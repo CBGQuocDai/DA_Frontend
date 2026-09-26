@@ -1,8 +1,5 @@
-export { AdminDashboardPage } from './admin/home/DashBoard';
-export { BookListPage } from './admin/books/BookListPage';
-export { UserListPage } from './admin/users/UserListPage';
+export { AdminLoginPage } from './admin/AdminLoginPage';
+export { ManageBookPage } from './admin/manageBook/ManageBook';
+export { ManageVoicePage } from './admin/manageVoice/ManageVoicePage';
+export { ViewStatisticPage } from './admin/viewStatistic/ViewStatisticPage';
 export { CustomerHomePage } from './customer/home/HomePage';
-export { CustomerStorePage } from './customer/store/StorePage';
-export { ProfilePage } from './customer/profile/ProfilePage';
-export { LoginPage } from './auth/login/LoginPage';
-export { RegisterPage } from './auth/register/RegisterPage';

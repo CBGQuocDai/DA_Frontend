@@ -1,11 +1,12 @@
 import { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { STORAGE_KEYS } from '@/src/shared/constants';
 
 /**
  * Hàm lấy Access Token từ Storage an toàn cho cả môi trường Next.js SSR và Client.
  */
 export const getAccessToken = (): string | null => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('access_token');
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   }
   return null;
 };
@@ -35,7 +36,7 @@ export const setupInterceptors = (axiosInstance: AxiosInstance): AxiosInstance =
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('access_token');
+          localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         }
         // TODO: call refresh token
       }

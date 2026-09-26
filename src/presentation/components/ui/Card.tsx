@@ -1,50 +1,24 @@
-import React from 'react';
+'use client';
 
 interface CardProps {
   children: React.ReactNode;
   className?: string;
-  hover?: boolean;
-  onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({
-  children,
-  className = '',
-  hover = false,
-  onClick,
-}) => {
-  return (
-    <div
-      className={`
-        bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden
-        ${hover ? 'hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer' : ''}
-        ${onClick ? 'cursor-pointer' : ''}
-        ${className}
-      `}
-      onClick={onClick}
-    >
-      {children}
-    </div>
-  );
+export const Card = ({ children, className = '' }: CardProps) => {
+  return <div className={`card ${className}`}>{children}</div>;
 };
 
-export const CardHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => (
-  <div className={`px-6 py-4 border-b border-slate-100 ${className}`}>{children}</div>
-);
+export const CardHeader = ({ children, className = '' }: CardProps) => {
+  return <div className={`card-header ${className}`}>{children}</div>;
+};
 
-export const CardContent: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <div className={`px-6 py-4 ${className}`}>{children}</div>;
+export const CardContent = ({ children, className = '' }: CardProps) => {
+  return <div className={`card-content ${className}`}>{children}</div>;
+};
 
-export const CardFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => (
-  <div className={`px-6 py-4 border-t border-slate-100 bg-slate-50 ${className}`}>{children}</div>
-);
+export const CardFooter = ({ children, className = '' }: CardProps) => {
+  return <div className={`card-footer ${className}`}>{children}</div>;
+};
 
 export default Card;

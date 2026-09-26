@@ -1,8 +1,15 @@
+// Storage Keys
+export const STORAGE_KEYS = {
+  ACCESS_TOKEN: 'da_access_token',
+  REFRESH_TOKEN: 'da_refresh_token',
+  USER: 'da_user',
+} as const;
+
 // API Endpoints
 export const API_ENDPOINTS = {
-  // Auth
   AUTH: {
     LOGIN: '/auth/login',
+    ADMIN_LOGIN: '/auth/admin/login',
     REGISTER: '/auth/register',
     LOGOUT: '/auth/logout',
     REFRESH_TOKEN: '/auth/refresh-token',
@@ -81,49 +88,5 @@ export const API_ENDPOINTS = {
   NARRATORS: {
     LIST: '/narrators',
     DETAIL: (id: string) => `/narrators/${id}`,
-  },
-} as const;
-
-// Storage Keys
-export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'da_access_token',
-  REFRESH_TOKEN: 'da_refresh_token',
-  USER: 'da_user',
-  REMEMBER_ME: 'da_remember_me',
-} as const;
-
-// Routes
-export const ROUTES = {
-  HOME: '/',
-  CUSTOMER: '/customer',
-  ADMIN: '/admin',
-  AUTH: {
-    LOGIN: '/login',
-    REGISTER: '/register',
-    FORGOT_PASSWORD: '/forgot-password',
-  },
-  ADMIN_PAGES: {
-    DASHBOARD: '/admin',
-    BOOKS: '/admin/books',
-    BOOK_CREATE: '/admin/books/create',
-    BOOK_EDIT: (id: string) => `/admin/books/${id}/edit`,
-    CATEGORIES: '/admin/categories',
-    USERS: '/admin/users',
-    REVIEWS: '/admin/reviews',
-    PURCHASES: '/admin/purchases',
-    SETTINGS: '/admin/settings',
-    NARRATORS: '/admin/narrators',
-    STATISTICS: '/admin/statistics',
-  },
-  CUSTOMER_PAGES: {
-    HOME: '/customer',
-    STORE: '/customer/store',
-    BOOK_DETAIL: (id: string) => `/customer/books/${id}`,
-    LISTENING: (id: string) => `/customer/listening/${id}`,
-    PROFILE: '/customer/profile',
-    PURCHASES: '/customer/purchases',
-    FAVORITES: '/customer/favorites',
-    HISTORY: '/customer/history',
-    SETTINGS: '/customer/settings',
   },
 } as const;
