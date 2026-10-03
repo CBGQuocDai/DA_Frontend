@@ -1,16 +1,15 @@
 'use client';
 
 import { useState } from "react";
-import { apiClient } from "@/src/infrastructure/api/config/apiClient";
-import { STORAGE_KEYS } from "@/src/shared/constants";
-import { LoginRequest } from "@/src/shared/types";
+import { authService } from "@/src/infrastructure/api/services";
+import type { LoginRequest } from "@/src/shared/types";
 
 interface LoginFormProps {
     endpoint: string;
     onSuccess?: () => void;
 }
 
-export const LoginForm = ({ endpoint, onSuccess }: LoginFormProps) => {
+export const LoginForm = ({ endpoint: _endpoint, onSuccess }: LoginFormProps) => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -22,15 +21,8 @@ export const LoginForm = ({ endpoint, onSuccess }: LoginFormProps) => {
         setIsLoading(true);
 
         try {
-            const login: LoginRequest = {
-                email,
-                password
-            }
-            const response = await apiClient.post(endpoint, login);
-            const { accessToken } = response.data;
-
-            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-
+            const credentials: LoginRequest = { email, password };
+            await authService.login(credentials, true);
             onSuccess?.();
         } catch (err: unknown) {
             const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Login failed. Please try again.";

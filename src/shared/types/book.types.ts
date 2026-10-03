@@ -1,65 +1,76 @@
 // Book Types
-import type { Review } from './review.types';
 
 export interface Book {
-  id: string;
+  id: number;
   title: string;
-  description: string;
-  coverImage: string;
-  author: string;
-  narrator: string;
-  duration: number; // in seconds
-  audioUrl: string;
-  category: Category;
-  tags: string[];
-  price: number;
-  rating: number;
-  totalListens: number;
+  description?: string;
+  coverImage?: string;
+  contentFile?: string;
+  isPublish?: boolean;
+  price?: number;
+  voice?: Voice;
   status: BookStatus;
-  publishedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface BookDetail extends Book {
-  chapters: Chapter[];
-  reviews: Review[];
+  bookCategories?: BookCategory[];
+  bookAuthors?: BookAuthor[];
+  categories?: BookCategory[];
+  authors?: BookAuthor[];
+  chapters?: Chapter[];
+  averageRating?: number;
+  ratingCount?: number;
 }
 
 export interface Chapter {
-  id: string;
-  bookId: string;
+  id: number;
   title: string;
-  orderIndex: number;
-  duration: number; // in seconds
-  audioUrl: string;
-  createdAt: string;
+  chapterOrder: number;
+  duration?: number;
+  audioUrl?: string;
+  rawText?: string;
+  status?: ChapterStatus;
 }
 
-export type BookStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export interface Voice {
+  id: number;
+  name: string;
+  exampleAudio?: string;
+  description?: string;
+}
+
+export interface BookCategory {
+  id: number;
+  category: Category;
+}
+
+export interface BookAuthor {
+  id: number;
+  author: Author;
+}
+
+export interface Author {
+  id: number;
+  fullName?: string;
+  avatar?: string;
+  bio?: string;
+}
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
-  slug: string;
-  icon?: string;
-  bookCount?: number;
+  description?: string;
 }
+
+export type BookStatus = 'PROCESSING' | 'PUBLISHED';
+export type ChapterStatus = 'PENDING_TEXT' | 'TEXT_READY' | 'PROCESSING_AUDIO' | 'AUDIO_READY';
 
 export interface CreateBookRequest {
   title: string;
-  description: string;
-  coverImage?: string;
-  author: string;
-  narrator: string;
-  duration?: number;
-  audioUrl?: string;
-  categoryId: string;
-  tags?: string[];
+  description?: string;
   price?: number;
-  status?: BookStatus;
+  voice?: Voice;
+  categories?: Category[];
+  authors?: Author[];
 }
 
 export interface UpdateBookRequest extends Partial<CreateBookRequest> {
-  id: string;
+  id: number;
 }

@@ -1,24 +1,24 @@
 // Review Types
 export interface Review {
-  id: string;
-  bookId: string;
-  userId: string;
+  id: number;
+  bookId: number;
+  userId: number;
   userName: string;
   userAvatar?: string;
   rating: number; // 1-5
   comment: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateReviewRequest {
-  bookId: string;
+  bookId: number;
   rating: number;
   comment: string;
 }
 
 export interface UpdateReviewRequest {
-  id: string;
+  id: number;
   rating: number;
   comment: string;
 }

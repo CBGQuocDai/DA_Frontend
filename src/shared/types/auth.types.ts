@@ -13,19 +13,18 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
-  user: User;
+  refreshToken?: string;
 }
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
   fullName: string;
   phone?: string;
-  avatar?: string;
-  role: UserRole;
-  createdAt: string;
-  updatedAt: string;
+  avatarUrl?: string;
+  password?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type UserRole = 'ADMIN' | 'CUSTOMER';

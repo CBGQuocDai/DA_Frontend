@@ -3,17 +3,17 @@ import type { Book } from './book.types';
 import type { Review } from './review.types';
 
 export interface ApiResponse<T> {
+  code: number;
+  message: string;
   data: T;
-  message?: string;
-  success: boolean;
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  content: T[];
   total: number;
+  totalPage: number;
   page: number;
   pageSize: number;
-  totalPages: number;
 }
 
 export interface PaginationParams {

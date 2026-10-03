@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { bookService } from '@/src/infrastructure/api/services';
-import { Book, BookDetail, Category, SearchParams } from '@/src/shared/types';
+import type { Book, Category } from '@/src/shared/types';
 
 interface UseBooksReturn {
   books: Book[];
@@ -12,40 +12,40 @@ interface UseBooksReturn {
     page: number;
     pageSize: number;
     total: number;
-    totalPages: number;
+    totalPage: number;
   };
-  loadBooks: (params?: SearchParams) => Promise<void>;
+  loadBooks: (params?: { page?: number; size?: number }) => Promise<void>;
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
-export const useBooks = (initialParams?: SearchParams): UseBooksReturn => {
+export const useBooks = (initialParams?: { page?: number; size?: number }): UseBooksReturn => {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
-    page: 1,
+    page: 0,
     pageSize: 10,
     total: 0,
-    totalPages: 0,
+    totalPage: 0,
   });
-  const [currentParams, setCurrentParams] = useState<SearchParams>(initialParams || {});
+  const [currentParams, setCurrentParams] = useState(initialParams || {});
 
-  const loadBooks = useCallback(async (params?: SearchParams) => {
+  const loadBooks = useCallback(async (params?: { page?: number; size?: number }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const mergedParams = { ...currentParams, ...params, page: 1 };
+      const mergedParams = { ...currentParams, ...params, page: 0 };
       setCurrentParams(mergedParams);
       const response = await bookService.getBooks(mergedParams);
-      setBooks(response.data);
+      setBooks(response.content);
       setPagination({
         page: response.page,
         pageSize: response.pageSize,
         total: response.total,
-        totalPages: response.totalPages,
+        totalPage: response.totalPage,
       });
-    } catch (err) {
+    } catch {
       setError('Không thể tải danh sách sách');
     } finally {
       setIsLoading(false);
@@ -53,18 +53,18 @@ export const useBooks = (initialParams?: SearchParams): UseBooksReturn => {
   }, [currentParams]);
 
   const loadMore = useCallback(async () => {
-    if (pagination.page >= pagination.totalPages || isLoading) return;
+    if (pagination.page >= pagination.totalPage - 1 || isLoading) return;
 
     setIsLoading(true);
     try {
       const nextPage = pagination.page + 1;
       const response = await bookService.getBooks({ ...currentParams, page: nextPage });
-      setBooks((prev) => [...prev, ...response.data]);
+      setBooks((prev) => [...prev, ...response.content]);
       setPagination({
         page: response.page,
         pageSize: response.pageSize,
         total: response.total,
-        totalPages: response.totalPages,
+        totalPage: response.totalPage,
       });
     } catch {
       setError('Không thể tải thêm sách');
@@ -93,14 +93,14 @@ export const useBooks = (initialParams?: SearchParams): UseBooksReturn => {
 };
 
 interface UseBookDetailReturn {
-  book: BookDetail | null;
+  book: Book | null;
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
 }
 
-export const useBookDetail = (bookId: string): UseBookDetailReturn => {
-  const [book, setBook] = useState<BookDetail | null>(null);
+export const useBookDetail = (bookId: number): UseBookDetailReturn => {
+  const [book, setBook] = useState<Book | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

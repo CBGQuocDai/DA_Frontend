@@ -1,41 +1,55 @@
 import { apiClient } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { Book, BookDetail, Category, SearchParams, PaginatedResponse } from '@/src/shared/types';
+import type { PaginatedResponse, Category } from '@/src/shared/types';
+import type { Book } from '@/src/shared/types';
 
 export const bookService = {
-  getBooks: async (params?: SearchParams): Promise<PaginatedResponse<Book>> => {
-    const response = await apiClient.get<PaginatedResponse<Book>>(
+  getBooks: async (params?: { page?: number; size?: number }): Promise<PaginatedResponse<Book>> => {
+    const response = await apiClient.get<any>(
       API_ENDPOINTS.BOOKS.LIST,
       { params }
     );
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  getBookById: async (id: string): Promise<BookDetail> => {
-    const response = await apiClient.get<BookDetail>(API_ENDPOINTS.BOOKS.DETAIL(id));
-    return response.data;
+  getBookById: async (id: number): Promise<Book> => {
+    const response = await apiClient.get<any>(API_ENDPOINTS.BOOKS.DETAIL(String(id)));
+    return response.data?.data ?? response.data;
   },
 
   getCategories: async (): Promise<Category[]> => {
-    const response = await apiClient.get<Category[]>(API_ENDPOINTS.BOOKS.CATEGORIES);
-    return response.data;
+    const response = await apiClient.get<any>(API_ENDPOINTS.BOOKS.CATEGORIES);
+    return response.data?.data ?? response.data;
   },
 
-  searchBooks: async (keyword: string): Promise<Book[]> => {
-    const response = await apiClient.get<Book[]>(API_ENDPOINTS.BOOKS.SEARCH, {
-      params: { keyword },
+  createBook: async (formData: FormData): Promise<Book> => {
+    const response = await apiClient.post<any>(API_ENDPOINTS.BOOKS.CREATE, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  getFeaturedBooks: async (): Promise<Book[]> => {
-    const response = await apiClient.get<Book[]>(API_ENDPOINTS.BOOKS.FEATURED);
-    return response.data;
+  updateBook: async (bookId: number, formData: FormData): Promise<Book> => {
+    const response = await apiClient.put<any>(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data?.data ?? response.data;
   },
 
-  getNewestBooks: async (): Promise<Book[]> => {
-    const response = await apiClient.get<Book[]>(API_ENDPOINTS.BOOKS.NEWEST);
-    return response.data;
+  publishBook: async (bookId: number): Promise<void> => {
+    await apiClient.put(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}/publish`);
+  },
+
+  unpublishBook: async (bookId: number): Promise<void> => {
+    await apiClient.put(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}/unpublish`);
+  },
+
+  deleteBook: async (bookId: number): Promise<void> => {
+    await apiClient.delete(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}`);
   },
 };
 
