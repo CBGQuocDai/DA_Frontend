@@ -2,12 +2,17 @@
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
+    CUSTOMER_LOGIN: '/customer/login',
+    CUSTOMER_REGISTER: '/customer/register',
+    CUSTOMER_PROFILE: '/customer/profile',
+    ADMIN_LOGIN: '/admin/login',
+    ADMIN_REGISTER: '/admin/register',
+    LOGIN: '/customer/login',
+    REGISTER: '/customer/register',
     LOGOUT: '/auth/logout',
     REFRESH_TOKEN: '/auth/refresh-token',
-    CHANGE_PASSWORD: '/auth/change-password',
-    ME: '/auth/me',
+    CHANGE_PASSWORD: '/customer/profile/change-password',
+    ME: '/customer/profile',
   },
 
   // Users
