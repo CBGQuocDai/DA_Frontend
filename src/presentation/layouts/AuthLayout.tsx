@@ -46,23 +46,23 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
               Sách nói
             </Link>
             <Link
-              href="/customer/store?category=truyen-audio"
+              href="/customer/authors"
               className="hover:text-rose-600 transition-colors"
             >
-              Truyện audio
+              Tác giả
             </Link>
-            <Link
+            {/* <Link
               href="/customer/store?tab=rankings"
               className="hover:text-rose-600 transition-colors"
             >
               Bảng xếp hạng
-            </Link>
-            <Link
+            </Link> */}
+            {/* <Link
               href="/customer/store?tab=albums"
               className="hover:text-rose-600 transition-colors"
             >
               Album
-            </Link>
+            </Link> */}
           </nav>
 
           {/* Right Action Icons & Button */}
