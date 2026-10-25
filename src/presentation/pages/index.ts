@@ -1,9 +1,11 @@
-export { AdminDashboardPage } from './admin/home/DashBoard';
-export { BookListPage } from './admin/books/BookListPage';
-// export { UserListPage } from './admin/users/UserListPage';
+export { AdminLoginPage } from './admin/AdminLoginPage';
+export { ManageBookPage } from './admin/manageBook/ManageBook';
+export { BookDetail } from './admin/bookDetail/BookDetail';
+export { ManageVoicePage } from './admin/manageVoice/ManageVoicePage';
+export { ViewStatisticPage } from './admin/viewStatistic/ViewStatisticPage';
 export { CustomerHomePage } from './customer/home/HomePage';
 export { CustomerStorePage } from './customer/store/StorePage';
-export { ProfilePage } from './customer/profile/ProfilePage';
-export { BookDetailPage } from './customer/books/BookDetailPage';
-export { LoginPage } from './auth/login/LoginPage';
-export { RegisterPage } from './auth/register/RegisterPage';
+export { CustomerBookDetailPage } from './customer/bookDetail/BookDetailPage';
+export { CustomerProfilePage } from './customer/profile/ProfilePage';
+export { CustomerLoginPage } from './customer/auth/CustomerLoginPage';
+export { CustomerRegisterPage } from './customer/auth/CustomerRegisterPage';

@@ -1,23 +1,36 @@
 import axios from 'axios';
+import { API_BASE_URL } from '@/src/shared/constants';
 import { setupInterceptors } from './interceptor.config';
 
-const getBaseURL = () => {
-  if (typeof window !== 'undefined') {
-    return '/api';
+class ApiClient {
+  private static instance: ApiClient | null = null;
+  private client: ReturnType<typeof axios.create>;
+
+  private constructor() {
+    this.client = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    setupInterceptors(this.client);
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-};
 
-export const apiClient = axios.create({
-  baseURL: getBaseURL(),
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
-  },
-});
+  public static getInstance(): ApiClient {
+    if (!ApiClient.instance) {
+      ApiClient.instance = new ApiClient();
+    }
+    return ApiClient.instance;
+  }
 
-// Áp dụng Interceptors
-setupInterceptors(apiClient);
+  public getClient() {
+    return this.client;
+  }
+}
 
-export default apiClient;
+export const apiClient = ApiClient.getInstance().getClient();
+
+/** Most endpoints wrap the payload as `{ code, message, data }`; a few return it bare. */
+export const unwrap = <T>({ data: body }: { data: unknown }): T =>
+  ((body as { data?: T } | undefined)?.data ?? body) as T;

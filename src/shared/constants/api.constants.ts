@@ -1,142 +1,55 @@
-// API Endpoints
-export const API_ENDPOINTS = {
-  // Auth
-  AUTH: {
-    CUSTOMER_LOGIN: "/customer/login",
-    CUSTOMER_REGISTER: "/customer/register",
-    CUSTOMER_PROFILE: "/customer/profile",
-    ADMIN_LOGIN: "/admin/login",
-    ADMIN_REGISTER: "/admin/register",
-    LOGIN: "/customer/login",
-    REGISTER: "/customer/register",
-    LOGOUT: "/auth/logout",
-    REFRESH_TOKEN: "/auth/refresh-token",
-    CHANGE_PASSWORD: "/customer/profile/change-password",
-    ME: "/customer/profile",
-  },
-
-  // Users
-  USERS: {
-    LIST: "/users",
-    DETAIL: (id: string) => `/users/${id}`,
-    UPDATE: (id: string) => `/users/${id}`,
-    DELETE: (id: string) => `/users/${id}`,
-  },
-
-  // Books
-  BOOKS: {
-    LIST: "/books",
-    DETAIL: (id: string) => `/books/${id}`,
-    CREATE: "/books",
-    UPDATE: (id: string) => `/books/${id}`,
-    DELETE: (id: string) => `/books/${id}`,
-    SEARCH: "/books/search",
-    FEATURED: "/books/featured",
-    NEWEST: "/books/newest",
-    CATEGORIES: "/books/categories",
-  },
-
-  // Categories
-  CATEGORIES: {
-    LIST: "/categories",
-    DETAIL: (id: string) => `/categories/${id}`,
-    CREATE: "/categories",
-    UPDATE: (id: string) => `/categories/${id}`,
-    DELETE: (id: string) => `/categories/${id}`,
-  },
-
-  // Reviews
-  REVIEWS: {
-    LIST: (bookId: string) => `/books/${bookId}/reviews`,
-    CREATE: (bookId: string) => `/books/${bookId}/reviews`,
-    UPDATE: (id: string) => `/reviews/${id}`,
-    DELETE: (id: string) => `/reviews/${id}`,
-  },
-
-  // Purchases
-  PURCHASES: {
-    LIST: "/purchases",
-    CREATE: "/purchases",
-    CHECK: (bookId: string | number) => `/purchases/check/${bookId}`,
-  },
-
-  // Payments
-  PAYMENTS: {
-    CREATE: "/payments",
-    STATUS: (id: number | string) => `/payments/${id}`,
-    PENDING: (bookId: number | string) => `/payments/pending/${bookId}`,
-    CHECK: (bookId: number | string) => `/payments/check/${bookId}`,
-  },
-
-  // Listening History
-  LISTENING_HISTORY: {
-    LIST: "/listening-history",
-    UPSERT: "/listening-history",
-    BOOK: (bookId: string) => `/listening-history/book/${bookId}`,
-  },
-
-  // Bookmarks
-  BOOKMARKS: {
-    LIST: "/bookmarks",
-    CREATE: "/bookmarks",
-    UPDATE: (id: string) => `/bookmarks/${id}`,
-    DELETE: (id: string) => `/bookmarks/${id}`,
-  },
-
-  // Dashboard
-  DASHBOARD: {
-    STATS: "/dashboard/stats",
-    TOP_BOOKS: "/dashboard/top-books",
-    RECENT_REVIEWS: "/dashboard/recent-reviews",
-  },
-
-  // Narrators
-  NARRATORS: {
-    LIST: "/narrators",
-    DETAIL: (id: string) => `/narrators/${id}`,
-  },
-} as const;
-
 // Storage Keys
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: "access_token",
-  REFRESH_TOKEN: "refresh_token",
-  USER: "user",
-  REMEMBER_ME: "remember_me",
+  ACCESS_TOKEN: 'da_access_token',
+  REFRESH_TOKEN: 'da_refresh_token',
+  USER: 'da_user',
 } as const;
 
-// Routes
-export const ROUTES = {
-  HOME: "/",
-  CUSTOMER: "/customer",
-  ADMIN: "/admin",
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
+
+// API Endpoints
+export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: "/login",
-    REGISTER: "/register",
-    FORGOT_PASSWORD: "/forgot-password",
+    ADMIN_LOGIN: '/admin/login',
+    CUSTOMER_LOGIN: '/customer/login',
+    CUSTOMER_REGISTER: '/customer/register',
+    CUSTOMER_PROFILE: '/customer/profile',
+    CHANGE_PASSWORD: '/customer/profile/change-password',
   },
-  ADMIN_PAGES: {
-    DASHBOARD: "/admin",
-    BOOKS: "/admin/books",
-    BOOK_CREATE: "/admin/books/create",
-    BOOK_EDIT: (id: string) => `/admin/books/${id}/edit`,
-    CATEGORIES: "/admin/categories",
-    USERS: "/admin/users",
-    REVIEWS: "/admin/reviews",
-    PURCHASES: "/admin/purchases",
-    SETTINGS: "/admin/settings",
-    NARRATORS: "/admin/narrators",
-    STATISTICS: "/admin/statistics",
+
+  BOOKS: {
+    LIST: '/books',
+    DETAIL: (id: string | number) => `/books/${id}`,
+    CREATE: '/books',
+    UPDATE: (id: string | number) => `/books/${id}`,
+    DELETE: (id: string | number) => `/books/${id}`,
+    PUBLISH: (id: string | number) => `/books/${id}/publish`,
+    UNPUBLISH: (id: string | number) => `/books/${id}/unpublish`,
+    BY_CATEGORY: (categoryId: string | number) => `/books/category/${categoryId}`,
   },
-  CUSTOMER_PAGES: {
-    HOME: "/customer",
-    STORE: "/customer/store",
-    BOOK_DETAIL: (id: string) => `/customer/books/${id}`,
-    LISTENING: (id: string) => `/customer/listening/${id}`,
-    PROFILE: "/customer/profile",
-    PURCHASES: "/customer/purchases",
-    FAVORITES: "/customer/favorites",
-    HISTORY: "/customer/history",
-    SETTINGS: "/customer/settings",
+
+  CATEGORIES: '/categories',
+  AUTHORS: '/authors',
+
+  VOICES: {
+    LIST: '/voice',
+    DETAIL: (voiceId: string | number) => `/voice/${voiceId}`,
+  },
+
+  CHAPTERS: {
+    LIST: (bookId: string | number) => `/books/${bookId}/chapters`,
+    CREATE: (bookId: string | number) => `/books/${bookId}/chapters`,
+    UPDATE: (bookId: string | number, chapterId: string | number) =>
+      `/books/${bookId}/chapters/${chapterId}`,
+    DELETE: (bookId: string | number, chapterId: string | number) =>
+      `/books/${bookId}/chapters/${chapterId}`,
+    GENERATE_AUDIO: (bookId: string | number, chapterId: string | number) =>
+      `/books/${bookId}/chapters/${chapterId}/audio`,
+  },
+
+  PAYMENTS: {
+    CREATE: '/payments',
+    DETAIL: (paymentId: string | number) => `/payments/${paymentId}`,
+    CHECK: (bookId: string | number) => `/payments/check/${bookId}`,
   },
 } as const;

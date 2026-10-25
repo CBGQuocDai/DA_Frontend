@@ -1,21 +1,18 @@
-import { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { STORAGE_KEYS } from '@/src/shared/constants';
+import { storageString } from '@/src/shared/utils';
 
 /**
  * Hàm lấy Access Token từ Storage an toàn cho cả môi trường Next.js SSR và Client.
  */
 export const getAccessToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("access_token");
-  }
-  return null;
+  return storageString.get(STORAGE_KEYS.ACCESS_TOKEN);
 };
 
 /**
  * Cấu hình Interceptor cho Axios Instance
  */
-export const setupInterceptors = (
-  axiosInstance: AxiosInstance,
-): AxiosInstance => {
+export const setupInterceptors = (axiosInstance: AxiosInstance): AxiosInstance => {
   // 1. Request Interceptor: Tự động đính kèm Bearer Token vào Header
   axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
@@ -24,25 +21,11 @@ export const setupInterceptors = (
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      if (config.headers) {
-        config.headers["ngrok-skip-browser-warning"] = "true";
-      }
-      if (typeof window !== "undefined") {
-        if (config.baseURL && config.baseURL.includes("localhost:8080")) {
-          config.baseURL = "/api";
-        }
-        if (config.url && config.url.includes("localhost:8080/api")) {
-          config.url = config.url.replace(
-            /http:\/\/localhost:8080\/api/,
-            "/api",
-          );
-        }
-      }
       return config;
     },
     (error: AxiosError) => {
       return Promise.reject(error);
-    },
+    }
   );
 
   // 2. Response Interceptor: Bắt các lỗi chung (VD: 401 Unauthorized khi token hết hạn)
@@ -50,13 +33,11 @@ export const setupInterceptors = (
     (response) => response,
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("access_token");
-        }
-        // TODO: call refresh token
+        storageString.remove(STORAGE_KEYS.ACCESS_TOKEN);
+        // TODO: call refresh token or redirect to login
       }
       return Promise.reject(error);
-    },
+    }
   );
 
   return axiosInstance;
