@@ -1,10 +1,19 @@
 import { apiClient } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
 import type { PaginatedResponse, Category } from '@/src/shared/types';
-import type { Book } from '@/src/shared/types';
+import type { Book, BookStatus } from '@/src/shared/types';
+
+export interface GetBooksParams {
+  page?: number;
+  size?: number;
+  bookName?: string;
+  categoryId?: number;
+  authorId?: number;
+  status?: BookStatus;
+}
 
 export const bookService = {
-  getBooks: async (params?: { page?: number; size?: number }): Promise<PaginatedResponse<Book>> => {
+  getBooks: async (params?: GetBooksParams): Promise<PaginatedResponse<Book>> => {
     const response = await apiClient.get<any>(
       API_ENDPOINTS.BOOKS.LIST,
       { params }

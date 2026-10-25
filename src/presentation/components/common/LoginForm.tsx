@@ -5,11 +5,10 @@ import { authService } from "@/src/infrastructure/api/services";
 import type { LoginRequest } from "@/src/shared/types";
 
 interface LoginFormProps {
-    endpoint: string;
     onSuccess?: () => void;
 }
 
-export const LoginForm = ({ endpoint: _endpoint, onSuccess }: LoginFormProps) => {
+export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);

@@ -3,6 +3,12 @@ import { API_ENDPOINTS } from '@/src/shared/constants';
 import type { Chapter } from '@/src/shared/types';
 
 
+/** Partial update: only the provided fields are changed. */
+export interface ChapterUpdatePayload {
+  title?: string;
+  rawText?: string;
+}
+
 export const chapterService = {
   getChapters: async (bookId: number): Promise<Chapter[]> => {
     const response = await apiClient.get<any>(
@@ -20,6 +26,10 @@ export const chapterService = {
       data
     );
     return response.data?.data ?? response.data;
+  },
+
+  updateChapter: async (bookId: number, chapterId: number, data: ChapterUpdatePayload): Promise<void> => {
+    await apiClient.patch(API_ENDPOINTS.CHAPTERS.UPDATE(bookId, chapterId), data);
   },
 
   deleteChapter: async (bookId: number, chapterId: number): Promise<void> => {

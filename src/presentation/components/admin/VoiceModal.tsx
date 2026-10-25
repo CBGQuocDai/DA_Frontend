@@ -33,31 +33,27 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({
   const [isPlayingExisting, setIsPlayingExisting] = useState(false);
   const existingAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
+  // Reset the form whenever the modal opens or switches to another voice
+  const [syncedFor, setSyncedFor] = useState<{ isOpen: boolean; voice?: Voice | null }>({
+    isOpen: false,
+  });
+  if (syncedFor.isOpen !== isOpen || syncedFor.voice !== voice) {
+    setSyncedFor({ isOpen, voice });
     if (isOpen) {
-      if (voice) {
-        setFormData({
-          name: voice.name || '',
-          description: voice.description || '',
-        });
-      } else {
-        setFormData({ name: '', description: '' });
-      }
+      setFormData({ name: voice?.name || '', description: voice?.description || '' });
       setAudioFile(null);
       setPreviewUrl(null);
-      setIsPlayingExisting(false);
-    } else {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
-      if (existingAudioRef.current) {
-        existingAudioRef.current.pause();
-        existingAudioRef.current.src = '';
-      }
-      setIsPlayingExisting(false);
     }
-  }, [isOpen, voice]);
+    setIsPlayingExisting(false);
+  }
+
+  // Stop the existing sample when the modal closes (the preview URL is revoked below)
+  useEffect(() => {
+    if (!isOpen && existingAudioRef.current) {
+      existingAudioRef.current.pause();
+      existingAudioRef.current.src = '';
+    }
+  }, [isOpen]);
 
   // Clean up object URLs and audio
   useEffect(() => {
@@ -118,10 +114,18 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({
     setIsSubmitting(true);
     try {
       if (isEditMode && voice) {
-        await voiceService.updateVoice(voice.id, {
-          name: formData.name.trim(),
-          description: formData.description.trim(),
-        });
+        const form = new FormData();
+        form.append(
+          'voiceInfo',
+          JSON.stringify({
+            name: formData.name.trim(),
+            description: formData.description.trim(),
+          })
+        );
+        if (audioFile) {
+          form.append('exampleAudio', audioFile);
+        }
+        await voiceService.updateVoice(voice.id, form);
       } else if (audioFile) {
         const form = new FormData();
         form.append(
@@ -190,16 +194,17 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({
             <label className="block text-sm font-semibold text-text-primary mb-1.5">
               File audio mẫu
             </label>
-            {voice?.exampleAudio ? (
+            {/* Existing file (if any) with preview player */}
+            {voice?.exampleAudio && !audioFile && (
               <div className="bg-bg/70 border border-border rounded-xl p-3 flex items-center justify-between text-xs">
-                <span className="text-text-secondary flex items-center gap-2">
+                <span className="text-text-secondary flex items-center gap-2 min-w-0">
                   <FileAudio className="w-4 h-4 text-accent flex-shrink-0" />
-                  <span>Đã có file audio mẫu được gán</span>
+                  <span className="truncate">Đã có file audio mẫu được gán</span>
                 </span>
                 <button
                   type="button"
                   onClick={handleToggleExistingAudio}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent/10 hover:bg-accent hover:text-white text-accent font-medium transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent/10 hover:bg-accent hover:text-white text-accent font-medium transition-colors cursor-pointer flex-shrink-0"
                 >
                   {isPlayingExisting ? (
                     <>
@@ -214,9 +219,71 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({
                   )}
                 </button>
               </div>
-            ) : (
-              <p className="text-xs text-text-muted italic">Chưa có file mẫu được tải lên</p>
             )}
+
+            {/* Re-upload zone: shown when no file picked yet, or as a swap card when a new file is chosen */}
+            <div
+              className={`mt-2 border-2 border-dashed border-border hover:border-accent/50 rounded-xl p-3 text-center transition-colors bg-bg/50 ${
+                audioFile ? 'border-accent/40' : ''
+              }`}
+            >
+              <input
+                type="file"
+                id="voice-modal-audio-reupload"
+                accept="audio/*"
+                onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              {audioFile ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-9 h-9 rounded-full bg-accent/10 text-accent flex items-center justify-center">
+                    <FileAudio className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-medium text-text-primary max-w-xs truncate">
+                    {audioFile.name}
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    {(audioFile.size / (1024 * 1024)).toFixed(2)} MB · Sẽ thay thế file hiện tại
+                  </p>
+                  {previewUrl && (
+                    <audio controls src={previewUrl} className="h-8 w-full max-w-xs mt-1" />
+                  )}
+                  <div className="flex items-center gap-3 mt-1">
+                    <label
+                      htmlFor="voice-modal-audio-reupload"
+                      className="text-xs text-accent hover:underline font-medium cursor-pointer"
+                    >
+                      Chọn file khác
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleFileChange(null)}
+                      className="text-xs text-error hover:underline cursor-pointer"
+                    >
+                      Hủy thay đổi
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label
+                  htmlFor="voice-modal-audio-reupload"
+                  className="flex flex-col items-center gap-1.5 cursor-pointer py-1.5"
+                >
+                  <div className="w-9 h-9 rounded-full bg-accent/10 text-accent flex items-center justify-center">
+                    <UploadCloud className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-medium text-text-primary">
+                    {voice?.exampleAudio
+                      ? 'Tải lên file audio mới'
+                      : 'Tải lên file audio mẫu'}
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    MP3, WAV, M4A (Tối đa 10MB)
+                    {voice?.exampleAudio && ' · Bỏ trống nếu muốn giữ file hiện tại'}
+                  </p>
+                </label>
+              )}
+            </div>
           </div>
         ) : (
           <div>

@@ -10,15 +10,3 @@ export interface Review {
   createdAt?: string;
   updatedAt?: string;
 }
-
-export interface CreateReviewRequest {
-  bookId: number;
-  rating: number;
-  comment: string;
-}
-
-export interface UpdateReviewRequest {
-  id: number;
-  rating: number;
-  comment: string;
-}

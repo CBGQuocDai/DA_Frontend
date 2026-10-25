@@ -1,54 +1,31 @@
-import React, { useRef, useState } from "react";
-import Link from "next/link";
+import React from "react";
 import { Button, Badge } from "@/src/presentation/components/ui";
-import { ROUTES } from "@/src/shared/constants";
 import type { Book, Chapter } from "@/src/shared/types";
 import {
-  ArrowLeft,
   BookOpen,
-  RotateCw,
   Pencil,
   Eye,
   EyeOff,
   Volume2,
   FileText,
-  Play,
-  Pause,
 } from "lucide-react";
 
 interface BookHeaderProps {
   book: Book;
   chapters: Chapter[];
-  isRefreshing: boolean;
   actionLoading: string | null;
-  isVoicePlaying: boolean;
-  onReload: () => void;
   onOpenEditBook: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
-  onToggleVoiceAudio: (audioUrl?: string) => void;
 }
-
-const resolveAudioUrl = (url?: string) => {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  const backendBase = (
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api"
-  ).replace(/\/api\/?$/, "");
-  return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
-};
 
 export const BookHeader: React.FC<BookHeaderProps> = ({
   book,
   chapters,
-  isRefreshing,
   actionLoading,
-  isVoicePlaying,
-  onReload,
   onOpenEditBook,
   onPublish,
   onUnpublish,
-  onToggleVoiceAudio,
 }) => {
   const bookStatusConfig: Record<
     string,
@@ -72,6 +49,7 @@ export const BookHeader: React.FC<BookHeaderProps> = ({
         <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
           <div className="w-12 h-16 sm:w-14 sm:h-20 bg-bg border border-border rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
             {book.coverImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={book.coverImage}
                 alt={book.title}

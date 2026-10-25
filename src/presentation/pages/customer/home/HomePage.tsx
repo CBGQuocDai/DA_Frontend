@@ -36,15 +36,6 @@ export const CustomerHomePage = () => {
     fetchData();
   }, []);
 
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-      return `${hours}h ${minutes}p`;
-    }
-    return `${minutes} phút`;
-  };
-
   return (
     <CustomerLayout>
       {/* Hero Section */}

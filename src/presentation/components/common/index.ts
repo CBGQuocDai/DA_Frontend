@@ -1,4 +1,5 @@
 export { MultiSelectCombobox } from './MultiSelectCombobox';
-export type { MultiSelectComboboxOption, MultiSelectComboboxProps } from './MultiSelectCombobox';
 export { DropSearch } from './DropSearch';
-export type { DropSearchOption, DropSearchProps } from './DropSearch';
+export { FileDropzone } from './FileDropzone';
+export { Pagination } from './Pagination';
+export type { PaginationProps } from './Pagination';

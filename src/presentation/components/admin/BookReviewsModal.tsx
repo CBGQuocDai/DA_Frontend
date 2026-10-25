@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import type { Book, Review } from '@/src/shared/types';
-import { Button, Badge } from '@/src/presentation/components/ui';
-import { Star, X, MessageSquare, BookOpen, ThumbsUp, Filter } from 'lucide-react';
+import { Button } from '@/src/presentation/components/ui';
+import { Star, X, MessageSquare, BookOpen, Filter } from 'lucide-react';
 
 interface BookReviewsModalProps {
   isOpen: boolean;
@@ -147,6 +147,7 @@ export const BookReviewsModal: React.FC<BookReviewsModalProps> = ({
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-14 bg-bg border border-border rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center shadow-xs">
                 {book.coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
                 ) : (
                   <BookOpen className="w-5 h-5 text-text-muted" />

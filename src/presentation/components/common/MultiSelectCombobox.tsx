@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from "react";
 
 export interface MultiSelectComboboxOption {
   id: number;
@@ -20,26 +20,29 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
   options,
   selectedIds,
   onChange,
-  placeholder = 'Tìm kiếm hoặc chọn...',
+  placeholder = "Tìm kiếm hoặc chọn...",
   disabled = false,
-  className = '',
+  className = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -63,9 +66,8 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
 
   const handleSelect = (id: number) => {
     onChange([...selectedIds, id]);
-    setSearchQuery('');
+    setSearchQuery("");
     setIsOpen(false);
-    inputRef.current?.focus();
   };
 
   const handleRemove = (id: number, e?: React.MouseEvent) => {
@@ -126,10 +128,14 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
             if (!isOpen) setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
+          onBlur={() => {
+            setIsOpen(false);
+            setSearchQuery("");
+          }}
           onKeyDown={(e) => {
-            if (e.key === 'Escape') {
+            if (e.key === "Escape") {
               setIsOpen(false);
-            } else if (e.key === 'Enter') {
+            } else if (e.key === "Enter") {
               e.preventDefault();
               if (filteredOptions.length > 0) {
                 handleSelect(filteredOptions[0].id);
@@ -139,12 +145,13 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
           disabled={disabled}
           placeholder={placeholder}
           className={`w-full px-3 py-2 pr-9 border border-border rounded-md text-sm bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors ${
-            disabled ? 'opacity-60 cursor-not-allowed bg-bg' : ''
+            disabled ? "opacity-60 cursor-not-allowed bg-bg" : ""
           }`}
         />
 
         {/* Action / Arrow indicator icon */}
         <div
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             if (!disabled) {
               setIsOpen((prev) => !prev);
@@ -154,19 +161,27 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
           className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-text-muted hover:text-text-secondary transition-colors"
         >
           <svg
-            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </div>
 
       {/* Dropdown list */}
       {isOpen && (
-        <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1 text-sm focus:outline-none">
+        <div
+          onMouseDown={(e) => e.preventDefault()}
+          className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1 text-sm focus:outline-none"
+        >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((opt) => (
               <div
@@ -185,10 +200,10 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
           ) : (
             <div className="px-3 py-2.5 text-center text-xs text-text-muted">
               {options.length === 0
-                ? 'Không có dữ liệu'
+                ? "Không có dữ liệu"
                 : selectedIds.length === options.length
-                ? 'Đã chọn tất cả'
-                : 'Không tìm thấy kết quả phù hợp'}
+                  ? "Đã chọn tất cả"
+                  : "Không tìm thấy kết quả phù hợp"}
             </div>
           )}
         </div>

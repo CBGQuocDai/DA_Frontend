@@ -4,7 +4,7 @@ interface ModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const Modal = ({ onClose, title, children, size = 'md' }: ModalProps) => {
@@ -13,6 +13,7 @@ export const Modal = ({ onClose, title, children, size = 'md' }: ModalProps) => 
     sm: 'max-w-md',
     md: 'max-w-lg',
     lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
   };
 
   return (
@@ -24,13 +25,13 @@ export const Modal = ({ onClose, title, children, size = 'md' }: ModalProps) => 
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         <div
-          className={`relative w-full ${sizeClasses[size]} bg-surface rounded-xl shadow-xl transform transition-all`}
+          className={`relative flex max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] w-full flex-col ${sizeClasses[size]} bg-surface rounded-xl shadow-xl transform transition-all`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex flex-shrink-0 items-center justify-between px-4 sm:px-6 py-4 border-b border-border">
             <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
             <button
               onClick={onClose}
@@ -43,7 +44,7 @@ export const Modal = ({ onClose, title, children, size = 'md' }: ModalProps) => 
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
             {children}
           </div>
         </div>

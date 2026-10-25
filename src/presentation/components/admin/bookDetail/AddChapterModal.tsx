@@ -3,14 +3,12 @@ import { Modal, Button } from '@/src/presentation/components/ui';
 import { Loader2 } from 'lucide-react';
 
 interface AddChapterModalProps {
-  isOpen: boolean;
   onClose: () => void;
   defaultChapterOrder: number;
   onSubmit: (title: string, chapterOrder: number, rawText: string) => Promise<void>;
 }
 
 export const AddChapterModal: React.FC<AddChapterModalProps> = ({
-  isOpen,
   onClose,
   defaultChapterOrder,
   onSubmit,
@@ -91,7 +89,7 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
             className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent leading-relaxed resize-y font-sans"
           />
           <p className="text-xs text-text-muted mt-1">
-            Nội dung chữ này sẽ được dùng khi bạn bấm nút "gen audio" để tạo audio AI.
+            Nội dung chữ này sẽ được dùng khi bạn bấm nút &quot;gen audio&quot; để tạo audio AI.
           </p>
         </div>
 

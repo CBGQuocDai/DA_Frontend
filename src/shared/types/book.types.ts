@@ -59,18 +59,5 @@ export interface Category {
   description?: string;
 }
 
-export type BookStatus = 'PROCESSING' | 'PUBLISHED';
+export type BookStatus = 'PROCESSING' | 'UNPUBLISHED' | 'PUBLISHED' | 'FAILED';
 export type ChapterStatus = 'PENDING_TEXT' | 'TEXT_READY' | 'PROCESSING_AUDIO' | 'AUDIO_READY';
-
-export interface CreateBookRequest {
-  title: string;
-  description?: string;
-  price?: number;
-  voice?: Voice;
-  categories?: Category[];
-  authors?: Author[];
-}
-
-export interface UpdateBookRequest extends Partial<CreateBookRequest> {
-  id: number;
-}

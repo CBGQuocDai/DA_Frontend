@@ -17,11 +17,12 @@ export const voiceService = {
     return response.data?.data ?? response.data;
   },
 
-  updateVoice: async (
-    voiceId: number,
-    data: { name: string; description?: string }
-  ): Promise<Voice> => {
-    const response = await apiClient.put<any>(`/voice/${voiceId}`, data);
+  updateVoice: async (voiceId: number, data: FormData): Promise<Voice> => {
+    const response = await apiClient.put<any>(`/voice/${voiceId}`, data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data?.data ?? response.data;
   },
 

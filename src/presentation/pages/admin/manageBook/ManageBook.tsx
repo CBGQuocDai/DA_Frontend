@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/src/shared/constants";
 import { AdminLayout } from "@/src/presentation/layouts";
@@ -15,14 +15,17 @@ import type {
   Voice,
   Category,
   Author,
-  PaginatedResponse,
+  BookStatus,
 } from "@/src/shared/types";
-import { Button, Badge, Modal } from "@/src/presentation/components/ui";
+import { Button, Badge } from "@/src/presentation/components/ui";
 import {
-  MultiSelectCombobox,
   DropSearch,
+  Pagination,
 } from "@/src/presentation/components/common";
-import { EditBookModal } from "@/src/presentation/components/admin/bookDetail";
+import {
+  BookFormModal,
+  type BookFormValues,
+} from "@/src/presentation/components/admin/BookFormModal";
 import { BookReviewsModal } from "@/src/presentation/components/admin/BookReviewsModal";
 import {
   Plus,
@@ -46,10 +49,13 @@ const statusConfig: Record<
   }
 > = {
   PROCESSING: { label: "Đang xử lý", variant: "warning" },
+  UNPUBLISHED: { label: "Chưa xuất bản", variant: "default" },
   PUBLISHED: { label: "Đã xuất bản", variant: "success" },
+  FAILED: { label: "Xử lý lỗi", variant: "error" },
 };
 
 const ITEMS_PER_PAGE = 10;
+const SEARCH_DEBOUNCE_MS = 400;
 
 export const ManageBookPage = () => {
   const router = useRouter();
@@ -62,7 +68,6 @@ export const ManageBookPage = () => {
     total: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Filter state
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -70,67 +75,40 @@ export const ManageBookPage = () => {
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
   const [authorFilter, setAuthorFilter] = useState<number | null>(null);
 
-  const filteredBooks = useMemo(() => {
-    let result = books;
-    if (searchKeyword.trim()) {
-      const q = searchKeyword.toLowerCase();
-      result = result.filter((b) => b.title?.toLowerCase().includes(q));
-    }
-    if (statusFilter) {
-      result = result.filter((b) => {
-        const currentStatus =
-          b.status || (b.isPublish ? "PUBLISHED" : "PROCESSING");
-        return currentStatus === statusFilter;
-      });
-    }
-    if (categoryFilter) {
-      result = result.filter((b) => {
-        const cats = b.categories || b.bookCategories || [];
-        return cats.some(
-          (bc: any) => (bc.category?.id ?? bc.id) === categoryFilter,
-        );
-      });
-    }
-    if (authorFilter) {
-      result = result.filter((b) => {
-        const auths = b.authors || b.bookAuthors || [];
-        return auths.some(
-          (ba: any) => (ba.author?.id ?? ba.id) === authorFilter,
-        );
-      });
-    }
-    return result;
-  }, [books, searchKeyword, statusFilter, categoryFilter, authorFilter]);
-
   // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [viewingReviewsBook, setViewingReviewsBook] = useState<Book | null>(
     null,
   );
-  const [isUpdatingBook, setIsUpdatingBook] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    price: 0,
-    voiceId: 0,
-    categoryIds: [] as number[],
-    authorIds: [] as number[],
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
 
-  const fetchBooks = useCallback(async (page: number) => {
+  // Debounced copy of the search box so each keystroke doesn't hit the API
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+  useEffect(() => {
+    const t = setTimeout(
+      () => setDebouncedKeyword(searchKeyword.trim()),
+      SEARCH_DEBOUNCE_MS,
+    );
+    return () => clearTimeout(t);
+  }, [searchKeyword]);
+
+  const fetchBooks = useCallback(
+    async (page: number) => {
     setIsLoading(true);
     try {
-      const data = await bookService.getBooks({ page, size: ITEMS_PER_PAGE });
+      const data = await bookService.getBooks({
+        page,
+        size: ITEMS_PER_PAGE,
+        bookName: debouncedKeyword || undefined,
+        categoryId: categoryFilter ?? undefined,
+        authorId: authorFilter ?? undefined,
+        status: (statusFilter || undefined) as BookStatus | undefined,
+      });
       if (data && data.content) {
         setBooks(data.content);
         setPagination({
@@ -146,7 +124,9 @@ export const ManageBookPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+    },
+    [debouncedKeyword, categoryFilter, authorFilter, statusFilter],
+  );
 
   const fetchFilters = async () => {
     try {
@@ -185,9 +165,13 @@ export const ManageBookPage = () => {
   };
 
   useEffect(() => {
-    fetchBooks(0);
     fetchFilters();
   }, []);
+
+  // Refetch from page 0 on mount and whenever a filter changes
+  useEffect(() => {
+    fetchBooks(0);
+  }, [fetchBooks]);
 
   const handlePageChange = (newPage: number) => {
     fetchBooks(newPage);
@@ -250,101 +234,37 @@ export const ManageBookPage = () => {
     }
   };
 
-  const handleUpdateBook = async (data: {
-    title: string;
-    description: string;
-    price: number;
-    voiceId: number;
-    categoryIds: number[];
-    authorIds: number[];
-    coverFile?: File | null;
-  }) => {
+  const buildBookForm = (data: BookFormValues) => {
+    const form = new FormData();
+    const bookData = {
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      voice: { id: data.voiceId },
+      categories: data.categoryIds.map((id) => ({ id })),
+      authors: data.authorIds.map((id) => ({ id })),
+    };
+    form.append(
+      "book",
+      new Blob([JSON.stringify(bookData)], { type: "application/json" }),
+    );
+    if (data.pdfFile) form.append("contentFile", data.pdfFile);
+    if (data.coverFile) form.append("bookCover", data.coverFile);
+    return form;
+  };
+
+  // Both handlers let errors propagate so BookFormModal can show them inline
+  const handleCreateBook = async (data: BookFormValues) => {
+    await bookService.createBook(buildBookForm(data));
+    setShowCreateModal(false);
+    await fetchBooks(0);
+  };
+
+  const handleUpdateBook = async (data: BookFormValues) => {
     if (!editingBook) return;
-
-    setIsUpdatingBook(true);
-    try {
-      const form = new FormData();
-      const bookData = {
-        title: data.title,
-        description: data.description,
-        price: data.price,
-        voice: data.voiceId ? { id: data.voiceId } : undefined,
-        categories: data.categoryIds.map((id) => ({ id })),
-        authors: data.authorIds.map((id) => ({ id })),
-      };
-      form.append(
-        "book",
-        new Blob([JSON.stringify(bookData)], { type: "application/json" }),
-      );
-      if (data.coverFile) {
-        form.append("bookCover", data.coverFile);
-      }
-
-      await bookService.updateBook(editingBook.id, form);
-      setEditingBook(null);
-      await fetchBooks(pagination.page);
-    } catch (err) {
-      console.error("Error updating book:", err);
-      alert("Có lỗi xảy ra khi cập nhật thông tin sách.");
-    } finally {
-      setIsUpdatingBook(false);
-    }
-  };
-
-  const handleCreateBook = async () => {
-    if (!formData.title) {
-      alert("Vui lòng nhập tiêu đề sách");
-      return;
-    }
-    if (!pdfFile) {
-      alert("Vui lòng chọn file PDF");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const form = new FormData();
-      const bookData = {
-        title: formData.title,
-        description: formData.description,
-        price: formData.price,
-        voice: formData.voiceId ? { id: formData.voiceId } : undefined,
-        categories: formData.categoryIds.map((id) => ({ id })),
-        authors: formData.authorIds.map((id) => ({ id })),
-      };
-      form.append(
-        "book",
-        new Blob([JSON.stringify(bookData)], { type: "application/json" }),
-      );
-      form.append("pdfFile", pdfFile);
-      if (coverFile) {
-        form.append("bookCover", coverFile);
-      }
-
-      await bookService.createBook(form);
-
-      setShowCreateModal(false);
-      resetForm();
-      setRefreshKey((k) => k + 1);
-    } catch (error) {
-      console.error("Error creating book:", error);
-      alert("Có lỗi xảy ra khi tạo sách");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      price: 0,
-      voiceId: 0,
-      categoryIds: [],
-      authorIds: [],
-    });
-    setPdfFile(null);
-    setCoverFile(null);
+    await bookService.updateBook(editingBook.id, buildBookForm(data));
+    setEditingBook(null);
+    await fetchBooks(pagination.page);
   };
 
   const getStatusBadge = (status: string) => {
@@ -353,91 +273,6 @@ export const ManageBookPage = () => {
       variant: "default" as const,
     };
     return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const renderPagination = () => {
-    const { page, totalPage } = pagination;
-    const pages: (number | string)[] = [];
-
-    if (totalPage <= 7) {
-      for (let i = 0; i < totalPage; i++) pages.push(i);
-    } else {
-      pages.push(0);
-      if (page > 2) pages.push("...");
-      for (
-        let i = Math.max(1, page - 1);
-        i <= Math.min(totalPage - 2, page + 1);
-        i++
-      ) {
-        pages.push(i);
-      }
-      if (page < totalPage - 3) pages.push("...");
-      pages.push(totalPage - 1);
-    }
-
-    return (
-      <div className="flex items-center justify-center gap-2 mt-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handlePageChange(page - 1)}
-          disabled={page === 0}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </Button>
-        {pages.map((p, i) =>
-          typeof p === "number" ? (
-            <button
-              key={i}
-              onClick={() => handlePageChange(p)}
-              className={`w-9 h-9 rounded-md text-sm font-medium transition-colors ${
-                p === page
-                  ? "bg-accent text-white"
-                  : "text-text-secondary hover:bg-bg"
-              }`}
-            >
-              {p + 1}
-            </button>
-          ) : (
-            <span key={i} className="px-2 text-text-muted">
-              {p}
-            </span>
-          ),
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handlePageChange(page + 1)}
-          disabled={page >= totalPage - 1}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </Button>
-      </div>
-    );
   };
 
   return (
@@ -507,10 +342,10 @@ export const ManageBookPage = () => {
                   placeholder="Tất cả trạng thái"
                   searchPlaceholder="Tìm trạng thái..."
                   allLabel="Tất cả trạng thái"
-                  options={[
-                    { value: "PROCESSING", label: "Đang xử lý" },
-                    { value: "PUBLISHED", label: "Đã xuất bản" },
-                  ]}
+                  options={Object.entries(statusConfig).map(([value, c]) => ({
+                    value,
+                    label: c.label,
+                  }))}
                   value={statusFilter}
                   onChange={(val) => setStatusFilter(val ? String(val) : "")}
                 />
@@ -522,21 +357,21 @@ export const ManageBookPage = () => {
               categoryFilter ||
               authorFilter ||
               statusFilter) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchKeyword("");
-                  setCategoryFilter(null);
-                  setAuthorFilter(null);
-                  setStatusFilter("");
-                }}
-                className="h-10 px-3 text-xs font-medium text-text-muted hover:text-error hover:bg-error-light/50 border border-border hover:border-error/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
-                title="Xóa tất cả bộ lọc"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Đặt lại</span>
-              </button>
-            )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchKeyword("");
+                    setCategoryFilter(null);
+                    setAuthorFilter(null);
+                    setStatusFilter("");
+                  }}
+                  className="h-10 px-3 text-xs font-medium text-text-muted hover:text-error hover:bg-error-light/50 border border-border hover:border-error/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
+                  title="Xóa tất cả bộ lọc"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Đặt lại</span>
+                </button>
+              )}
 
             {/* Thêm sách mới: Cùng dòng đẹp mắt */}
             <div className="flex-shrink-0">
@@ -618,7 +453,7 @@ export const ManageBookPage = () => {
                       </div>
                     </td>
                   </tr>
-                ) : filteredBooks.length === 0 ? (
+                ) : books.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-16 text-center">
                       <div className="text-text-secondary">
@@ -643,7 +478,7 @@ export const ManageBookPage = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredBooks.map((book, index) => {
+                  books.map((book, index) => {
                     const startIndex = pagination.page * ITEMS_PER_PAGE;
                     return (
                       <tr
@@ -791,7 +626,7 @@ export const ManageBookPage = () => {
                         {/* Average Rating */}
                         <td className="px-4 py-3">
                           {typeof book.averageRating === "number" &&
-                          book.averageRating > 0 ? (
+                            book.averageRating > 0 ? (
                             <div className="flex items-center gap-1.5 whitespace-nowrap">
                               <Star className="w-4 h-4 fill-amber-400 text-amber-400 flex-shrink-0" />
                               <span className="font-semibold text-text-primary text-sm">
@@ -814,7 +649,7 @@ export const ManageBookPage = () => {
                           <div className="flex items-center">
                             {getStatusBadge(
                               book.status ||
-                                (book.isPublish ? "PUBLISHED" : "PROCESSING"),
+                              (book.isPublish ? "PUBLISHED" : "PROCESSING"),
                             )}
                           </div>
                         </td>
@@ -844,7 +679,7 @@ export const ManageBookPage = () => {
                                   <span>Xem bình luận</span>
                                 </button>
                                 {book.status === "PUBLISHED" ||
-                                book.isPublish ? (
+                                  book.isPublish ? (
                                   <button
                                     type="button"
                                     onClick={() => handleUnpublish(book.id)}
@@ -896,189 +731,37 @@ export const ManageBookPage = () => {
           </div>
 
           {/* Pagination */}
-          {!isLoading && filteredBooks.length > 0 && (
+          {!isLoading && books.length > 0 && (
             <div className="px-4 py-3 border-t border-border">
-              {renderPagination()}
+              <Pagination
+                page={pagination.page}
+                totalPage={pagination.totalPage}
+                onPageChange={handlePageChange}
+              />
             </div>
           )}
         </div>
 
-        {/* Create Modal */}
         {showCreateModal && (
-          <Modal
-            title="Thêm sách mới"
-            onClose={() => {
-              setShowCreateModal(false);
-              resetForm();
-            }}
-            size="lg"
-          >
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Tiêu đề <span className="text-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-                  placeholder="Nhập tiêu đề sách"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Mô tả
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none"
-                  rows={3}
-                  placeholder="Nhập mô tả sách"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1.5">
-                    Giá (VNĐ)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        price: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-                    placeholder="0 = Miễn phí"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1.5">
-                    Giọng đọc
-                  </label>
-                  <select
-                    value={formData.voiceId}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        voiceId: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent bg-surface"
-                  >
-                    <option value={0}>Chọn giọng đọc</option>
-                    {voices.map((voice) => (
-                      <option key={voice.id} value={voice.id}>
-                        {voice.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Danh mục
-                </label>
-                <MultiSelectCombobox
-                  options={categories.map((c) => ({ id: c.id, name: c.name }))}
-                  selectedIds={formData.categoryIds}
-                  onChange={(ids) =>
-                    setFormData({ ...formData, categoryIds: ids })
-                  }
-                  placeholder="Tìm kiếm và chọn danh mục..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Tác giả
-                </label>
-                <MultiSelectCombobox
-                  options={authors.map((a) => ({
-                    id: a.id,
-                    name: a.fullName || `Tác giả #${a.id}`,
-                  }))}
-                  selectedIds={formData.authorIds}
-                  onChange={(ids) =>
-                    setFormData({ ...formData, authorIds: ids })
-                  }
-                  placeholder="Tìm kiếm và chọn tác giả..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  File PDF <span className="text-error">*</span>
-                </label>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-border rounded-md text-sm"
-                />
-                {pdfFile && (
-                  <p className="text-xs text-success mt-1">✓ {pdfFile.name}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5">
-                  Ảnh bìa
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-border rounded-md text-sm"
-                />
-                {coverFile && (
-                  <p className="text-xs text-success mt-1">
-                    ✓ {coverFile.name}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-border sticky bottom-0 bg-surface">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    resetForm();
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button onClick={handleCreateBook} disabled={isSubmitting}>
-                  {isSubmitting ? "Đang tạo..." : "Tạo sách"}
-                </Button>
-              </div>
-            </div>
-          </Modal>
+          <BookFormModal
+            mode="create"
+            categories={categories}
+            authors={authors}
+            voices={voices}
+            onClose={() => setShowCreateModal(false)}
+            onSubmit={handleCreateBook}
+          />
         )}
 
-        {/* Edit Book Modal */}
         {editingBook && (
-          <EditBookModal
-            isOpen={!!editingBook}
-            onClose={() => setEditingBook(null)}
+          <BookFormModal
+            mode="edit"
             book={editingBook}
             categories={categories}
             authors={authors}
             voices={voices}
-            isSubmitting={isUpdatingBook}
-            onSave={handleUpdateBook}
+            onClose={() => setEditingBook(null)}
+            onSubmit={handleUpdateBook}
           />
         )}
 

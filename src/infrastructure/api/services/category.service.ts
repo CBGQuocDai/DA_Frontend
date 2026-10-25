@@ -1,5 +1,4 @@
 import { apiClient } from '../config/apiClient';
-import type { ApiResponse, PaginatedResponse } from '@/src/shared/types';
 import type { Category } from '@/src/shared/types';
 
 export const categoryService = {

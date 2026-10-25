@@ -7,6 +7,7 @@ import { voiceService } from "@/src/infrastructure/api/services";
 import type { Voice } from "@/src/shared/types";
 import { Button, ConfirmDeleteModal } from "@/src/presentation/components/ui";
 import { VoiceModal } from "@/src/presentation/components/admin/VoiceModal";
+import { Pagination } from "@/src/presentation/components/common";
 import {
   Search,
   ChevronUp,
@@ -18,7 +19,6 @@ import {
   Plus,
   Play,
   Pause,
-  RotateCcw,
   Mic,
 } from "lucide-react";
 
@@ -26,14 +26,16 @@ type SortField = "name" | "id";
 type SortDir = "asc" | "desc";
 type FilterAudio = "all" | "has_audio" | "no_audio";
 
+const VOICES_PER_PAGE = 10;
+
 export const ManageVoicePage = () => {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [audioFilter, setAudioFilter] = useState<FilterAudio>("all");
   const [sortField, setSortField] = useState<SortField>("id");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [pageState, setPageState] = useState({ page: 0, filterKey: "" });
   const [isMounted, setIsMounted] = useState(false);
 
   // Unified Create / Edit Modal State
@@ -208,6 +210,15 @@ export const ManageVoicePage = () => {
     return sortDir === "asc" ? sorted : sorted.reverse();
   }, [voices, searchKeyword, audioFilter, sortField, sortDir]);
 
+  // Pagination (client-side). Page resets to the first one whenever the filter/sort changes.
+  const filterKey = `${searchKeyword}|${audioFilter}|${sortField}|${sortDir}`;
+  const totalPage = Math.max(1, Math.ceil(filteredAndSortedVoices.length / VOICES_PER_PAGE));
+  const page = Math.min(pageState.filterKey === filterKey ? pageState.page : 0, totalPage - 1);
+  const pagedVoices = filteredAndSortedVoices.slice(
+    page * VOICES_PER_PAGE,
+    (page + 1) * VOICES_PER_PAGE
+  );
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -269,8 +280,6 @@ export const ManageVoicePage = () => {
     });
   };
 
-  const hasAudioCount = voices.filter((v) => v.exampleAudio).length;
-  const noAudioCount = voices.length - hasAudioCount;
 
   return (
     <AdminLayout>
@@ -397,7 +406,7 @@ export const ManageVoicePage = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredAndSortedVoices.map((voice, index) => {
+                  pagedVoices.map((voice, index) => {
                     const isVoiceActive = playingVoice?.id === voice.id;
                     const isVoicePlaying = isVoiceActive && isPlaying;
 
@@ -410,7 +419,7 @@ export const ManageVoicePage = () => {
                       >
                         {/* STT */}
                         <td className="px-4 py-3.5 text-center text-xs font-mono text-text-muted tabular-nums align-middle">
-                          {index + 1}
+                          {page * VOICES_PER_PAGE + index + 1}
                         </td>
 
                         {/* Tên giọng */}
@@ -488,8 +497,7 @@ export const ManageVoicePage = () => {
                           <button
                             type="button"
                             onClick={(e) => handleToggleMenu(e, voice)}
-                            disabled={actionLoading === voice.id}
-                            className="p-1.5 text-text-muted hover:text-text-primary hover:bg-bg rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            className="p-1.5 text-text-muted hover:text-text-primary hover:bg-bg rounded-lg transition-colors cursor-pointer"
                             aria-label="Mở menu thao tác"
                           >
                             <MoreVertical className="w-4 h-4" />
@@ -502,6 +510,16 @@ export const ManageVoicePage = () => {
               </tbody>
             </table>
           </div>
+
+          {!isLoading && totalPage > 1 && (
+            <div className="flex-shrink-0 px-4 py-3 border-t border-border">
+              <Pagination
+                page={page}
+                totalPage={totalPage}
+                onPageChange={(next) => setPageState({ page: next, filterKey })}
+              />
+            </div>
+          )}
 
           {/* Docked Sticky Bottom Audio Player */}
           {playingVoice && (

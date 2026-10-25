@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/src/presentation/components/ui";
 import type { Chapter } from "@/src/shared/types";
-import { getChapterStatusBadge } from "@/src/presentation/utils/chapterStatus";
-import { Volume2, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 interface ChapterListProps {
   chapters: Chapter[];
@@ -14,11 +13,6 @@ interface ChapterListProps {
   onAddChapter: () => void;
 }
 
-const getWordCount = (text?: string) => {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).filter(Boolean).length;
-};
-
 export const ChapterList: React.FC<ChapterListProps> = ({
   chapters,
   selectedChapterId,
@@ -28,6 +22,16 @@ export const ChapterList: React.FC<ChapterListProps> = ({
   onSelectChapter,
   onAddChapter,
 }) => {
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+
+  // Only show the tooltip when the title is actually truncated
+  const showTooltip = (e: React.MouseEvent<HTMLElement>, text: string) => {
+    const el = e.currentTarget;
+    if (el.scrollWidth <= el.clientWidth) return;
+    const rect = el.getBoundingClientRect();
+    setTooltip({ text, x: rect.left, y: rect.top });
+  };
+
   return (
     <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex items-center justify-between pb-3 border-b border-border gap-2 flex-shrink-0">
@@ -71,9 +75,6 @@ export const ChapterList: React.FC<ChapterListProps> = ({
         ) : (
           filteredChapters.map((chapter) => {
             const isSelected = selectedChapterId === chapter.id;
-            const wordCount = getWordCount(chapter.rawText);
-            const hasAudio =
-              !!chapter.audioUrl || chapter.status === "AUDIO_READY";
 
             return (
               <div
@@ -85,9 +86,9 @@ export const ChapterList: React.FC<ChapterListProps> = ({
                     : "bg-bg/50 border-border/80 hover:bg-bg hover:border-accent/40 text-text-secondary"
                 }`}
               >
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-center gap-2.5">
                   <span
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                       isSelected
                         ? "bg-accent text-white"
                         : "bg-surface text-text-muted border border-border"
@@ -101,6 +102,10 @@ export const ChapterList: React.FC<ChapterListProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
                       <p
+                        onMouseEnter={(e) =>
+                          showTooltip(e, chapter.title || `Chương ${chapter.chapterOrder}`)
+                        }
+                        onMouseLeave={() => setTooltip(null)}
                         className={`text-sm font-semibold truncate ${
                           isSelected ? "text-accent" : "text-text-primary"
                         }`}
@@ -115,6 +120,15 @@ export const ChapterList: React.FC<ChapterListProps> = ({
           })
         )}
       </div>
+
+      {tooltip && (
+        <div
+          style={{ left: tooltip.x, top: tooltip.y - 8 }}
+          className="fixed z-50 max-w-xs -translate-y-full px-2.5 py-1.5 rounded-lg bg-text-primary text-bg text-xs font-medium shadow-lg pointer-events-none"
+        >
+          {tooltip.text}
+        </div>
+      )}
     </div>
   );
 };

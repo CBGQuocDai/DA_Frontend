@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/src/presentation/components/ui';
-import type { Chapter } from '@/src/shared/types';
-import { getChapterStatusBadge } from '@/src/presentation/utils/chapterStatus';
+import type { ChapterWorkspaceProps } from './ChapterWorkspace.types';
+import { getChapterStatusBadge } from '@/src/presentation/utils/admin';
 import {
   BookOpen,
   Pencil,
@@ -17,32 +17,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-
-interface ChapterWorkspaceProps {
-  activeChapter: Chapter | null;
-  sortedChapters: Chapter[];
-  activeChapterIndex: number;
-  isEditingText: boolean;
-  textDraft: string;
-  fontSize: 'sm' | 'base' | 'lg';
-  isSavingText: boolean;
-  isCurrentProcessing: boolean;
-  isCurrentGenerating: boolean;
-  isCurrentUploading: boolean;
-  copyFeedback: boolean;
-  isSidebarOpen?: boolean;
-  onToggleSidebar?: () => void;
-  onEditInfo: () => void;
-  onGenerateVoice: (chapterId: number) => void;
-  onUploadAudio: (chapterId: number) => void;
-  onDeleteChapter: () => void;
-  onSetEditingText: (value: boolean) => void;
-  onTextDraftChange: (value: string) => void;
-  onSaveText: () => void;
-  onCopyText: () => void;
-  onSetFontSize: (size: 'sm' | 'base' | 'lg') => void;
-  onSelectChapter: (chapterId: number) => void;
-}
 
 const resolveAudioUrl = (url?: string) => {
   if (!url) return '';
@@ -108,7 +82,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
           </div>
           <h3 className="text-lg font-bold text-text-primary">Chưa có chương nào được tạo</h3>
           <p className="text-xs text-text-secondary max-w-sm mx-auto">
-            Bắt đầu bằng cách bấm nút "Thêm chương" để thêm chương đầu tiên cho cuốn sách.
+            Bắt đầu bằng cách bấm nút &quot;Thêm chương&quot; để thêm chương đầu tiên cho cuốn sách.
           </p>
         </div>
       </div>
@@ -153,11 +127,6 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                 </button>
               </div>
               <div className="flex items-center gap-3 mt-1 text-xs text-text-muted flex-wrap">
-                <span className="font-medium text-text-primary">
-                  {getWordCount(activeChapter.rawText).toLocaleString()} từ
-                </span>
-                <span>•</span>
-                <span>{activeChapter.rawText?.length.toLocaleString() || 0} ký tự</span>
                 {activeChapter.duration && (
                   <>
                     <span>•</span>
@@ -241,8 +210,8 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
               <div className="flex items-center gap-2 text-xs text-text-muted py-1 italic">
                 <Volume2 className="w-4 h-4 text-text-muted" />
                 <span>
-                  Chương này chưa có file âm thanh. Bấm "gen audio" để AI tạo tự động hoặc
-                  "Upload audio" để tải lên.
+                  Chương này chưa có file âm thanh. Bấm &quot;gen audio&quot; để AI tạo tự động hoặc
+                  &quot;Upload audio&quot; để tải lên.
                 </span>
               </div>
             )}
@@ -256,11 +225,10 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
           <button
             type="button"
             onClick={() => onSetEditingText(false)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              !isEditingText
-                ? 'bg-surface text-accent shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${!isEditingText
+              ? 'bg-surface text-accent shadow-sm'
+              : 'text-text-secondary hover:text-text-primary'
+              }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>Đọc văn bản</span>
@@ -271,11 +239,10 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
               onTextDraftChange(activeChapter.rawText || '');
               onSetEditingText(true);
             }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-              isEditingText
-                ? 'bg-surface text-accent shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${isEditingText
+              ? 'bg-surface text-accent shadow-sm'
+              : 'text-text-secondary hover:text-text-primary'
+              }`}
           >
             <Pencil className="w-3.5 h-3.5" />
             <span>Chỉnh sửa text</span>
@@ -289,9 +256,8 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetFontSize('sm')}
-                  className={`px-2 py-1 transition-colors ${
-                    fontSize === 'sm' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
-                  }`}
+                  className={`px-2 py-1 transition-colors ${fontSize === 'sm' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
+                    }`}
                   title="Cỡ chữ nhỏ"
                 >
                   A-
@@ -299,9 +265,8 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetFontSize('base')}
-                  className={`px-2.5 py-1 transition-colors ${
-                    fontSize === 'base' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
-                  }`}
+                  className={`px-2.5 py-1 transition-colors ${fontSize === 'base' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
+                    }`}
                   title="Cỡ chữ chuẩn"
                 >
                   A
@@ -309,9 +274,8 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetFontSize('lg')}
-                  className={`px-2 py-1 transition-colors ${
-                    fontSize === 'lg' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
-                  }`}
+                  className={`px-2 py-1 transition-colors ${fontSize === 'lg' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
+                    }`}
                   title="Cỡ chữ lớn"
                 >
                   A+
@@ -380,29 +344,17 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
               className="w-full flex-1 min-h-[320px] p-4 bg-surface border border-accent/40 rounded-xl text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent/20 font-sans shadow-sm"
               autoFocus
             />
-            <div className="flex justify-between items-center text-xs text-text-muted pt-1 flex-shrink-0">
-              <span>Mẹo: Bạn có thể dán nội dung hàng nghìn từ từ file Word hoặc PDF.</span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" onClick={() => onSetEditingText(false)}>
-                  Hủy
-                </Button>
-                <Button size="sm" variant="primary" onClick={onSaveText} disabled={isSavingText}>
-                  {isSavingText ? 'Đang lưu...' : 'Lưu nội dung'}
-                </Button>
-              </div>
-            </div>
           </div>
         ) : (
           <div className="w-full">
             {activeChapter.rawText ? (
               <article
-                className={`w-full text-text-primary space-y-4 font-sans ${
-                  fontSize === 'sm'
-                    ? 'text-sm leading-7'
-                    : fontSize === 'lg'
+                className={`w-full text-text-primary space-y-4 font-sans ${fontSize === 'sm'
+                  ? 'text-sm leading-7'
+                  : fontSize === 'lg'
                     ? 'text-lg leading-9'
                     : 'text-base leading-8'
-                }`}
+                  }`}
               >
                 {activeChapter.rawText
                   .split(/\n+/)
@@ -422,7 +374,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                   Chương này chưa có nội dung văn bản
                 </p>
                 <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                  Bấm "Chỉnh sửa text" ở trên để nhập hoặc dán nội dung chữ cho chương này.
+                  Bấm &quot;Chỉnh sửa text&quot; ở trên để nhập hoặc dán nội dung chữ cho chương này.
                 </p>
                 <Button
                   size="sm"
@@ -446,11 +398,10 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
           type="button"
           onClick={() => prevChapter && onSelectChapter(prevChapter.id)}
           disabled={!prevChapter}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
-            prevChapter
-              ? 'hover:bg-bg hover:text-text-primary text-text-secondary border border-border bg-surface'
-              : 'opacity-40 cursor-not-allowed border border-transparent'
-          }`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${prevChapter
+            ? 'hover:bg-bg hover:text-text-primary text-text-secondary border border-border bg-surface'
+            : 'opacity-40 cursor-not-allowed border border-transparent'
+            }`}
         >
           <ChevronLeft className="w-4 h-4" />
           <span>{prevChapter ? `Chương ${prevChapter.chapterOrder}` : 'Chương trước'}</span>
@@ -464,11 +415,10 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
           type="button"
           onClick={() => nextChapter && onSelectChapter(nextChapter.id)}
           disabled={!nextChapter}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
-            nextChapter
-              ? 'hover:bg-bg hover:text-text-primary text-text-secondary border border-border bg-surface'
-              : 'opacity-40 cursor-not-allowed border border-transparent'
-          }`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${nextChapter
+            ? 'hover:bg-bg hover:text-text-primary text-text-secondary border border-border bg-surface'
+            : 'opacity-40 cursor-not-allowed border border-transparent'
+            }`}
         >
           <span>{nextChapter ? `Chương ${nextChapter.chapterOrder}` : 'Chương sau'}</span>
           <ChevronRight className="w-4 h-4" />

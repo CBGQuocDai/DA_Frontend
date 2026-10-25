@@ -23,6 +23,8 @@ export const API_ENDPOINTS = {
   CHAPTERS: {
     LIST: (bookId: string | number) => `/books/${bookId}/chapters`,
     CREATE: (bookId: string | number) => `/books/${bookId}/chapters`,
+    UPDATE: (bookId: string | number, chapterId: string | number) =>
+      `/books/${bookId}/chapters/${chapterId}`,
     DELETE: (bookId: string | number, chapterId: string | number) =>
       `/books/${bookId}/chapters/${chapterId}`,
     GENERATE_AUDIO: (bookId: string | number, chapterId: string | number) =>
