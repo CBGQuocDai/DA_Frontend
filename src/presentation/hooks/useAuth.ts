@@ -1,15 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { authService } from '@/src/infrastructure/api/services';
-import { User } from '@/src/shared/types';
+import { useState, useEffect, useCallback } from "react";
+import { authService } from "@/src/infrastructure/api/services";
+import { User } from "@/src/shared/types";
 
 interface UseAuthReturn {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    role?: "ADMIN" | "CUSTOMER",
+  ) => Promise<User>;
+  register: (
+    email: string,
+    password: string,
+    fullName: string,
+    role?: "ADMIN" | "CUSTOMER",
+  ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -43,13 +52,26 @@ export const useAuth = (): UseAuthReturn => {
     initAuth();
   }, [checkAuth]);
 
-  const login = async (email: string, password: string) => {
-    const response = await authService.login({ email, password });
+  const login = async (
+    email: string,
+    password: string,
+    role?: "ADMIN" | "CUSTOMER",
+  ) => {
+    const response = await authService.login({ email, password }, role);
     setUser(response.user);
+    return response.user;
   };
 
-  const register = async (email: string, password: string, fullName: string) => {
-    const response = await authService.register({ email, password, fullName });
+  const register = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role?: "ADMIN" | "CUSTOMER",
+  ) => {
+    const response = await authService.register(
+      { email, password, fullName },
+      role,
+    );
     setUser(response.user);
   };
 

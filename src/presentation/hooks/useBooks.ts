@@ -15,6 +15,7 @@ interface UseBooksReturn {
     totalPages: number;
   };
   loadBooks: (params?: SearchParams) => Promise<void>;
+  goToPage: (page: number) => Promise<void>;
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -25,32 +26,47 @@ export const useBooks = (initialParams?: SearchParams): UseBooksReturn => {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: initialParams?.pageSize || 8,
     total: 0,
     totalPages: 0,
   });
   const [currentParams, setCurrentParams] = useState<SearchParams>(initialParams || {});
 
-  const loadBooks = useCallback(async (params?: SearchParams) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const mergedParams = { ...currentParams, ...params, page: 1 };
-      setCurrentParams(mergedParams);
-      const response = await bookService.getBooks(mergedParams);
-      setBooks(response.data);
-      setPagination({
-        page: response.page,
-        pageSize: response.pageSize,
-        total: response.total,
-        totalPages: response.totalPages,
-      });
-    } catch (err) {
-      setError('Không thể tải danh sách sách');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentParams]);
+  const loadBooks = useCallback(
+    async (params?: SearchParams) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const targetPage = params?.page ?? currentParams.page ?? 1;
+        const mergedParams = {
+          ...currentParams,
+          ...params,
+          page: targetPage,
+        };
+        setCurrentParams(mergedParams);
+        const response = await bookService.getBooks(mergedParams);
+        setBooks(response.data);
+        setPagination({
+          page: response.page,
+          pageSize: response.pageSize,
+          total: response.total,
+          totalPages: response.totalPages,
+        });
+      } catch (err: any) {
+        setError(err?.message || 'Không thể tải danh sách sách');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentParams]
+  );
+
+  const goToPage = useCallback(
+    async (pageNumber: number) => {
+      await loadBooks({ page: pageNumber });
+    },
+    [loadBooks]
+  );
 
   const loadMore = useCallback(async () => {
     if (pagination.page >= pagination.totalPages || isLoading) return;
@@ -87,6 +103,7 @@ export const useBooks = (initialParams?: SearchParams): UseBooksReturn => {
     error,
     pagination,
     loadBooks,
+    goToPage,
     loadMore,
     refresh,
   };
