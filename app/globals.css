@@ -71,3 +71,10 @@
     background: #94A3B8;
   }
 }
+
+/* Customer pages use a rose accent; shared components (Pagination, Button...) read these tokens */
+.theme-customer {
+  --color-accent: #E11D48;
+  --color-accent-hover: #BE123C;
+  --color-accent-light: #FFF1F2;
+}

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button } from '@/src/presentation/components/ui';
-import { Loader2 } from 'lucide-react';
+import { Modal, Button, Spinner } from '@/src/presentation/components/common';
 
 interface AddChapterModalProps {
   onClose: () => void;
@@ -15,7 +14,7 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
 }) => {
   const [form, setForm] = useState({
     title: '',
-    chapterOrder: 1,
+    chapterOrder: defaultChapterOrder,
     rawText: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +29,6 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
     setIsSubmitting(true);
     try {
       await onSubmit(form.title.trim(), form.chapterOrder, form.rawText);
-      setForm({ title: '', chapterOrder: defaultChapterOrder + 1, rawText: '' });
       onClose();
     } catch {
       // Error handled by parent
@@ -39,15 +37,8 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setForm({ title: '', chapterOrder: defaultChapterOrder + 1, rawText: '' });
-      onClose();
-    }
-  };
-
   return (
-    <Modal title="Thêm chương mới" onClose={() => handleOpenChange(false)} size="lg">
+    <Modal title="Thêm chương mới" onClose={onClose} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-text-primary mb-1.5">
@@ -94,13 +85,13 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-3 border-t border-border">
-          <Button type="button" variant="secondary" onClick={() => handleOpenChange(false)}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Hủy
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Spinner />
                 <span>Đang tạo...</span>
               </>
             ) : (
@@ -112,5 +103,3 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
     </Modal>
   );
 };
-
-export default AddChapterModal;

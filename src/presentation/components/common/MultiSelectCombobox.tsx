@@ -211,5 +211,3 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     </div>
   );
 };
-
-export default MultiSelectCombobox;

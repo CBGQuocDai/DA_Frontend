@@ -1,14 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  bookService,
-  categoryService,
-  authorService,
-  voiceService,
-} from '@/src/infrastructure/api/services';
-import type { Book, Category, Author, Voice } from '@/src/shared/types';
-import type { BookFormValues } from '@/src/presentation/components/admin/BookFormModal';
+import { bookService } from '@/src/infrastructure/api/services';
+import type { Book, BookStatus } from '@/src/shared/types';
+import { toBookFormData, type BookFormValues } from '@/src/presentation/components/admin/book';
+import { useBookFormOptions } from './useBookFormOptions';
 
 interface Options {
   book: Book | null;
@@ -19,18 +15,20 @@ interface Options {
 /** Publish / unpublish and the "edit book" modal flow. */
 export const useBookActions = ({ book, setBook, reload }: Options) => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [authors, setAuthors] = useState<Author[]>([]);
-  const [voices, setVoices] = useState<Voice[]>([]);
+  const options = useBookFormOptions();
 
-  const runAction = async (key: string, task: () => Promise<unknown>, errorMessage: string) => {
+  const changeStatus = async (
+    key: 'publish' | 'unpublish',
+    task: (bookId: number) => Promise<void>,
+    status: BookStatus,
+    errorMessage: string
+  ) => {
     if (!book) return;
     setActionLoading(key);
     try {
-      await task();
-      await reload();
+      await task(book.id);
+      setBook({ ...book, status, isPublish: status === 'PUBLISHED' });
     } catch (error) {
       console.error(`Error (${key}) book:`, error);
       alert(errorMessage);
@@ -40,51 +38,22 @@ export const useBookActions = ({ book, setBook, reload }: Options) => {
   };
 
   const publish = () =>
-    runAction(
+    changeStatus(
       'publish',
-      () => bookService.publishBook(book!.id),
+      bookService.publishBook,
+      'PUBLISHED',
       'Không thể xuất bản sách. Vui lòng kiểm tra: Đã chọn giọng đọc, có chapter, chapter đã có audio.'
     );
 
   const unpublish = () =>
-    runAction('unpublish', () => bookService.unpublishBook(book!.id), 'Có lỗi xảy ra khi gỡ sách.');
-
-  const openEdit = async () => {
-    if (!book) return;
-    try {
-      const [cats, auths, voiceRes] = await Promise.all([
-        categoryService.getCategories(),
-        authorService.getAuthors(),
-        voiceService.getVoices(),
-      ]);
-      setCategories(cats ?? []);
-      setAuthors(auths ?? []);
-      setVoices((voiceRes as any)?.content ?? (Array.isArray(voiceRes) ? voiceRes : []));
-    } catch (err) {
-      console.error('Error fetching options for book edit:', err);
-    }
-    setIsEditOpen(true);
-  };
+    changeStatus('unpublish', bookService.unpublishBook, 'UNPUBLISHED', 'Có lỗi xảy ra khi gỡ sách.');
 
   // Errors propagate to BookFormModal, which shows them inline
   const saveEdit = async (data: BookFormValues) => {
     if (!book) return;
-
-    const form = new FormData();
-    const payload = {
-      title: data.title,
-      description: data.description,
-      price: data.price,
-      voice: { id: data.voiceId },
-      categories: data.categoryIds.map((id) => ({ id })),
-      authors: data.authorIds.map((id) => ({ id })),
-    };
-    form.append('book', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    if (data.coverFile) form.append('bookCover', data.coverFile);
-
-    const updated = await bookService.updateBook(book.id, form);
-    if (updated) setBook(updated);
+    await bookService.updateBook(book.id, toBookFormData(data));
     setIsEditOpen(false);
+    // Reload instead of using the response so the cover goes through the same lookup as loadData
     await reload();
   };
 
@@ -94,10 +63,8 @@ export const useBookActions = ({ book, setBook, reload }: Options) => {
     unpublish,
     edit: {
       isOpen: isEditOpen,
-      categories,
-      authors,
-      voices,
-      open: openEdit,
+      ...options,
+      open: () => setIsEditOpen(true),
       close: () => setIsEditOpen(false),
       save: saveEdit,
     },

@@ -26,20 +26,16 @@ export const useChapterActions = ({
 }: Options) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [generatingChapterId, setGeneratingChapterId] = useState<number | null>(null);
   const [uploadingChapterId, setUploadingChapterId] = useState<number | null>(null);
-
-  const refreshChapters = async () => {
-    const refreshed = await chapterService.getChapters(bookId);
-    setChapters(refreshed ?? []);
-    return refreshed;
-  };
 
   const createChapter = async (title: string, chapterOrder: number, rawText: string) => {
     const created = await chapterService.createChapter(bookId, { title, chapterOrder, rawText });
 
     if (created && created.id) {
-      await refreshChapters();
+      setChapters((prev) => [...prev, created]);
       setSelectedChapterId(created.id);
       onChapterCreated?.();
     } else {
@@ -49,18 +45,11 @@ export const useChapterActions = ({
 
   const handleEditSuccess = (updated: Chapter) => {
     setChapters((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-    chapterService.getChapters(bookId).then((refreshed) => {
-      if (refreshed) setChapters(refreshed);
-    });
   };
 
   const deleteActiveChapter = async () => {
     if (!activeChapter) return;
-    const confirmed = window.confirm(
-      `Bạn có chắc chắn muốn xóa "${activeChapter.title || `Chương ${activeChapter.chapterOrder}`}"? Hành động này không thể hoàn tác.`
-    );
-    if (!confirmed) return;
-
+    setIsDeleting(true);
     try {
       await chapterService.deleteChapter(bookId, activeChapter.id);
       const remaining = chapters.filter((c) => c.id !== activeChapter.id);
@@ -69,6 +58,9 @@ export const useChapterActions = ({
     } catch (error) {
       console.error('Error deleting chapter:', error);
       alert('Có lỗi xảy ra khi xóa chương này.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -126,9 +118,15 @@ export const useChapterActions = ({
       open: () => activeChapter && setShowEditModal(true),
       close: () => setShowEditModal(false),
     },
+    deleteModal: {
+      isOpen: showDeleteModal,
+      isDeleting,
+      open: () => activeChapter && setShowDeleteModal(true),
+      close: () => setShowDeleteModal(false),
+      confirm: deleteActiveChapter,
+    },
     createChapter,
     handleEditSuccess,
-    deleteActiveChapter,
     generateVoice,
     triggerUpload,
   };

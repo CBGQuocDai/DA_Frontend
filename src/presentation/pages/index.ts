@@ -4,3 +4,8 @@ export { BookDetail } from './admin/bookDetail/BookDetail';
 export { ManageVoicePage } from './admin/manageVoice/ManageVoicePage';
 export { ViewStatisticPage } from './admin/viewStatistic/ViewStatisticPage';
 export { CustomerHomePage } from './customer/home/HomePage';
+export { CustomerStorePage } from './customer/store/StorePage';
+export { CustomerBookDetailPage } from './customer/bookDetail/BookDetailPage';
+export { CustomerProfilePage } from './customer/profile/ProfilePage';
+export { CustomerLoginPage } from './customer/auth/CustomerLoginPage';
+export { CustomerRegisterPage } from './customer/auth/CustomerRegisterPage';

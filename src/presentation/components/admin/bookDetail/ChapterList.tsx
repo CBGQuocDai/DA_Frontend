@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "@/src/presentation/components/ui";
+import { Button } from "@/src/presentation/components/common";
 import type { Chapter } from "@/src/shared/types";
 import { Plus, Search } from "lucide-react";
 
@@ -94,9 +94,7 @@ export const ChapterList: React.FC<ChapterListProps> = ({
                         : "bg-surface text-text-muted border border-border"
                     }`}
                   >
-                    {chapter.chapterOrder < 10
-                      ? `0${chapter.chapterOrder}`
-                      : chapter.chapterOrder}
+                    {String(chapter.chapterOrder).padStart(2, "0")}
                   </span>
 
                   <div className="min-w-0 flex-1">
@@ -132,5 +130,3 @@ export const ChapterList: React.FC<ChapterListProps> = ({
     </div>
   );
 };
-
-export default ChapterList;

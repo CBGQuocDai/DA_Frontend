@@ -14,9 +14,7 @@ export const useBookDetailData = (bookId: number) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(
-    async (isInitial = false) => {
-      if (isInitial) setIsLoading(true);
-
+    async () => {
       try {
         const [chaptersRes, bookRes] = await Promise.allSettled([
           chapterService.getChapters(bookId),
@@ -34,9 +32,8 @@ export const useBookDetailData = (bookId: number) => {
 
         let bookData: Book | null = bookRes.status === 'fulfilled' ? bookRes.value : null;
 
-        if (!bookData && chaptersData.length > 0 && (chaptersData[0] as any).book) {
-          bookData = (chaptersData[0] as any).book as Book;
-        }
+        // Fall back to the book embedded in the chapter payload when the detail request failed
+        bookData ??= (chaptersData[0] as (Chapter & { book?: Book }) | undefined)?.book ?? null;
 
         if (bookData && (!bookData.coverImage || !bookData.coverImage.startsWith('http'))) {
           try {
@@ -61,7 +58,7 @@ export const useBookDetailData = (bookId: number) => {
   );
 
   useEffect(() => {
-    loadData(true);
+    loadData();
   }, [loadData]);
 
   const hasProcessing = chapters.some((c) => c.status === 'PROCESSING_AUDIO');
@@ -69,6 +66,8 @@ export const useBookDetailData = (bookId: number) => {
     if (!hasProcessing) return;
 
     const interval = setInterval(async () => {
+      // No need to poll while the tab is in the background
+      if (document.hidden) return;
       try {
         const updated = await chapterService.getChapters(bookId);
         setChapters(updated ?? []);

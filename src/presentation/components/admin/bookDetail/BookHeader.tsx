@@ -1,8 +1,15 @@
 import React from "react";
-import { Button, Badge } from "@/src/presentation/components/ui";
+import { Button } from "@/src/presentation/components/common";
+import { getBookStatusBadge } from "@/src/presentation/utils/admin";
 import type { Book, Chapter } from "@/src/shared/types";
 import {
-  BookOpen,
+  formatBookPrice,
+  getBookAuthorNames,
+  getBookCategories,
+  isBookPublished,
+} from "@/src/shared/utils";
+import { BookThumbnail } from "../book";
+import {
   Pencil,
   Eye,
   EyeOff,
@@ -27,61 +34,41 @@ export const BookHeader: React.FC<BookHeaderProps> = ({
   onPublish,
   onUnpublish,
 }) => {
-  const bookStatusConfig: Record<
-    string,
-    {
-      label: string;
-      variant: "default" | "primary" | "success" | "warning" | "error";
-    }
-  > = {
-    PROCESSING: { label: "Đang xử lý", variant: "warning" },
-    PUBLISHED: { label: "Đã xuất bản", variant: "success" },
-  };
-
-  const bookStatus = bookStatusConfig[book.status] || {
-    label: book.status,
-    variant: "default" as const,
-  };
+  const authorNames = getBookAuthorNames(book, '');
+  const categories = getBookCategories(book);
+  const published = isBookPublished(book);
 
   return (
     <div className="bg-surface rounded-xl sm:rounded-2xl border border-border p-3.5 sm:p-4 shadow-sm flex-shrink-0">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3.5">
         <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
-          <div className="w-12 h-16 sm:w-14 sm:h-20 bg-bg border border-border rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
-            {book.coverImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={book.coverImage}
-                alt={book.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <BookOpen className="w-6 h-6 text-text-muted" />
-            )}
-          </div>
+          <BookThumbnail
+            title={book.title}
+            coverImage={book.coverImage}
+            className="w-12 h-16 sm:w-14 sm:h-20 rounded-lg sm:rounded-xl shadow-sm"
+            iconClassName="w-6 h-6"
+          />
 
           <div className="min-w-0 space-y-1.5 flex-1">
             <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-lg sm:text-xl font-bold text-text-primary tracking-tight">
                 {book.title || "Chưa có tiêu đề"}
               </h1>
-              <Badge variant={bookStatus.variant}>{bookStatus.label}</Badge>
+              {getBookStatusBadge(book)}
             </div>
 
             <div className="flex items-center gap-3 text-xs text-text-secondary flex-wrap">
-              {book.bookAuthors && book.bookAuthors.length > 0 && (
-                <span className="font-medium text-text-primary flex items-center gap-1">
-                  {book.bookAuthors.map((ba) => ba.author.fullName).join(", ")}
-                </span>
+              {authorNames && (
+                <span className="font-medium text-text-primary flex items-center gap-1">{authorNames}</span>
               )}
-              {book.bookCategories && book.bookCategories.length > 0 && (
+              {categories.length > 0 && (
                 <div className="flex items-center gap-1 flex-wrap">
-                  {book.bookCategories.map((bc) => (
+                  {categories.map((category) => (
                     <span
-                      key={bc.id}
+                      key={category.id}
                       className="px-2 py-0.5 bg-bg border border-border rounded-md text-[11px] font-medium text-text-secondary"
                     >
-                      {bc.category.name}
+                      {category.name}
                     </span>
                   ))}
                 </div>
@@ -90,9 +77,7 @@ export const BookHeader: React.FC<BookHeaderProps> = ({
 
             <div className="flex items-center gap-3 text-xs text-text-secondary flex-wrap pt-0.5">
               <span className="font-semibold text-accent text-sm">
-                {book.price
-                  ? `${Number(book.price).toLocaleString()}đ`
-                  : "Miễn phí"}
+                {formatBookPrice(book)}
               </span>
               <span>•</span>
               <span>{chapters.length} chương</span>
@@ -129,19 +114,18 @@ export const BookHeader: React.FC<BookHeaderProps> = ({
             variant="secondary"
             size="sm"
             onClick={onOpenEditBook}
-            className="text-xs"
             title="Chỉnh sửa thông tin sách"
           >
             <Pencil className="w-3.5 h-3.5" />
             <span>Sửa sách</span>
           </Button>
-          {book.isPublish ? (
+          {published ? (
             <Button
               variant="ghost"
               size="sm"
               onClick={onUnpublish}
               disabled={actionLoading === "unpublish"}
-              className="text-xs border border-border"
+              className="border border-border"
             >
               <EyeOff className="w-3.5 h-3.5" />
               <span>
@@ -154,7 +138,7 @@ export const BookHeader: React.FC<BookHeaderProps> = ({
               size="sm"
               onClick={onPublish}
               disabled={actionLoading === "publish"}
-              className="text-xs shadow-sm"
+              className="shadow-sm"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>
@@ -167,5 +151,3 @@ export const BookHeader: React.FC<BookHeaderProps> = ({
     </div>
   );
 };
-
-export default BookHeader;

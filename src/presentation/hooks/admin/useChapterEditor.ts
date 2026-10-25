@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
+import { useCopyToClipboard } from '../common';
 
 export type FontSize = 'sm' | 'base' | 'lg';
 
@@ -18,16 +19,15 @@ export const useChapterEditor = ({ bookId, activeChapter, setChapters }: Options
   const [textDraft, setTextDraft] = useState('');
   const [isSavingText, setIsSavingText] = useState(false);
   const [fontSize, setFontSize] = useState<FontSize>('base');
-  const [copyFeedback, setCopyFeedback] = useState(false);
+  const { copiedKey, copy } = useCopyToClipboard();
 
   // Reset the draft whenever a different chapter becomes active
-  useEffect(() => {
-    if (activeChapter) {
-      setTextDraft(activeChapter.rawText || '');
-      setIsEditingText(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeChapter?.id]);
+  const [draftChapterId, setDraftChapterId] = useState<number | undefined>(undefined);
+  if (activeChapter && activeChapter.id !== draftChapterId) {
+    setDraftChapterId(activeChapter.id);
+    setTextDraft(activeChapter.rawText || '');
+    setIsEditingText(false);
+  }
 
   const saveText = async () => {
     if (!activeChapter) return;
@@ -48,9 +48,7 @@ export const useChapterEditor = ({ bookId, activeChapter, setChapters }: Options
 
   const copyText = () => {
     if (!activeChapter?.rawText) return;
-    navigator.clipboard.writeText(activeChapter.rawText);
-    setCopyFeedback(true);
-    setTimeout(() => setCopyFeedback(false), 2000);
+    copy(activeChapter.rawText, 'chapter-text');
   };
 
   return {
@@ -61,7 +59,7 @@ export const useChapterEditor = ({ bookId, activeChapter, setChapters }: Options
     isSavingText,
     fontSize,
     setFontSize,
-    copyFeedback,
+    copyFeedback: copiedKey === 'chapter-text',
     saveText,
     copyText,
   };

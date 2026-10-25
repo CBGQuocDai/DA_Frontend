@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_BASE_URL } from '@/src/shared/constants';
 import { setupInterceptors } from './interceptor.config';
 
 class ApiClient {
@@ -7,7 +8,7 @@ class ApiClient {
 
   private constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api',
+      baseURL: API_BASE_URL,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -29,4 +30,7 @@ class ApiClient {
 }
 
 export const apiClient = ApiClient.getInstance().getClient();
-export default apiClient;
+
+/** Most endpoints wrap the payload as `{ code, message, data }`; a few return it bare. */
+export const unwrap = <T>({ data: body }: { data: unknown }): T =>
+  ((body as { data?: T } | undefined)?.data ?? body) as T;

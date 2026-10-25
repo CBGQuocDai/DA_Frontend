@@ -1,11 +1,8 @@
-import { apiClient } from '../config/apiClient';
+import { apiClient, unwrap } from '../config/apiClient';
+import { API_ENDPOINTS } from '@/src/shared/constants';
 import type { Author } from '@/src/shared/types';
 
 export const authorService = {
-  getAuthors: async (): Promise<Author[]> => {
-    const response = await apiClient.get<any>('/authors');
-    return response.data?.data ?? response.data ?? [];
-  },
+  getAuthors: async (): Promise<Author[]> =>
+    unwrap<Author[]>(await apiClient.get(API_ENDPOINTS.AUTHORS)) ?? [],
 };
-
-export default authorService;

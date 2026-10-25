@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/src/presentation/components/ui';
+import { Button } from './Button';
 
 export interface PaginationProps {
   /** Zero-based current page */

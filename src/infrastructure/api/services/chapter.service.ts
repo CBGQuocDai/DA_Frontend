@@ -1,7 +1,6 @@
-import { apiClient } from '../config/apiClient';
+import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
 import type { Chapter } from '@/src/shared/types';
-
 
 /** Partial update: only the provided fields are changed. */
 export interface ChapterUpdatePayload {
@@ -10,23 +9,13 @@ export interface ChapterUpdatePayload {
 }
 
 export const chapterService = {
-  getChapters: async (bookId: number): Promise<Chapter[]> => {
-    const response = await apiClient.get<any>(
-      API_ENDPOINTS.CHAPTERS.LIST(bookId)
-    );
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    return response.data?.data ?? [];
-  },
+  getChapters: async (bookId: number): Promise<Chapter[]> =>
+    unwrap<Chapter[]>(await apiClient.get(API_ENDPOINTS.CHAPTERS.LIST(bookId))) ?? [],
 
-  createChapter: async (bookId: number, data: { title: string; rawText?: string; chapterOrder?: number }): Promise<Chapter> => {
-    const response = await apiClient.post<any>(
-      API_ENDPOINTS.CHAPTERS.CREATE(bookId),
-      data
-    );
-    return response.data?.data ?? response.data;
-  },
+  createChapter: async (
+    bookId: number,
+    data: { title: string; rawText?: string; chapterOrder?: number }
+  ): Promise<Chapter> => unwrap(await apiClient.post(API_ENDPOINTS.CHAPTERS.CREATE(bookId), data)),
 
   updateChapter: async (bookId: number, chapterId: number, data: ChapterUpdatePayload): Promise<void> => {
     await apiClient.patch(API_ENDPOINTS.CHAPTERS.UPDATE(bookId, chapterId), data);
@@ -36,12 +25,6 @@ export const chapterService = {
     await apiClient.delete(API_ENDPOINTS.CHAPTERS.DELETE(bookId, chapterId));
   },
 
-  generateAudio: async (bookId: number, chapterId: number): Promise<Chapter> => {
-    const response = await apiClient.post<any>(
-      API_ENDPOINTS.CHAPTERS.GENERATE_AUDIO(bookId, chapterId)
-    );
-    return response.data?.data ?? response.data;
-  },
+  generateAudio: async (bookId: number, chapterId: number): Promise<Chapter> =>
+    unwrap(await apiClient.post(API_ENDPOINTS.CHAPTERS.GENERATE_AUDIO(bookId, chapterId))),
 };
-
-export default chapterService;

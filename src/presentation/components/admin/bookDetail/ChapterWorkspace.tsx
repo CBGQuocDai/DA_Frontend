@@ -1,7 +1,8 @@
-import React from 'react';
-import { Button } from '@/src/presentation/components/ui';
+import React, { useMemo } from 'react';
+import { Button, Spinner } from '@/src/presentation/components/common';
 import type { ChapterWorkspaceProps } from './ChapterWorkspace.types';
 import { getChapterStatusBadge } from '@/src/presentation/utils/admin';
+import { resolveMediaUrl } from '@/src/shared/utils';
 import {
   BookOpen,
   Pencil,
@@ -10,7 +11,6 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   Volume2,
   Copy,
   Check,
@@ -18,20 +18,22 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 
-const resolveAudioUrl = (url?: string) => {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const backendBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api').replace(
-    /\/api\/?$/,
-    ''
-  );
-  return `${backendBase}${url.startsWith('/') ? '' : '/'}${url}`;
-};
-
 const getWordCount = (text?: string) => {
   if (!text) return 0;
   return text.trim().split(/\s+/).filter(Boolean).length;
 };
+
+const FONT_SIZE_CLASSES = {
+  sm: 'text-sm leading-7',
+  base: 'text-base leading-8',
+  lg: 'text-lg leading-9',
+} as const;
+
+const splitParagraphs = (text?: string) =>
+  (text ?? '')
+    .split(/\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 
 const formatDuration = (seconds?: number | null) => {
   if (!seconds && seconds !== 0) return null;
@@ -67,6 +69,8 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
   onSetFontSize,
   onSelectChapter,
 }) => {
+  const paragraphs = useMemo(() => splitParagraphs(activeChapter?.rawText), [activeChapter?.rawText]);
+  const wordCount = useMemo(() => getWordCount(textDraft), [textDraft]);
   const prevChapter = activeChapterIndex > 0 ? sortedChapters[activeChapterIndex - 1] : null;
   const nextChapter =
     activeChapterIndex >= 0 && activeChapterIndex < sortedChapters.length - 1
@@ -150,7 +154,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
             >
               {isCurrentGenerating || isCurrentProcessing ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Spinner className="w-3.5 h-3.5" />
                   <span>{isCurrentGenerating ? 'Đang gửi...' : 'Đang tạo audio...'}</span>
                 </>
               ) : (
@@ -166,7 +170,6 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
               size="sm"
               onClick={() => onUploadAudio(activeChapter.id)}
               disabled={isCurrentUploading || isCurrentGenerating}
-              className="text-xs"
               title="Tải lên file âm thanh cho chương này"
             >
               <Upload className="w-3.5 h-3.5" />
@@ -201,7 +204,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                 <audio
                   key={activeChapter.id}
                   controls
-                  src={resolveAudioUrl(activeChapter.audioUrl)}
+                  src={resolveMediaUrl(activeChapter.audioUrl)}
                   className="w-full h-9 rounded"
                   preload="metadata"
                 />
@@ -281,7 +284,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                   A+
                 </button>
               </div>
-              <Button type="button" variant="secondary" size="sm" onClick={onCopyText} className="text-xs">
+              <Button type="button" variant="secondary" size="sm" onClick={onCopyText}>
                 {copyFeedback ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-success" />
@@ -305,14 +308,13 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
                   onTextDraftChange(activeChapter.rawText || '');
                   onSetEditingText(false);
                 }}
-                className="text-xs"
               >
                 Hủy bỏ
               </Button>
               <Button type="button" variant="primary" size="sm" onClick={onSaveText} disabled={isSavingText} className="text-xs shadow-sm">
                 {isSavingText ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Spinner className="w-3.5 h-3.5" />
                     <span>Đang lưu...</span>
                   </>
                 ) : (
@@ -334,7 +336,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
             <div className="flex items-center justify-between text-xs text-text-muted flex-shrink-0">
               <span>Đang chỉnh sửa nội dung văn bản</span>
               <span>
-                {getWordCount(textDraft).toLocaleString()} từ • {textDraft.length.toLocaleString()} ký tự
+                {wordCount.toLocaleString()} từ • {textDraft.length.toLocaleString()} ký tự
               </span>
             </div>
             <textarea
@@ -349,21 +351,13 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
           <div className="w-full">
             {activeChapter.rawText ? (
               <article
-                className={`w-full text-text-primary space-y-4 font-sans ${fontSize === 'sm'
-                  ? 'text-sm leading-7'
-                  : fontSize === 'lg'
-                    ? 'text-lg leading-9'
-                    : 'text-base leading-8'
-                  }`}
+                className={`w-full text-text-primary space-y-4 font-sans ${FONT_SIZE_CLASSES[fontSize]}`}
               >
-                {activeChapter.rawText
-                  .split(/\n+/)
-                  .filter((para) => para.trim().length > 0)
-                  .map((paragraph, idx) => (
-                    <p key={idx} className="text-justify indent-6">
-                      {paragraph.trim()}
-                    </p>
-                  ))}
+                {paragraphs.map((paragraph, idx) => (
+                  <p key={idx} className="text-justify indent-6">
+                    {paragraph}
+                  </p>
+                ))}
               </article>
             ) : (
               <div className="py-20 text-center space-y-3">
@@ -427,5 +421,3 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
     </div>
   );
 };
-
-export default ChapterWorkspace;

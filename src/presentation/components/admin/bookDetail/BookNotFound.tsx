@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen } from 'lucide-react';
-import { Button } from '@/src/presentation/components/ui';
+import { Button } from '@/src/presentation/components/common';
 import { ROUTES } from '@/src/shared/constants';
 
 export const BookNotFound: React.FC<{ bookId: number }> = ({ bookId }) => (

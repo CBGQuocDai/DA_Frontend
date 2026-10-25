@@ -9,8 +9,14 @@ export const ROUTES = {
   },
   CUSTOMER: {
     HOME: '/customer',
-    LIBRARY: '/customer/library',
-    HISTORY: '/customer/history',
-    BOOK_DETAIL: (id: number) => `/customer/book/${id}`,
+    LOGIN: '/customer/login',
+    /** Login page that sends the user back to `path` afterwards. */
+    LOGIN_THEN: (path: string) => `/customer/login?redirect=${encodeURIComponent(path)}`,
+    REGISTER: '/customer/register',
+    FORGOT_PASSWORD: '/customer/forgot-password',
+    STORE: '/customer/store',
+    AUTHORS: '/customer/authors',
+    PROFILE: '/customer/profile',
+    BOOK_DETAIL: (id: number | string) => `/customer/books/${id}`,
   },
 } as const;

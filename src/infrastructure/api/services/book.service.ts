@@ -1,7 +1,6 @@
-import { apiClient } from '../config/apiClient';
+import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { PaginatedResponse, Category } from '@/src/shared/types';
-import type { Book, BookStatus } from '@/src/shared/types';
+import type { Book, BookStatus, PaginatedResponse } from '@/src/shared/types';
 
 export interface GetBooksParams {
   page?: number;
@@ -12,54 +11,36 @@ export interface GetBooksParams {
   status?: BookStatus;
 }
 
+const multipart = { headers: { 'Content-Type': 'multipart/form-data' } };
+
 export const bookService = {
-  getBooks: async (params?: GetBooksParams): Promise<PaginatedResponse<Book>> => {
-    const response = await apiClient.get<any>(
-      API_ENDPOINTS.BOOKS.LIST,
-      { params }
-    );
-    return response.data?.data ?? response.data;
-  },
+  getBooks: async (params?: GetBooksParams): Promise<PaginatedResponse<Book>> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.LIST, { params })),
 
-  getBookById: async (id: number): Promise<Book> => {
-    const response = await apiClient.get<any>(API_ENDPOINTS.BOOKS.DETAIL(String(id)));
-    return response.data?.data ?? response.data;
-  },
+  getBooksByCategory: async (
+    categoryId: number,
+    params?: Pick<GetBooksParams, 'page' | 'size'>
+  ): Promise<PaginatedResponse<Book>> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.BY_CATEGORY(categoryId), { params })),
 
-  getCategories: async (): Promise<Category[]> => {
-    const response = await apiClient.get<any>(API_ENDPOINTS.BOOKS.CATEGORIES);
-    return response.data?.data ?? response.data;
-  },
+  getBookById: async (id: number): Promise<Book> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.DETAIL(id))),
 
-  createBook: async (formData: FormData): Promise<Book> => {
-    const response = await apiClient.post<any>(API_ENDPOINTS.BOOKS.CREATE, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data?.data ?? response.data;
-  },
+  createBook: async (formData: FormData): Promise<Book> =>
+    unwrap(await apiClient.post(API_ENDPOINTS.BOOKS.CREATE, formData, multipart)),
 
-  updateBook: async (bookId: number, formData: FormData): Promise<Book> => {
-    const response = await apiClient.put<any>(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data?.data ?? response.data;
-  },
+  updateBook: async (bookId: number, formData: FormData): Promise<Book> =>
+    unwrap(await apiClient.put(API_ENDPOINTS.BOOKS.UPDATE(bookId), formData, multipart)),
 
   publishBook: async (bookId: number): Promise<void> => {
-    await apiClient.put(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}/publish`);
+    await apiClient.put(API_ENDPOINTS.BOOKS.PUBLISH(bookId));
   },
 
   unpublishBook: async (bookId: number): Promise<void> => {
-    await apiClient.put(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}/unpublish`);
+    await apiClient.put(API_ENDPOINTS.BOOKS.UNPUBLISH(bookId));
   },
 
   deleteBook: async (bookId: number): Promise<void> => {
-    await apiClient.delete(`${API_ENDPOINTS.BOOKS.LIST}/${bookId}`);
+    await apiClient.delete(API_ENDPOINTS.BOOKS.DELETE(bookId));
   },
 };
-
-export default bookService;

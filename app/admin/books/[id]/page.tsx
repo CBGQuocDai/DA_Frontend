@@ -1,9 +1,6 @@
-'use client';
+import { BookDetail } from '@/src/presentation/pages';
 
-import { use } from 'react';
-import { BookDetail } from '@/src/presentation/pages/admin/bookDetail/BookDetail';
-
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return <BookDetail bookId={Number(id)} />;
 }

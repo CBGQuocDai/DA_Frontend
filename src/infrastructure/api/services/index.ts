@@ -4,3 +4,4 @@ export { voiceService } from './voice.service';
 export { categoryService } from './category.service';
 export { authorService } from './author.service';
 export { chapterService } from './chapter.service';
+export { paymentService } from './payment.service';

@@ -1,10 +1,7 @@
 import type { ChapterStatus } from '@/src/shared/types';
-import { Badge } from '@/src/presentation/components/ui';
+import { Badge, type BadgeVariant } from '@/src/presentation/components/common';
 
-export const chapterStatusConfig: Record<
-  ChapterStatus,
-  { label: string; variant: 'default' | 'primary' | 'success' | 'warning' | 'error' }
-> = {
+const chapterStatusConfig: Record<ChapterStatus, { label: string; variant: BadgeVariant }> = {
   PENDING_TEXT: { label: 'Chờ text', variant: 'default' },
   TEXT_READY: { label: 'Text sẵn sàng', variant: 'primary' },
   PROCESSING_AUDIO: { label: 'Đang tạo audio', variant: 'warning' },

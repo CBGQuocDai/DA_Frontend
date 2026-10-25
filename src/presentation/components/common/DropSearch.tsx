@@ -98,5 +98,3 @@ export const DropSearch: React.FC<DropSearchProps> = ({
     </Listbox>
   );
 };
-
-export default DropSearch;

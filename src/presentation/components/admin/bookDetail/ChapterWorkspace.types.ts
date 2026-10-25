@@ -1,4 +1,5 @@
 import type { Chapter } from '@/src/shared/types';
+import type { FontSize } from '@/src/presentation/hooks/admin';
 
 export interface ChapterWorkspaceProps {
   activeChapter: Chapter | null;
@@ -6,7 +7,7 @@ export interface ChapterWorkspaceProps {
   activeChapterIndex: number;
   isEditingText: boolean;
   textDraft: string;
-  fontSize: 'sm' | 'base' | 'lg';
+  fontSize: FontSize;
   isSavingText: boolean;
   isCurrentProcessing: boolean;
   isCurrentGenerating: boolean;
@@ -22,6 +23,6 @@ export interface ChapterWorkspaceProps {
   onTextDraftChange: (value: string) => void;
   onSaveText: () => void;
   onCopyText: () => void;
-  onSetFontSize: (size: 'sm' | 'base' | 'lg') => void;
+  onSetFontSize: (size: FontSize) => void;
   onSelectChapter: (chapterId: number) => void;
 }

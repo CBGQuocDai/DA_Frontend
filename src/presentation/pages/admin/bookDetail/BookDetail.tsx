@@ -4,18 +4,19 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { AdminLayout } from '@/src/presentation/layouts';
-import { BookFormModal } from '@/src/presentation/components/admin/BookFormModal';
-import { EditChapterModal } from '@/src/presentation/components/admin/EditChapterModal';
+import { ConfirmDeleteModal } from '@/src/presentation/components/common';
+import { BookFormModal } from '@/src/presentation/components/admin/book';
 import {
   BookHeader,
   ChapterList,
   ChapterWorkspace,
   AddChapterModal,
+  EditChapterModal,
   BookDetailSkeleton,
   BookNotFound,
   MobileTabSwitcher,
+  type MobileTab,
 } from '@/src/presentation/components/admin/bookDetail';
-import type { MobileTab } from '@/src/presentation/components/admin/bookDetail';
 import { ROUTES } from '@/src/shared/constants';
 import {
   useBookDetailData,
@@ -148,7 +149,7 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               onEditInfo={chapterActions.editModal.open}
               onGenerateVoice={chapterActions.generateVoice}
               onUploadAudio={chapterActions.triggerUpload}
-              onDeleteChapter={chapterActions.deleteActiveChapter}
+              onDeleteChapter={chapterActions.deleteModal.open}
               onSetEditingText={editor.setIsEditingText}
               onTextDraftChange={editor.setTextDraft}
               onSaveText={editor.saveText}
@@ -185,15 +186,21 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
 
       {chapterActions.editModal.isOpen && activeChapter && (
         <EditChapterModal
-          isOpen
           bookId={bookId}
           onClose={chapterActions.editModal.close}
           chapter={activeChapter}
           onSuccess={chapterActions.handleEditSuccess}
         />
       )}
+
+      <ConfirmDeleteModal
+        isOpen={chapterActions.deleteModal.isOpen}
+        onClose={chapterActions.deleteModal.close}
+        onConfirm={chapterActions.deleteModal.confirm}
+        title="Xóa chương"
+        itemName={activeChapter?.title || `Chương ${activeChapter?.chapterOrder ?? ''}`}
+        isLoading={chapterActions.deleteModal.isDeleting}
+      />
     </AdminLayout>
   );
 };
-
-export default BookDetail;
