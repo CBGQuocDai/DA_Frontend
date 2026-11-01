@@ -9,6 +9,8 @@ export interface ChapterUpdatePayload {
   rawText?: string;
   /** Formatted document; the backend derives `rawText` from it, so send one or the other */
   contentJson?: string;
+  /** New position; the backend shifts the chapters in between so orders stay unique */
+  chapterOrder?: number;
 }
 
 export const chapterService = {
@@ -17,7 +19,7 @@ export const chapterService = {
 
   createChapter: async (
     bookId: number,
-    data: { title: string; rawText?: string; chapterOrder?: number }
+    data: { title: string; chapterOrder: number }
   ): Promise<Chapter> => unwrap(await apiClient.post(API_ENDPOINTS.CHAPTERS.CREATE(bookId), data)),
 
   updateChapter: async (bookId: number, chapterId: number, data: ChapterUpdatePayload): Promise<void> => {

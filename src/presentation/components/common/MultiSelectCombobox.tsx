@@ -1,6 +1,34 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+} from "react";
+
+const MAX_RESULTS = 10;
+const MAX_LIST_HEIGHT = 224;
+const MIN_LIST_HEIGHT = 96;
+/** Gap between input and list, plus breathing room from the clipping edge */
+const LIST_OFFSET = 12;
+
+interface ListPlacement {
+  openUp: boolean;
+  maxHeight: number;
+}
+
+/** Nearest scrolling ancestor's box (a modal body, say), or the viewport. */
+const getClipBounds = (element: HTMLElement) => {
+  for (let el = element.parentElement; el; el = el.parentElement) {
+    const { overflowY } = getComputedStyle(el);
+    if (overflowY === "auto" || overflowY === "scroll") {
+      return el.getBoundingClientRect();
+    }
+  }
+  return { top: 0, bottom: window.innerHeight };
+};
 
 export interface MultiSelectComboboxOption {
   id: number;
@@ -28,6 +56,11 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<ListPlacement>({
+    openUp: false,
+    maxHeight: MAX_LIST_HEIGHT,
+  });
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -46,6 +79,43 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     };
   }, []);
 
+  // Flip the list above the input when it would not fit below. Runs on open,
+  // not on every keystroke, so the list does not jump sides while typing.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const updatePlacement = () => {
+      if (!inputRef.current || !listRef.current) return;
+      const input = inputRef.current.getBoundingClientRect();
+      const bounds = getClipBounds(inputRef.current);
+      const spaceBelow = bounds.bottom - input.bottom - LIST_OFFSET;
+      const spaceAbove = input.top - bounds.top - LIST_OFFSET;
+      const needed = Math.min(listRef.current.scrollHeight, MAX_LIST_HEIGHT);
+      const openUp = spaceBelow < needed && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(
+        MIN_LIST_HEIGHT,
+        Math.min(MAX_LIST_HEIGHT, openUp ? spaceAbove : spaceBelow),
+      );
+      setPlacement((prev) =>
+        prev.openUp === openUp && prev.maxHeight === maxHeight
+          ? prev
+          : { openUp, maxHeight },
+      );
+    };
+
+    const handleScroll = (event: Event) => {
+      if (event.target !== listRef.current) updatePlacement();
+    };
+
+    updatePlacement();
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", updatePlacement);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", updatePlacement);
+    };
+  }, [isOpen]);
+
   // Map option lookup by ID
   const optionMap = useMemo(() => {
     const map = new Map<number, MultiSelectComboboxOption>();
@@ -63,6 +133,8 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
       return opt.name.toLowerCase().includes(query);
     });
   }, [options, selectedIds, searchQuery]);
+
+  const visibleOptions = filteredOptions.slice(0, MAX_RESULTS);
 
   const handleSelect = (id: number) => {
     onChange([...selectedIds, id]);
@@ -174,40 +246,50 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
             />
           </svg>
         </div>
-      </div>
 
-      {/* Dropdown list */}
-      {isOpen && (
-        <div
-          onMouseDown={(e) => e.preventDefault()}
-          className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1 text-sm focus:outline-none"
-        >
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt) => (
-              <div
-                key={opt.id}
-                onClick={() => handleSelect(opt.id)}
-                className="px-3 py-2 hover:bg-accent-light hover:text-accent cursor-pointer transition-colors flex items-center justify-between group"
-              >
-                <span className="text-text-primary group-hover:text-accent font-medium">
-                  {opt.name}
-                </span>
-                <span className="text-xs text-text-muted group-hover:text-accent/80">
-                  + Thêm
-                </span>
+        {/* Dropdown list */}
+        {isOpen && (
+          <div
+            ref={listRef}
+            onMouseDown={(e) => e.preventDefault()}
+            style={{ maxHeight: placement.maxHeight }}
+            className={`absolute left-0 right-0 z-50 overflow-y-auto overscroll-contain bg-surface border border-border rounded-lg shadow-lg text-sm focus:outline-none ${
+              placement.openUp ? "bottom-full mb-1" : "top-full mt-1"
+            }`}
+          >
+            {visibleOptions.length > 0 ? (
+              visibleOptions.map((opt) => (
+                <div
+                  key={opt.id}
+                  onClick={() => handleSelect(opt.id)}
+                  className="px-3 py-2 hover:bg-accent-light hover:text-accent cursor-pointer transition-colors flex items-center justify-between gap-3 group"
+                >
+                  <span className="min-w-0 truncate text-text-primary group-hover:text-accent font-medium">
+                    {opt.name}
+                  </span>
+                  <span className="flex-shrink-0 text-xs text-text-muted group-hover:text-accent/80">
+                    + Thêm
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-2.5 text-center text-xs text-text-muted">
+                {options.length === 0
+                  ? "Không có dữ liệu"
+                  : selectedIds.length === options.length
+                    ? "Đã chọn tất cả"
+                    : "Không tìm thấy kết quả phù hợp"}
               </div>
-            ))
-          ) : (
-            <div className="px-3 py-2.5 text-center text-xs text-text-muted">
-              {options.length === 0
-                ? "Không có dữ liệu"
-                : selectedIds.length === options.length
-                  ? "Đã chọn tất cả"
-                  : "Không tìm thấy kết quả phù hợp"}
-            </div>
-          )}
-        </div>
-      )}
+            )}
+            {filteredOptions.length > MAX_RESULTS && (
+              <div className="sticky bottom-0 border-t border-border bg-surface px-3 py-1.5 text-center text-xs text-text-muted">
+                Hiển thị {MAX_RESULTS}/{filteredOptions.length} kết quả · nhập để
+                tìm thêm
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

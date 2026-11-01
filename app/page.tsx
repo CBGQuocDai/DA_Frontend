@@ -29,7 +29,7 @@ export default function Home() {
             Khách hàng
           </Link>
           <Link
-            href="/admin"
+            href="/admin/login"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-surface text-text-primary font-semibold rounded-xl hover:bg-bg transition-colors border border-border shadow-sm"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

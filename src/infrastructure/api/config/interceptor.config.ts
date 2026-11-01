@@ -1,5 +1,5 @@
 import { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { STORAGE_KEYS } from '@/src/shared/constants';
+import { ROUTES, STORAGE_KEYS } from '@/src/shared/constants';
 import { storageString } from '@/src/shared/utils';
 
 /**
@@ -7,6 +7,19 @@ import { storageString } from '@/src/shared/utils';
  */
 export const getAccessToken = (): string | null => {
   return storageString.get(STORAGE_KEYS.ACCESS_TOKEN);
+};
+
+/**
+ * Admin pages can't work without a session, so don't leave them open sending anonymous requests.
+ * The login page keeps its own 401 (wrong password); customer pages stay browsable.
+ * A full navigation lets the book editor's beforeunload warning protect unsaved text.
+ */
+const redirectAdminToLogin = (): void => {
+  if (typeof window === 'undefined') return;
+  const { pathname } = window.location;
+  if (pathname.startsWith('/admin') && pathname !== ROUTES.ADMIN.LOGIN) {
+    window.location.assign(ROUTES.ADMIN.LOGIN);
+  }
 };
 
 /**
@@ -34,7 +47,7 @@ export const setupInterceptors = (axiosInstance: AxiosInstance): AxiosInstance =
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
         storageString.remove(STORAGE_KEYS.ACCESS_TOKEN);
-        // TODO: call refresh token or redirect to login
+        redirectAdminToLogin();
       }
       return Promise.reject(error);
     }

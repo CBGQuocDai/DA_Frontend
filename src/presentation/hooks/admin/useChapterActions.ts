@@ -11,7 +11,6 @@ interface Options {
   activeChapter: Chapter | null;
   setChapters: React.Dispatch<React.SetStateAction<Chapter[]>>;
   setSelectedChapterId: (id: number | null) => void;
-  reload: () => Promise<void>;
   onChapterCreated?: () => void;
 }
 
@@ -22,7 +21,6 @@ export const useChapterActions = ({
   activeChapter,
   setChapters,
   setSelectedChapterId,
-  reload,
   onChapterCreated,
 }: Options) => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -33,20 +31,16 @@ export const useChapterActions = ({
   const [uploadingChapterId, setUploadingChapterId] = useState<number | null>(null);
   const [audioSpeed, setAudioSpeed] = useState(1);
 
-  const createChapter = async (title: string, chapterOrder: number, rawText: string) => {
-    const created = await chapterService.createChapter(bookId, { title, chapterOrder, rawText });
-
-    if (created && created.id) {
-      setChapters((prev) => [...prev, created]);
-      setSelectedChapterId(created.id);
-      onChapterCreated?.();
-    } else {
-      await reload();
-    }
+  // The backend may renumber other chapters, so both flows re-read the list
+  const reloadChapters = async () => {
+    setChapters(await chapterService.getChapters(bookId));
   };
 
-  const handleEditSuccess = (updated: Chapter) => {
-    setChapters((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  const createChapter = async (title: string, chapterOrder: number) => {
+    const created = await chapterService.createChapter(bookId, { title, chapterOrder });
+    await reloadChapters();
+    setSelectedChapterId(created.id);
+    onChapterCreated?.();
   };
 
   const deleteActiveChapter = async () => {
@@ -130,7 +124,7 @@ export const useChapterActions = ({
       confirm: deleteActiveChapter,
     },
     createChapter,
-    handleEditSuccess,
+    reloadChapters,
     generateVoice,
     triggerUpload,
   };

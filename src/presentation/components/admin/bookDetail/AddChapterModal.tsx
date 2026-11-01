@@ -4,7 +4,7 @@ import { Modal, Button, Spinner, showAlert } from '@/src/presentation/components
 interface AddChapterModalProps {
   onClose: () => void;
   defaultChapterOrder: number;
-  onSubmit: (title: string, chapterOrder: number, rawText: string) => Promise<void>;
+  onSubmit: (title: string, chapterOrder: number) => Promise<void>;
 }
 
 export const AddChapterModal: React.FC<AddChapterModalProps> = ({
@@ -14,8 +14,8 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
 }) => {
   const [form, setForm] = useState({
     title: '',
-    chapterOrder: defaultChapterOrder,
-    rawText: '',
+    // Kept as text so clearing the field stays empty and `required` can catch it
+    chapterOrder: String(defaultChapterOrder),
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,10 +28,11 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(form.title.trim(), form.chapterOrder, form.rawText);
+      await onSubmit(form.title.trim(), Number(form.chapterOrder));
       onClose();
-    } catch {
-      // Error handled by parent
+    } catch (error) {
+      console.error('Error creating chapter:', error);
+      showAlert('Không thể tạo chương. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
     }
@@ -57,31 +58,16 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-text-primary mb-1.5">
-            Thứ tự chương
+            Thứ tự chương <span className="text-error">*</span>
           </label>
           <input
             type="number"
             value={form.chapterOrder}
-            onChange={(e) => setForm({ ...form, chapterOrder: Number(e.target.value) })}
-            min={1}
+            onChange={(e) => setForm({ ...form, chapterOrder: e.target.value })}
+            min={0}
+            required
             className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text-primary mb-1.5">
-            Nội dung văn bản (Text / OCR)
-          </label>
-          <textarea
-            value={form.rawText}
-            onChange={(e) => setForm({ ...form, rawText: e.target.value })}
-            placeholder="Dán hoặc nhập toàn bộ nội dung chữ của chương tại đây..."
-            rows={8}
-            className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent leading-relaxed resize-y font-sans"
-          />
-          <p className="text-xs text-text-muted mt-1">
-            Nội dung chữ này sẽ được dùng khi bạn bấm nút &quot;gen audio&quot; để tạo audio AI.
-          </p>
         </div>
 
         <div className="flex justify-end gap-3 pt-3 border-t border-border">

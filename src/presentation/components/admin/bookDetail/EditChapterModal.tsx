@@ -7,7 +7,7 @@ interface EditChapterModalProps {
   bookId: number;
   onClose: () => void;
   chapter: Chapter;
-  onSuccess: (updated: Chapter) => void;
+  onSuccess: () => Promise<void>;
 }
 
 export const EditChapterModal: React.FC<EditChapterModalProps> = ({
@@ -19,7 +19,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
   // The modal is mounted per open, so the chapter only seeds the initial form
   const [infoForm, setInfoForm] = useState({
     title: chapter.title || '',
-    chapterOrder: chapter.chapterOrder,
+    // Kept as text so clearing the field stays empty and `required` can catch it
+    chapterOrder: String(chapter.chapterOrder),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,12 +31,11 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
     }
     const title = infoForm.title.trim();
     try {
-      await chapterService.updateChapter(bookId, chapter.id, { title });
-      onSuccess({
-        ...chapter,
+      await chapterService.updateChapter(bookId, chapter.id, {
         title,
-        chapterOrder: infoForm.chapterOrder,
+        chapterOrder: Number(infoForm.chapterOrder),
       });
+      await onSuccess();
       onClose();
     } catch (error) {
       console.error('Error updating chapter:', error);
@@ -62,13 +62,14 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-text-primary mb-1.5">
-            Thứ tự chương
+            Thứ tự chương <span className="text-error">*</span>
           </label>
           <input
             type="number"
             value={infoForm.chapterOrder}
-            onChange={(e) => setInfoForm({ ...infoForm, chapterOrder: Number(e.target.value) })}
-            min={1}
+            onChange={(e) => setInfoForm({ ...infoForm, chapterOrder: e.target.value })}
+            min={0}
+            required
             className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
           />
           <p className="text-xs text-text-muted mt-1">
