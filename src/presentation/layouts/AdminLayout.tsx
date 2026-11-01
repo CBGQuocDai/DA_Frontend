@@ -6,6 +6,8 @@ import { BarChart3, BookOpen, Mic, LogOut, Radio } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+  /** Tighter page gutter for full-height workspaces */
+  compact?: boolean;
 }
 
 const navItems = [
@@ -26,7 +28,7 @@ const navItems = [
   },
 ];
 
-export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, compact }) => {
   const pathname = usePathname();
 
   return (
@@ -84,7 +86,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       {/* Main Content: full height 100dvh, flex-1 min-w-0, no top header bar */}
       <main className="flex-1 flex flex-col h-full min-w-0 overflow-y-auto">
-        <div className="flex-1 min-h-0 p-3.5 sm:p-5 lg:p-6 flex flex-col">
+        <div className={`flex-1 min-h-0 flex flex-col ${compact ? 'p-2 lg:p-3' : 'p-3.5 sm:p-5 lg:p-6'}`}>
           {children}
         </div>
       </main>

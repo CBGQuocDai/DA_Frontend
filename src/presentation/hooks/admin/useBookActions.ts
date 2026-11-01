@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { bookService } from '@/src/infrastructure/api/services';
 import type { Book, BookStatus } from '@/src/shared/types';
-import { toBookFormData, type BookFormValues } from '@/src/presentation/components/admin/book';
+import { toBookPayload, type BookFormValues } from '@/src/presentation/components/admin/book';
 import { useBookFormOptions } from './useBookFormOptions';
+import { showAlert } from '@/src/presentation/components/common';
 
 interface Options {
   book: Book | null;
@@ -16,7 +17,8 @@ interface Options {
 export const useBookActions = ({ book, setBook, reload }: Options) => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const options = useBookFormOptions();
+  // Only needed by the edit modal, so don't fetch them until it opens
+  const options = useBookFormOptions(isEditOpen);
 
   const changeStatus = async (
     key: 'publish' | 'unpublish',
@@ -31,7 +33,7 @@ export const useBookActions = ({ book, setBook, reload }: Options) => {
       setBook({ ...book, status, isPublish: status === 'PUBLISHED' });
     } catch (error) {
       console.error(`Error (${key}) book:`, error);
-      alert(errorMessage);
+      showAlert(errorMessage);
     } finally {
       setActionLoading(null);
     }
@@ -51,9 +53,9 @@ export const useBookActions = ({ book, setBook, reload }: Options) => {
   // Errors propagate to BookFormModal, which shows them inline
   const saveEdit = async (data: BookFormValues) => {
     if (!book) return;
-    await bookService.updateBook(book.id, toBookFormData(data));
+    await bookService.updateBook(book.id, await toBookPayload(data, book));
     setIsEditOpen(false);
-    // Reload instead of using the response so the cover goes through the same lookup as loadData
+    // Reload so cover/PDF come back as freshly signed URLs from the detail endpoint
     await reload();
   };
 

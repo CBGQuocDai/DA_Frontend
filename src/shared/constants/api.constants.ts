@@ -36,6 +36,10 @@ export const API_ENDPOINTS = {
     DETAIL: (voiceId: string | number) => `/voice/${voiceId}`,
   },
 
+  UPLOADS: {
+    SIGN_URL: '/uploads/sign-url',
+  },
+
   CHAPTERS: {
     LIST: (bookId: string | number) => `/books/${bookId}/chapters`,
     CREATE: (bookId: string | number) => `/books/${bookId}/chapters`,

@@ -131,16 +131,13 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   }, [coverUrl]);
 
   const hasExistingCover = isEdit && !!book?.coverImage;
-  const currentPdf = useMemo(() => {
-    if (!isEdit || !book?.contentFile) return null;
-    let name = 'original.pdf';
-    try {
-      name = new URL(book.contentFile).pathname.split('/').pop() || name;
-    } catch {
-      name = book.contentFile.split('?')[0].split('/').pop() || name;
-    }
-    return { name, url: book.contentFile };
-  }, [isEdit, book?.contentFile]);
+  const currentPdf =
+    isEdit && book?.contentFile
+      ? {
+          name: book.contentFile.path.split('/').pop() || 'original.pdf',
+          url: book.contentFile.url,
+        }
+      : null;
   const errors = useMemo(
     () =>
       validateBookForm({
@@ -162,7 +159,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   };
 
   const previewUrl =
-    coverUrl ?? (hasExistingCover ? (book?.coverImage ?? null) : null);
+    coverUrl ?? (hasExistingCover ? (book?.coverImage?.url ?? null) : null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

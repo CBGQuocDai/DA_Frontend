@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, Spinner } from '@/src/presentation/components/common';
+import { Modal, Button, Spinner, showAlert } from '@/src/presentation/components/common';
 
 interface AddChapterModalProps {
   onClose: () => void;
@@ -22,7 +22,7 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
-      alert('Vui lòng nhập tiêu đề chương');
+      showAlert('Vui lòng nhập tiêu đề chương', 'warning');
       return;
     }
 

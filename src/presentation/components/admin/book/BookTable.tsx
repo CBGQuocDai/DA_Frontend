@@ -59,7 +59,7 @@ const BookRow: React.FC<BookRowHandlers & { book: Book; index: number; isBusy: b
 
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <BookThumbnail title={title} coverImage={book.coverImage} />
+          <BookThumbnail title={title} coverImage={book.coverImage?.url} />
           <div className="min-w-0">
             <p className="font-medium text-text-primary line-clamp-1" title={title}>
               {title}

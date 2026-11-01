@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Button, FileDropzone } from '@/src/presentation/components/common';
-import { voiceService } from '@/src/infrastructure/api/services';
+import { Modal, Button, FileDropzone, showAlert } from '@/src/presentation/components/common';
+import { uploadService, voiceService } from '@/src/infrastructure/api/services';
 import type { Voice } from '@/src/shared/types';
 import { resolveMediaUrl } from '@/src/shared/utils';
 
-const AUDIO_HINT = 'MP3, WAV, M4A (Tối đa 10MB)';
+const AUDIO_HINT = 'MP3, WAV (Tối đa 10MB)';
 
 interface VoiceModalProps {
   /** Voice to edit; omit to create a new one. The modal is mounted per open. */
@@ -34,28 +34,29 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert('Vui lòng nhập tên giọng đọc');
+      showAlert('Vui lòng nhập tên giọng đọc', 'warning');
       return;
     }
     if (!isEditMode && !audioFile) {
-      alert('Vui lòng chọn file audio mẫu');
+      showAlert('Vui lòng chọn file audio mẫu', 'warning');
       return;
     }
 
-    const form = new FormData();
-    form.append('voiceInfo', JSON.stringify({ name: name.trim(), description: description.trim() }));
-    if (audioFile) form.append('exampleAudio', audioFile);
-
     setIsSubmitting(true);
     try {
+      // The sample goes straight to cloud storage; the voice only stores its path
+      const exampleAudio = audioFile
+        ? await uploadService.uploadFile(audioFile, 'AUDIO')
+        : voice?.exampleAudio?.path;
+      const payload = { name: name.trim(), description: description.trim(), exampleAudio };
       const saved = voice
-        ? await voiceService.updateVoice(voice.id, form)
-        : await voiceService.createVoice(form);
+        ? await voiceService.updateVoice(voice.id, payload)
+        : await voiceService.createVoice(payload);
       onSuccess(saved);
       onClose();
     } catch (error) {
       console.error('Error saving voice:', error);
-      alert(isEditMode ? 'Có lỗi xảy ra khi cập nhật giọng đọc' : 'Có lỗi xảy ra khi tạo giọng đọc');
+      showAlert(isEditMode ? 'Có lỗi xảy ra khi cập nhật giọng đọc' : 'Có lỗi xảy ra khi tạo giọng đọc');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,11 +100,11 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
             File audio mẫu {!isEditMode && <span className="text-error">*</span>}
           </label>
           {voice?.exampleAudio && !audioFile && (
-            <audio controls src={resolveMediaUrl(voice.exampleAudio)} className="h-8 w-full" />
+            <audio controls src={resolveMediaUrl(voice.exampleAudio.url)} className="h-8 w-full" />
           )}
           <FileDropzone
             id="voice-modal-audio"
-            accept="audio/*"
+            accept=".mp3,.wav,audio/mpeg,audio/wav"
             file={audioFile}
             onChange={setAudioFile}
             prompt={voice?.exampleAudio ? 'Tải lên file audio mới' : 'Kéo thả hoặc chọn file audio mẫu'}

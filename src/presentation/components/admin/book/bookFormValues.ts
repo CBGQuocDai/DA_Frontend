@@ -1,4 +1,5 @@
 import type { Book } from '@/src/shared/types';
+import { uploadService, type BookPayload } from '@/src/infrastructure/api/services';
 import type { BookFormValues } from './BookFormModal';
 import { getBookAuthors, getBookCategories, getBookPrice } from '@/src/shared/utils';
 
@@ -13,19 +14,24 @@ export const getBookPriceInput = (book?: Book): string => {
   return price == null ? '' : String(Math.round(price));
 };
 
-/** Multipart body expected by the create/update book endpoints. */
-export const toBookFormData = (values: BookFormValues): FormData => {
-  const form = new FormData();
-  const book = {
+/**
+ * Uploads the chosen PDF/cover straight to cloud storage, then builds the JSON
+ * body of the create/update book endpoints. A file left empty on update resends
+ * the current path of `book`, which keeps it.
+ */
+export const toBookPayload = async (values: BookFormValues, book?: Book): Promise<BookPayload> => {
+  const [contentFile, coverImage] = await Promise.all([
+    values.pdfFile ? uploadService.uploadFile(values.pdfFile, 'PDF') : book?.contentFile?.path,
+    values.coverFile ? uploadService.uploadFile(values.coverFile, 'IMAGE') : book?.coverImage?.path,
+  ]);
+  return {
     title: values.title,
     description: values.description,
     price: values.price,
-    voice: { id: values.voiceId },
-    categories: values.categoryIds.map((id) => ({ id })),
-    authors: values.authorIds.map((id) => ({ id })),
+    voiceId: values.voiceId,
+    categoryIds: values.categoryIds,
+    authorIds: values.authorIds,
+    contentFile,
+    coverImage,
   };
-  form.append('book', new Blob([JSON.stringify(book)], { type: 'application/json' }));
-  if (values.pdfFile) form.append('contentFile', values.pdfFile);
-  if (values.coverFile) form.append('bookCover', values.coverFile);
-  return form;
 };

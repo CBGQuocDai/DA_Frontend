@@ -36,7 +36,7 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-8 md:p-10">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8 lg:gap-12">
         <div className="w-56 sm:w-64 md:w-72 lg:w-80 flex-shrink-0 aspect-[3/4.2] rounded-2xl overflow-hidden shadow-xl shadow-slate-300/60 border border-slate-200/90">
-          <BookCover title={book.title} author={authorName} coverImage={book.coverImage} />
+          <BookCover title={book.title} author={authorName} coverImage={book.coverImage?.url} />
         </div>
 
         <div className="flex-1 min-w-0 text-center md:text-left flex flex-col justify-between self-stretch">

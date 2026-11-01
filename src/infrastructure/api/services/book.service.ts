@@ -11,7 +11,21 @@ export interface GetBooksParams {
   status?: BookStatus;
 }
 
-const multipart = { headers: { 'Content-Type': 'multipart/form-data' } };
+/**
+ * Body of both create (POST) and update (PUT, full replacement). Files are
+ * uploaded beforehand (uploadService) and sent as storage paths; both are always
+ * required, and an update keeps a file by sending its current path.
+ */
+export interface BookPayload {
+  title: string;
+  description: string;
+  price: number;
+  voiceId: number;
+  categoryIds: number[];
+  authorIds: number[];
+  contentFile?: string;
+  coverImage?: string;
+}
 
 export const bookService = {
   getBooks: async (params?: GetBooksParams): Promise<PaginatedResponse<Book>> =>
@@ -26,11 +40,11 @@ export const bookService = {
   getBookById: async (id: number): Promise<Book> =>
     unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.DETAIL(id))),
 
-  createBook: async (formData: FormData): Promise<Book> =>
-    unwrap(await apiClient.post(API_ENDPOINTS.BOOKS.CREATE, formData, multipart)),
+  createBook: async (payload: BookPayload): Promise<Book> =>
+    unwrap(await apiClient.post(API_ENDPOINTS.BOOKS.CREATE, payload)),
 
-  updateBook: async (bookId: number, formData: FormData): Promise<Book> =>
-    unwrap(await apiClient.put(API_ENDPOINTS.BOOKS.UPDATE(bookId), formData, multipart)),
+  updateBook: async (bookId: number, payload: BookPayload): Promise<Book> =>
+    unwrap(await apiClient.put(API_ENDPOINTS.BOOKS.UPDATE(bookId), payload)),
 
   publishBook: async (bookId: number): Promise<void> => {
     await apiClient.put(API_ENDPOINTS.BOOKS.PUBLISH(bookId));

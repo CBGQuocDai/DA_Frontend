@@ -7,13 +7,13 @@ import { AdminLayout } from "@/src/presentation/layouts";
 import { bookService } from "@/src/infrastructure/api/services";
 import type { Book } from "@/src/shared/types";
 import { isBookPublished } from "@/src/shared/utils";
-import { ConfirmDeleteModal, Pagination } from "@/src/presentation/components/common";
+import { ConfirmDeleteModal, Pagination, showAlert } from "@/src/presentation/components/common";
 import {
   BookFilterToolbar,
   BookFormModal,
   BookReviewsModal,
   BookTable,
-  toBookFormData,
+  toBookPayload,
   type BookFormValues,
 } from "@/src/presentation/components/admin/book";
 import {
@@ -56,7 +56,7 @@ export const ManageBookPage = () => {
         await (publish ? bookService.publishBook(book.id) : bookService.unpublishBook(book.id));
         list.updateBook(book.id, { status: publish ? "PUBLISHED" : "UNPUBLISHED", isPublish: publish });
       },
-      publish ? () => alert(PUBLISH_ERROR) : undefined,
+      publish ? () => showAlert(PUBLISH_ERROR) : undefined,
     );
   };
 
@@ -81,7 +81,7 @@ export const ManageBookPage = () => {
 
   // Both handlers let errors propagate so BookFormModal can show them inline
   const handleCreateBook = async (data: BookFormValues) => {
-    await bookService.createBook(toBookFormData(data));
+    await bookService.createBook(await toBookPayload(data));
     setShowCreateModal(false);
     if (list.page === 0) list.reload();
     else list.goToPage(0);
@@ -89,7 +89,7 @@ export const ManageBookPage = () => {
 
   const handleUpdateBook = async (data: BookFormValues) => {
     if (!editingBook) return;
-    await bookService.updateBook(editingBook.id, toBookFormData(data));
+    await bookService.updateBook(editingBook.id, await toBookPayload(data, editingBook));
     setEditingBook(null);
     list.reload();
   };

@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '@/src/presentation/layouts';
-import { ConfirmDeleteModal } from '@/src/presentation/components/common';
+import { ConfirmDeleteModal, showConfirm } from '@/src/presentation/components/common';
 import { BookFormModal } from '@/src/presentation/components/admin/book';
 import {
   BookHeader,
@@ -17,7 +15,6 @@ import {
   MobileTabSwitcher,
   type MobileTab,
 } from '@/src/presentation/components/admin/bookDetail';
-import { ROUTES } from '@/src/shared/constants';
 import {
   useBookDetailData,
   useBookActions,
@@ -62,9 +59,27 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
   });
   const search = useChapterSearch(sortedChapters);
 
+  // Warn before closing the tab while the chapter text has unsaved edits
+  const { hasUnsavedChanges } = editor;
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
+
+  const confirmDiscardEdits = async () =>
+    !hasUnsavedChanges ||
+    showConfirm({
+      title: 'Bỏ thay đổi chưa lưu?',
+      message: 'Chương hiện tại có thay đổi chưa lưu. Nếu tiếp tục, các thay đổi này sẽ bị mất.',
+      confirmText: 'Bỏ thay đổi',
+      cancelText: 'Tiếp tục sửa',
+    });
+
   if (data.isLoading) {
     return (
-      <AdminLayout>
+      <AdminLayout compact>
         <BookDetailSkeleton />
       </AdminLayout>
     );
@@ -79,22 +94,10 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
   }
 
   return (
-    <AdminLayout>
-      <div className="h-full flex flex-col min-h-0 space-y-3 sm:space-y-3.5">
-        <div className="flex items-center justify-between flex-shrink-0">
-          <Link
-            href={ROUTES.ADMIN.MANAGE_BOOK}
-            className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-            <span>Quay lại danh sách</span>
-          </Link>
-          <span className="text-xs text-text-muted font-mono">Book ID: #{book.id}</span>
-        </div>
-
+    <AdminLayout compact>
+      <div className="h-full flex flex-col min-h-0 space-y-2">
         <BookHeader
           book={book}
-          chapters={chapters}
           actionLoading={bookActions.actionLoading}
           onOpenEditBook={bookActions.edit.open}
           onPublish={bookActions.publish}
@@ -103,7 +106,7 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
 
         <MobileTabSwitcher value={mobileTab} chapterCount={chapters.length} onChange={setMobileTab} />
 
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3.5 lg:gap-4.5 min-h-[420px]">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-[420px]">
           <div
             className={`w-full lg:w-[350px] xl:w-[380px] 2xl:w-[410px] lg:flex-shrink-0 flex flex-col h-full min-h-0 ${
               !isSidebarOpen ? 'lg:hidden' : ''
@@ -115,11 +118,15 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               filteredChapters={search.filtered}
               chapterSearch={search.query}
               onSearchChange={search.setQuery}
-              onSelectChapter={(id) => {
+              onSelectChapter={async (id) => {
+                if (id !== selectedChapterId && !(await confirmDiscardEdits())) return;
                 setSelectedChapterId(id);
                 setMobileTab('detail');
               }}
-              onAddChapter={chapterActions.addModal.open}
+              onAddChapter={async () => {
+                // Creating a chapter switches to it, which drops the current draft
+                if (await confirmDiscardEdits()) chapterActions.addModal.open();
+              }}
             />
           </div>
 
@@ -132,10 +139,14 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               activeChapter={activeChapter}
               sortedChapters={sortedChapters}
               activeChapterIndex={activeChapterIndex}
-              isEditingText={editor.isEditingText}
+              voiceName={book.voice?.name}
               textDraft={editor.textDraft}
-              fontSize={editor.fontSize}
+              contentDraft={editor.contentDraft}
+              savedContent={editor.savedContent}
+              textVersion={editor.textVersion}
               isSavingText={editor.isSavingText}
+              hasUnsavedChanges={hasUnsavedChanges}
+              audioSpeed={chapterActions.audioSpeed}
               isCurrentProcessing={activeChapter?.status === 'PROCESSING_AUDIO'}
               isCurrentGenerating={
                 !!activeChapter && chapterActions.generatingChapterId === activeChapter.id
@@ -143,21 +154,18 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               isCurrentUploading={
                 !!activeChapter && chapterActions.uploadingChapterId === activeChapter.id
               }
-              copyFeedback={editor.copyFeedback}
               isSidebarOpen={isSidebarOpen}
               onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
               onEditInfo={chapterActions.editModal.open}
               onGenerateVoice={chapterActions.generateVoice}
+              onAudioSpeedChange={chapterActions.setAudioSpeed}
               onUploadAudio={chapterActions.triggerUpload}
               onDeleteChapter={chapterActions.deleteModal.open}
-              onSetEditingText={editor.setIsEditingText}
-              onTextDraftChange={editor.setTextDraft}
+              onDraftChange={editor.updateDraft}
               onSaveText={editor.saveText}
-              onCopyText={editor.copyText}
-              onSetFontSize={editor.setFontSize}
-              onSelectChapter={(id) => {
+              onSelectChapter={async (id) => {
+                if (!(await confirmDiscardEdits())) return;
                 setSelectedChapterId(id);
-                editor.setIsEditingText(false);
               }}
             />
           </div>

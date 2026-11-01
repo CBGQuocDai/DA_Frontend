@@ -1,7 +1,11 @@
 export { authService } from './auth.service';
 export { bookService } from './book.service';
+export type { BookPayload } from './book.service';
 export { voiceService } from './voice.service';
+export type { VoicePayload } from './voice.service';
 export { categoryService } from './category.service';
 export { authorService } from './author.service';
 export { chapterService } from './chapter.service';
 export { paymentService } from './payment.service';
+export { uploadService } from './upload.service';
+export type { UploadType } from './upload.service';

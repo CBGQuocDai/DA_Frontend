@@ -4,4 +4,4 @@ export { BookReviewsModal } from './BookReviewsModal';
 export { BookFilterToolbar } from './BookFilterToolbar';
 export { BookTable } from './BookTable';
 export { BookThumbnail } from './BookThumbnail';
-export { toBookFormData } from './bookFormValues';
+export { toBookPayload } from './bookFormValues';

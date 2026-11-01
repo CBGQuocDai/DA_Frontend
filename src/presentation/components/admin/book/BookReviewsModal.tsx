@@ -42,7 +42,7 @@ export const BookReviewsModal: React.FC<BookReviewsModalProps> = ({ book, onClos
             <div className="flex items-center gap-3 min-w-0">
               <BookThumbnail
                 title={book.title}
-                coverImage={book.coverImage}
+                coverImage={book.coverImage?.url}
                 className="w-10 h-14 rounded-lg shadow-xs"
               />
               <div className="min-w-0">

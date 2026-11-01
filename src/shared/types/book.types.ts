@@ -1,11 +1,18 @@
 // Book Types
 
+export interface StoredFile {
+  /** Storage path: send it back in an update request to keep this file */
+  path: string;
+  /** Signed URL to read the file */
+  url: string;
+}
+
 export interface Book {
   id: number;
   title: string;
   description?: string;
-  coverImage?: string;
-  contentFile?: string;
+  coverImage?: StoredFile;
+  contentFile?: StoredFile;
   isPublish?: boolean;
   price?: number;
   voice?: Voice;
@@ -26,13 +33,15 @@ export interface Chapter {
   duration?: number;
   audioUrl?: string;
   rawText?: string;
+  /** Editor document with formatting; empty when the chapter is plain text */
+  contentJson?: string;
   status?: ChapterStatus;
 }
 
 export interface Voice {
   id: number;
   name: string;
-  exampleAudio?: string;
+  exampleAudio?: StoredFile;
   description?: string;
 }
 
@@ -60,4 +69,4 @@ export interface Category {
 }
 
 export type BookStatus = 'PROCESSING' | 'UNPUBLISHED' | 'PUBLISHED' | 'FAILED';
-export type ChapterStatus = 'PENDING_TEXT' | 'TEXT_READY' | 'PROCESSING_AUDIO' | 'AUDIO_READY';
+export type ChapterStatus = 'FAILED' | 'PROCESSING_AUDIO' | 'AUDIO_READY';

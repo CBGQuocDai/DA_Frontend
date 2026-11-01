@@ -1,76 +1,73 @@
-import React, { useMemo } from 'react';
-import { Button, Spinner } from '@/src/presentation/components/common';
-import type { ChapterWorkspaceProps } from './ChapterWorkspace.types';
+import React, { useRef, useState } from 'react';
+import { Button, Spinner, showConfirm } from '@/src/presentation/components/common';
+import type { ChapterWorkspaceProps } from '../../../../shared/types/ChapterWorkspace.types';
 import { getChapterStatusBadge } from '@/src/presentation/utils/admin';
 import { resolveMediaUrl } from '@/src/shared/utils';
 import {
   BookOpen,
   Pencil,
-  Sparkles,
-  Upload,
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Volume2,
-  Copy,
   Check,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
+import { ChapterTextEditor, type ChapterTextEditorHandle } from './chapterEditor/ChapterTextEditor';
+import { AudioPopover } from './AudioPopover';
+import type { Chapter } from '@/src/shared/types';
 
-const getWordCount = (text?: string) => {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).filter(Boolean).length;
-};
+interface ChapterStepButtonProps {
+  chapter: Chapter | null;
+  direction: 'prev' | 'next';
+  onSelect: (id: number) => void;
+}
 
-const FONT_SIZE_CLASSES = {
-  sm: 'text-sm leading-7',
-  base: 'text-base leading-8',
-  lg: 'text-lg leading-9',
-} as const;
-
-const splitParagraphs = (text?: string) =>
-  (text ?? '')
-    .split(/\n+/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-
-const formatDuration = (seconds?: number | null) => {
-  if (!seconds && seconds !== 0) return null;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (mins === 0) return `${secs}s`;
-  if (secs === 0) return `${mins}m`;
-  return `${mins}m ${secs}s`;
+const ChapterStepButton: React.FC<ChapterStepButtonProps> = ({ chapter, direction, onSelect }) => {
+  const Icon = direction === 'prev' ? ChevronLeft : ChevronRight;
+  const label = chapter ? `Chương ${chapter.chapterOrder}` : direction === 'prev' ? 'Chương trước' : 'Chương sau';
+  return (
+    <button
+      type="button"
+      onClick={() => chapter && onSelect(chapter.id)}
+      disabled={!chapter}
+      title={label}
+      aria-label={label}
+      className="p-0.5 rounded-md text-text-secondary hover:bg-bg hover:text-text-primary transition-colors flex-shrink-0 disabled:opacity-40 disabled:pointer-events-none"
+    >
+      <Icon className="w-4 h-4" />
+    </button>
+  );
 };
 
 export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
   activeChapter,
   sortedChapters,
   activeChapterIndex,
-  isEditingText,
+  voiceName,
   textDraft,
-  fontSize,
+  contentDraft,
+  savedContent,
+  textVersion,
   isSavingText,
+  hasUnsavedChanges,
+  audioSpeed,
   isCurrentProcessing,
   isCurrentGenerating,
   isCurrentUploading,
-  copyFeedback,
   isSidebarOpen = true,
   onToggleSidebar,
   onEditInfo,
   onGenerateVoice,
+  onAudioSpeedChange,
   onUploadAudio,
   onDeleteChapter,
-  onSetEditingText,
-  onTextDraftChange,
+  onDraftChange,
   onSaveText,
-  onCopyText,
-  onSetFontSize,
   onSelectChapter,
 }) => {
-  const paragraphs = useMemo(() => splitParagraphs(activeChapter?.rawText), [activeChapter?.rawText]);
-  const wordCount = useMemo(() => getWordCount(textDraft), [textDraft]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const editorRef = useRef<ChapterTextEditorHandle>(null);
   const prevChapter = activeChapterIndex > 0 ? sortedChapters[activeChapterIndex - 1] : null;
   const nextChapter =
     activeChapterIndex >= 0 && activeChapterIndex < sortedChapters.length - 1
@@ -93,330 +90,166 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
     );
   }
 
+  const discardChanges = async () => {
+    const confirmed = await showConfirm({
+      title: 'Bỏ thay đổi chưa lưu?',
+      message: 'Nội dung của chương này sẽ trở về bản đã lưu gần nhất.',
+      confirmText: 'Bỏ thay đổi',
+      cancelText: 'Tiếp tục sửa',
+    });
+    if (!confirmed) return;
+    const savedText = activeChapter.rawText || '';
+    editorRef.current?.resetContent(savedText, savedContent);
+    onDraftChange(savedText, savedContent);
+  };
+
+  const saveIfDirty = () => {
+    if (hasUnsavedChanges && !isSavingText) onSaveText();
+  };
+
   return (
-    <div className="bg-surface rounded-xl sm:rounded-2xl border border-border p-4 sm:p-5 shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
-      {/* Header */}
-      <div className="pb-3 border-b border-border space-y-3 flex-shrink-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {onToggleSidebar && (
-              <button
-                type="button"
-                onClick={onToggleSidebar}
-                className="hidden lg:flex p-2 text-text-secondary hover:text-text-primary hover:bg-bg rounded-lg border border-border transition-colors flex-shrink-0"
-                title={isSidebarOpen ? 'Thu gọn danh sách chương để đọc rộng hơn' : 'Hiện danh sách chương'}
-              >
-                {isSidebarOpen ? (
-                  <PanelLeftClose className="w-4 h-4" />
-                ) : (
-                  <PanelLeftOpen className="w-4 h-4" />
-                )}
-              </button>
-            )}
-            <span className="w-10 h-10 bg-accent/10 text-accent font-bold rounded-xl flex items-center justify-center text-base flex-shrink-0">
-              {activeChapter.chapterOrder}
-            </span>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-bold text-text-primary tracking-tight truncate">
-                  {activeChapter.title || `Chương ${activeChapter.chapterOrder}`}
-                </h2>
-                <button
-                  type="button"
-                  onClick={onEditInfo}
-                  className="p-1 text-text-muted hover:text-accent rounded transition-colors"
-                  title="Đổi tiêu đề hoặc thứ tự chương"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="flex items-center gap-3 mt-1 text-xs text-text-muted flex-wrap">
-                {activeChapter.duration && (
-                  <>
-                    <span>•</span>
-                    <span>Thời lượng: {formatDuration(activeChapter.duration)}</span>
-                  </>
-                )}
-                <span>•</span>
-                {getChapterStatusBadge(activeChapter.status)}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onGenerateVoice(activeChapter.id)}
-              disabled={isCurrentProcessing || isCurrentGenerating || isCurrentUploading}
-              className="text-xs shadow-sm"
-              title="Tạo giọng đọc AI từ nội dung văn bản này"
+    <div
+      className={`@container bg-surface border border-border shadow-sm flex flex-col min-h-0 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-40' : 'rounded-xl sm:rounded-2xl h-full'
+        }`}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-1.5 border-b border-border flex-shrink-0">
+        {/* Wide enough for the number, title and status, so the actions wrap before the status clips */}
+        <div className="flex items-center gap-2 flex-1 min-w-[min(20rem,100%)] overflow-hidden">
+          {onToggleSidebar && !isFullscreen && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="hidden lg:flex p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg rounded-md transition-colors flex-shrink-0"
+              title={isSidebarOpen ? 'Thu gọn danh sách chương để có thêm chỗ' : 'Hiện danh sách chương'}
             >
-              {isCurrentGenerating || isCurrentProcessing ? (
-                <>
-                  <Spinner className="w-3.5 h-3.5" />
-                  <span>{isCurrentGenerating ? 'Đang gửi...' : 'Đang tạo audio...'}</span>
-                </>
+              {isSidebarOpen ? (
+                <PanelLeftClose className="w-4 h-4" />
               ) : (
-                <>
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>gen audio</span>
-                </>
+                <PanelLeftOpen className="w-4 h-4" />
               )}
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onUploadAudio(activeChapter.id)}
-              disabled={isCurrentUploading || isCurrentGenerating}
-              title="Tải lên file âm thanh cho chương này"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>Upload audio</span>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDeleteChapter}
-              className="text-xs text-error hover:bg-error-light hover:text-error border border-error/20"
-              title="Xóa chương này"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Xóa</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Audio Player */}
-        <div className="p-3 bg-bg rounded-xl border border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex-1 w-full">
-            {activeChapter.audioUrl ? (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-text-muted mb-1">
-                  <span className="font-medium text-text-primary flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                    Audio phát chính thức
-                  </span>
-                  {activeChapter.duration && <span>{formatDuration(activeChapter.duration)}</span>}
-                </div>
-                <audio
-                  key={activeChapter.id}
-                  controls
-                  src={resolveMediaUrl(activeChapter.audioUrl)}
-                  className="w-full h-9 rounded"
-                  preload="metadata"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-text-muted py-1 italic">
-                <Volume2 className="w-4 h-4 text-text-muted" />
-                <span>
-                  Chương này chưa có file âm thanh. Bấm &quot;gen audio&quot; để AI tạo tự động hoặc
-                  &quot;Upload audio&quot; để tải lên.
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex items-center justify-between flex-wrap gap-2 py-2 flex-shrink-0">
-        <div className="flex items-center border border-border rounded-lg p-0.5 bg-bg">
+            </button>
+          )}
+          <span className="w-8 h-8 bg-accent/10 text-accent font-bold rounded-lg flex items-center justify-center text-sm flex-shrink-0">
+            {activeChapter.chapterOrder}
+          </span>
+          <h2
+            className="min-w-0 text-sm font-bold text-text-primary tracking-tight truncate"
+            title={activeChapter.title || undefined}
+          >
+            {activeChapter.title || `Chương ${activeChapter.chapterOrder}`}
+          </h2>
           <button
             type="button"
-            onClick={() => onSetEditingText(false)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${!isEditingText
-              ? 'bg-surface text-accent shadow-sm'
-              : 'text-text-secondary hover:text-text-primary'
-              }`}
+            onClick={onEditInfo}
+            className="-ml-1 p-0.5 text-text-muted hover:text-accent rounded transition-colors flex-shrink-0"
+            title="Đổi tiêu đề hoặc thứ tự chương"
+            aria-label="Đổi tiêu đề hoặc thứ tự chương"
           >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Đọc văn bản</span>
+            <Pencil className="w-3 h-3" />
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              onTextDraftChange(activeChapter.rawText || '');
-              onSetEditingText(true);
-            }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${isEditingText
-              ? 'bg-surface text-accent shadow-sm'
-              : 'text-text-secondary hover:text-text-primary'
-              }`}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            <span>Chỉnh sửa text</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {!isEditingText ? (
-            <>
-              <div className="flex items-center border border-border rounded-lg overflow-hidden bg-bg text-xs">
-                <button
-                  type="button"
-                  onClick={() => onSetFontSize('sm')}
-                  className={`px-2 py-1 transition-colors ${fontSize === 'sm' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
-                    }`}
-                  title="Cỡ chữ nhỏ"
-                >
-                  A-
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSetFontSize('base')}
-                  className={`px-2.5 py-1 transition-colors ${fontSize === 'base' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
-                    }`}
-                  title="Cỡ chữ chuẩn"
-                >
-                  A
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSetFontSize('lg')}
-                  className={`px-2 py-1 transition-colors ${fontSize === 'lg' ? 'bg-accent text-white font-bold' : 'text-text-secondary hover:bg-surface'
-                    }`}
-                  title="Cỡ chữ lớn"
-                >
-                  A+
-                </button>
-              </div>
-              <Button type="button" variant="secondary" size="sm" onClick={onCopyText}>
-                {copyFeedback ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-success" />
-                    <span>Đã sao chép!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Sao chép</span>
-                  </>
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  onTextDraftChange(activeChapter.rawText || '');
-                  onSetEditingText(false);
-                }}
-              >
-                Hủy bỏ
-              </Button>
-              <Button type="button" variant="primary" size="sm" onClick={onSaveText} disabled={isSavingText} className="text-xs shadow-sm">
-                {isSavingText ? (
-                  <>
-                    <Spinner className="w-3.5 h-3.5" />
-                    <span>Đang lưu...</span>
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Lưu nội dung</span>
-                  </>
-                )}
-              </Button>
-            </>
+          {activeChapter.status && (
+            <span className="whitespace-nowrap flex-shrink-0">{getChapterStatusBadge(activeChapter.status)}</span>
           )}
         </div>
-      </div>
 
-      {/* Content Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-bg/40 rounded-xl border border-border/70 p-4 sm:p-6 lg:p-7">
-        {isEditingText ? (
-          <div className="space-y-3 h-full flex flex-col">
-            <div className="flex items-center justify-between text-xs text-text-muted flex-shrink-0">
-              <span>Đang chỉnh sửa nội dung văn bản</span>
-              <span>
-                {wordCount.toLocaleString()} từ • {textDraft.length.toLocaleString()} ký tự
-              </span>
-            </div>
-            <textarea
-              value={textDraft}
-              onChange={(e) => onTextDraftChange(e.target.value)}
-              placeholder="Nhập hoặc dán nội dung chữ của chương..."
-              className="w-full flex-1 min-h-[320px] p-4 bg-surface border border-accent/40 rounded-xl text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent/20 font-sans shadow-sm"
-              autoFocus
-            />
-          </div>
-        ) : (
-          <div className="w-full">
-            {activeChapter.rawText ? (
-              <article
-                className={`w-full text-text-primary space-y-4 font-sans ${FONT_SIZE_CLASSES[fontSize]}`}
-              >
-                {paragraphs.map((paragraph, idx) => (
-                  <p key={idx} className="text-justify indent-6">
-                    {paragraph}
-                  </p>
-                ))}
-              </article>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span
+            className={`hidden @xl:inline-flex items-center gap-1.5 text-[11px] font-medium ${hasUnsavedChanges ? 'text-warning' : 'text-text-muted'}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? 'bg-warning' : 'bg-success'}`} />
+            {hasUnsavedChanges ? 'Chưa lưu' : 'Đã lưu'}
+          </span>
+          {hasUnsavedChanges && (
+            <Button type="button" variant="secondary" size="sm" onClick={discardChanges} disabled={isSavingText}>
+              Hủy
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={saveIfDirty}
+            disabled={isSavingText || !hasUnsavedChanges}
+            className="text-xs shadow-sm"
+            title="Lưu nội dung (Ctrl+S)"
+          >
+            {isSavingText ? (
+              <>
+                <Spinner className="w-3.5 h-3.5" />
+                <span>Đang lưu...</span>
+              </>
             ) : (
-              <div className="py-20 text-center space-y-3">
-                <div className="w-12 h-12 bg-surface rounded-full flex items-center justify-center mx-auto text-text-muted">
-                  <BookOpen className="w-6 h-6" />
-                </div>
-                <p className="text-base font-semibold text-text-primary">
-                  Chương này chưa có nội dung văn bản
-                </p>
-                <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                  Bấm &quot;Chỉnh sửa text&quot; ở trên để nhập hoặc dán nội dung chữ cho chương này.
-                </p>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => {
-                    onTextDraftChange('');
-                    onSetEditingText(true);
-                  }}
-                >
-                  + Nhập nội dung text ngay
-                </Button>
-              </div>
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Lưu</span>
+              </>
             )}
+          </Button>
+        </div>
+
+        {!isFullscreen && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <AudioPopover
+              rawText={activeChapter.rawText}
+              hasAudio={!!activeChapter.audioUrl}
+              hasUnsavedChanges={hasUnsavedChanges}
+              voiceName={voiceName}
+              speed={audioSpeed}
+              isProcessing={isCurrentProcessing}
+              isGenerating={isCurrentGenerating}
+              isUploading={isCurrentUploading}
+              onSpeedChange={onAudioSpeedChange}
+              onGenerate={(speed) => onGenerateVoice(activeChapter.id, speed)}
+              onUpload={() => onUploadAudio(activeChapter.id)}
+            />
+
+            <button
+              type="button"
+              onClick={onDeleteChapter}
+              className="p-2 rounded-md text-error border border-error/20 hover:bg-error-light transition-colors"
+              title="Xóa chương này"
+              aria-label="Xóa chương này"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="pt-3 border-t border-border flex items-center justify-between text-xs text-text-secondary flex-shrink-0">
-        <button
-          type="button"
-          onClick={() => prevChapter && onSelectChapter(prevChapter.id)}
-          disabled={!prevChapter}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${prevChapter
-            ? 'hover:bg-bg hover:text-text-primary text-text-secondary border border-border bg-surface'
-            : 'opacity-40 cursor-not-allowed border border-transparent'
-            }`}
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>{prevChapter ? `Chương ${prevChapter.chapterOrder}` : 'Chương trước'}</span>
-        </button>
-
-        <span className="font-mono text-text-muted">
-          {activeChapterIndex >= 0 ? `${activeChapterIndex + 1} / ${sortedChapters.length}` : ''}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => nextChapter && onSelectChapter(nextChapter.id)}
-          disabled={!nextChapter}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${nextChapter
-            ? 'hover:bg-bg hover:text-text-primary text-text-secondary border border-border bg-surface'
-            : 'opacity-40 cursor-not-allowed border border-transparent'
-            }`}
-        >
-          <span>{nextChapter ? `Chương ${nextChapter.chapterOrder}` : 'Chương sau'}</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <ChapterTextEditor
+          key={`${activeChapter.id}-${textVersion}`}
+          handleRef={editorRef}
+          initialText={textDraft}
+          initialContent={contentDraft}
+          isFullscreen={isFullscreen}
+          onChange={onDraftChange}
+          onSave={saveIfDirty}
+          onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+          statusBarAudio={
+            activeChapter.audioUrl && (
+              <audio
+                controls
+                src={resolveMediaUrl(activeChapter.audioUrl)}
+                className="order-first w-full h-7 @4xl:order-none @4xl:w-auto @4xl:flex-1 @4xl:min-w-0"
+                preload="metadata"
+                aria-label="Audio của chương"
+              />
+            )
+          }
+          statusBarEnd={
+            !isFullscreen &&
+            activeChapterIndex >= 0 && (
+              <span className="inline-flex items-center gap-1">
+                <ChapterStepButton chapter={prevChapter} direction="prev" onSelect={onSelectChapter} />
+                <span className="text-text-muted whitespace-nowrap">
+                  Chương {activeChapterIndex + 1}/{sortedChapters.length}
+                </span>
+                <ChapterStepButton chapter={nextChapter} direction="next" onSelect={onSelectChapter} />
+              </span>
+            )
+          }
+        />
       </div>
     </div>
   );

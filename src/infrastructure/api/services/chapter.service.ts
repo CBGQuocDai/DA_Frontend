@@ -5,7 +5,10 @@ import type { Chapter } from '@/src/shared/types';
 /** Partial update: only the provided fields are changed. */
 export interface ChapterUpdatePayload {
   title?: string;
+  /** Plain text; also clears any stored formatting */
   rawText?: string;
+  /** Formatted document; the backend derives `rawText` from it, so send one or the other */
+  contentJson?: string;
 }
 
 export const chapterService = {
@@ -25,6 +28,9 @@ export const chapterService = {
     await apiClient.delete(API_ENDPOINTS.CHAPTERS.DELETE(bookId, chapterId));
   },
 
-  generateAudio: async (bookId: number, chapterId: number): Promise<Chapter> =>
-    unwrap(await apiClient.post(API_ENDPOINTS.CHAPTERS.GENERATE_AUDIO(bookId, chapterId))),
+  /** `speed` is the TTS reading-speed multiplier (1 = normal). */
+  generateAudio: async (bookId: number, chapterId: number, speed = 1): Promise<Chapter> =>
+    unwrap(
+      await apiClient.post(API_ENDPOINTS.CHAPTERS.GENERATE_AUDIO(bookId, chapterId), { bookId, chapterId, speed })
+    ),
 };
