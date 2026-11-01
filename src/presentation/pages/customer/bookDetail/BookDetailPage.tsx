@@ -138,7 +138,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
       {payment.isModalOpen && (
         <PaymentModal
           bookTitle={book.title}
-          coverImage={book.coverImage}
+          coverImage={book.coverImage?.url}
           price={price}
           chapterCount={chapters.length}
           payment={payment.payment}

@@ -38,11 +38,15 @@ export const invalidateBookFormOptions = () => {
   optionsPromise = null;
 };
 
-/** Categories, authors and voices used by the book form and filters, fetched once per session. */
-export const useBookFormOptions = (): BookFormOptions => {
+/**
+ * Categories, authors and voices used by the book form and filters, fetched once per session.
+ * Pass `enabled = false` to defer the fetch until the options are actually needed.
+ */
+export const useBookFormOptions = (enabled = true): BookFormOptions => {
   const [options, setOptions] = useState<BookFormOptions>(EMPTY_OPTIONS);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     optionsPromise ??= loadOptions();
     optionsPromise.then((loaded) => {
@@ -51,7 +55,7 @@ export const useBookFormOptions = (): BookFormOptions => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   return options;
 };

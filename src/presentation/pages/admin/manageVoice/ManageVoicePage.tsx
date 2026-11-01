@@ -24,6 +24,7 @@ import {
 } from "@/src/presentation/components/admin/voice";
 import { useAudioPlayer } from "@/src/presentation/hooks/common";
 import { invalidateBookFormOptions } from "@/src/presentation/hooks/admin";
+import { showAlert } from "@/src/presentation/components/common";
 
 const VOICES_PER_PAGE = 10;
 const MENU_HEIGHT = 88;
@@ -130,7 +131,7 @@ export const ManageVoicePage = () => {
       setDeletingVoice(null);
     } catch (error) {
       console.error("Error deleting voice:", error);
-      alert("Có lỗi xảy ra khi xóa giọng đọc");
+      showAlert("Có lỗi xảy ra khi xóa giọng đọc");
     } finally {
       setIsDeleting(false);
     }
@@ -185,7 +186,7 @@ export const ManageVoicePage = () => {
             <>
               <audio
                 key={playingVoice.id}
-                src={resolveMediaUrl(playingVoice.exampleAudio)}
+                src={resolveMediaUrl(playingVoice.exampleAudio.url)}
                 {...player.audioProps}
               />
               <VoicePlayerBar

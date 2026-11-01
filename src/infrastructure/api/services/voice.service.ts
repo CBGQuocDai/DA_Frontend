@@ -2,7 +2,16 @@ import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
 import type { Voice } from '@/src/shared/types';
 
-const multipart = { headers: { 'Content-Type': 'multipart/form-data' } };
+/**
+ * Body of both create (POST) and update (PUT, full replacement). `exampleAudio`
+ * is always required: the storage path returned by uploadService, or on update
+ * the current path to keep the sample.
+ */
+export interface VoicePayload {
+  name: string;
+  description: string;
+  exampleAudio?: string;
+}
 
 export const voiceService = {
   getVoices: async (): Promise<{ content: Voice[]; total: number }> => {
@@ -12,11 +21,11 @@ export const voiceService = {
     return Array.isArray(data) ? { content: data, total: data.length } : data;
   },
 
-  createVoice: async (data: FormData): Promise<Voice> =>
-    unwrap(await apiClient.post(API_ENDPOINTS.VOICES.LIST, data, multipart)),
+  createVoice: async (payload: VoicePayload): Promise<Voice> =>
+    unwrap(await apiClient.post(API_ENDPOINTS.VOICES.LIST, payload)),
 
-  updateVoice: async (voiceId: number, data: FormData): Promise<Voice> =>
-    unwrap(await apiClient.put(API_ENDPOINTS.VOICES.DETAIL(voiceId), data, multipart)),
+  updateVoice: async (voiceId: number, payload: VoicePayload): Promise<Voice> =>
+    unwrap(await apiClient.put(API_ENDPOINTS.VOICES.DETAIL(voiceId), payload)),
 
   deleteVoice: async (voiceId: number): Promise<void> => {
     await apiClient.delete(API_ENDPOINTS.VOICES.DETAIL(voiceId));

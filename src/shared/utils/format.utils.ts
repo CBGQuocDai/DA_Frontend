@@ -15,3 +15,13 @@ export const formatClock = (totalSeconds: number) => {
   const seconds = String(safe % 60).padStart(2, '0');
   return `${minutes}:${seconds}`;
 };
+
+/** 200 -> "3m 20s" */
+export const formatDuration = (seconds?: number | null) => {
+  if (!seconds && seconds !== 0) return null;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins === 0) return `${secs}s`;
+  if (secs === 0) return `${mins}m`;
+  return `${mins}m ${secs}s`;
+};

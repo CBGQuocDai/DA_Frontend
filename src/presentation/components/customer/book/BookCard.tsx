@@ -31,7 +31,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, showStatusBadge = fals
         <BookCover
           title={book.title}
           author={author}
-          coverImage={book.coverImage}
+          coverImage={book.coverImage?.url}
           className="group-hover:scale-105 transition-transform duration-500"
         />
 

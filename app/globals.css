@@ -78,3 +78,72 @@
   --color-accent-hover: #BE123C;
   --color-accent-light: #FFF1F2;
 }
+
+/* Admin chapter text editor (Tiptap) */
+.chapter-sheet {
+  --sheet-x: 1.25rem;
+  --sheet-y: 1.25rem;
+  padding: var(--sheet-y) var(--sheet-x);
+}
+@media (min-width: 640px) {
+  .chapter-sheet {
+    --sheet-x: 3rem;
+    --sheet-y: 1.75rem;
+  }
+}
+.chapter-editor {
+  counter-reset: chapter-page 1;
+}
+.chapter-editor p {
+  margin-inline: -0.5rem;
+  margin-bottom: 0.75rem;
+  padding-inline: 0.5rem;
+  border-radius: 0.25rem;
+}
+.chapter-editor p.has-focus {
+  background-color: color-mix(in srgb, var(--color-accent) 3%, transparent);
+}
+/* A page break reads as the desk showing between two sheets */
+.chapter-editor [data-page-break] {
+  counter-increment: chapter-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  margin: 1.5rem calc(-1 * var(--sheet-x) - 1px);
+  background-color: var(--color-bg);
+  border-block: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.chapter-editor [data-page-break]::after {
+  content: "Trang " counter(chapter-page);
+}
+.chapter-editor [data-page-break]:last-child {
+  margin-bottom: calc(-1 * var(--sheet-y));
+}
+.chapter-editor [data-page-break]:last-child::after {
+  content: "Hết chương";
+}
+.chapter-editor [data-page-break].ProseMirror-selectednode {
+  background-color: var(--color-accent-light);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.chapter-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--color-text-muted);
+}
+.chapter-editor .search-match {
+  background-color: #FEF08A;
+  border-radius: 2px;
+}
+.chapter-editor .search-match-current {
+  background-color: #F59E0B;
+  color: #1A1A1A;
+}

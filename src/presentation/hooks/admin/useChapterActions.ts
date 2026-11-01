@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { chapterService } from '@/src/infrastructure/api/services';
 import type { Chapter, ChapterStatus } from '@/src/shared/types';
+import { showAlert } from '@/src/presentation/components/common';
 
 interface Options {
   bookId: number;
@@ -30,6 +31,7 @@ export const useChapterActions = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [generatingChapterId, setGeneratingChapterId] = useState<number | null>(null);
   const [uploadingChapterId, setUploadingChapterId] = useState<number | null>(null);
+  const [audioSpeed, setAudioSpeed] = useState(1);
 
   const createChapter = async (title: string, chapterOrder: number, rawText: string) => {
     const created = await chapterService.createChapter(bookId, { title, chapterOrder, rawText });
@@ -57,17 +59,17 @@ export const useChapterActions = ({
       setSelectedChapterId(remaining.length > 0 ? remaining[0].id : null);
     } catch (error) {
       console.error('Error deleting chapter:', error);
-      alert('Có lỗi xảy ra khi xóa chương này.');
+      showAlert('Có lỗi xảy ra khi xóa chương này.');
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
   };
 
-  const generateVoice = async (chapterId: number) => {
+  const generateVoice = async (chapterId: number, speed: number) => {
     setGeneratingChapterId(chapterId);
     try {
-      await chapterService.generateAudio(bookId, chapterId);
+      await chapterService.generateAudio(bookId, chapterId, speed);
       setChapters((prev) =>
         prev.map((c) =>
           c.id === chapterId ? { ...c, status: 'PROCESSING_AUDIO' as ChapterStatus } : c
@@ -75,7 +77,7 @@ export const useChapterActions = ({
       );
     } catch (error) {
       console.error('Error generating voice audio:', error);
-      alert('Không thể tạo audio tự động cho chương này. Vui lòng thử lại sau.');
+      showAlert('Không thể tạo audio tự động cho chương này. Vui lòng thử lại sau.');
     } finally {
       setGeneratingChapterId(null);
     }
@@ -108,6 +110,8 @@ export const useChapterActions = ({
   return {
     generatingChapterId,
     uploadingChapterId,
+    audioSpeed,
+    setAudioSpeed,
     addModal: {
       isOpen: showAddModal,
       open: () => setShowAddModal(true),

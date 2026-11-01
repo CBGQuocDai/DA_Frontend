@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
-import { useCopyToClipboard } from '../common';
-
-export type FontSize = 'sm' | 'base' | 'lg';
+import { getValidContent } from '@/src/presentation/components/admin/bookDetail/chapterEditor/plainText';
+import { showAlert } from '@/src/presentation/components/common';
 
 interface Options {
   bookId: number;
@@ -13,54 +12,75 @@ interface Options {
   setChapters: React.Dispatch<React.SetStateAction<Chapter[]>>;
 }
 
-/** Raw-text reading/editing state for the active chapter. */
+/** Text and formatting drafts for the active chapter. */
 export const useChapterEditor = ({ bookId, activeChapter, setChapters }: Options) => {
-  const [isEditingText, setIsEditingText] = useState(false);
   const [textDraft, setTextDraft] = useState('');
+  const [contentDraft, setContentDraft] = useState('');
   const [isSavingText, setIsSavingText] = useState(false);
-  const [fontSize, setFontSize] = useState<FontSize>('base');
-  const { copiedKey, copy } = useCopyToClipboard();
+  // Bumped when the draft must be reloaded into the already open editor
+  const [textVersion, setTextVersion] = useState(0);
+
+  const savedText = activeChapter?.rawText || '';
+  const contentJson = activeChapter?.contentJson;
+  const savedContent = useMemo(() => getValidContent(contentJson, savedText), [contentJson, savedText]);
 
   // Reset the draft whenever a different chapter becomes active
   const [draftChapterId, setDraftChapterId] = useState<number | undefined>(undefined);
+  const [syncedText, setSyncedText] = useState('');
+  const [syncedContent, setSyncedContent] = useState('');
   if (activeChapter && activeChapter.id !== draftChapterId) {
     setDraftChapterId(activeChapter.id);
-    setTextDraft(activeChapter.rawText || '');
-    setIsEditingText(false);
+    setTextDraft(savedText);
+    setContentDraft(savedContent);
+    setSyncedText(savedText);
+    setSyncedContent(savedContent);
+  } else if (savedText !== syncedText || savedContent !== syncedContent) {
+    // The saved text changed (our own save, or a reload picking up OCR results). Follow a
+    // change from elsewhere unless there are edits to keep, so a stale draft can't overwrite it.
+    setSyncedText(savedText);
+    setSyncedContent(savedContent);
+    if (textDraft === syncedText && contentDraft === syncedContent) {
+      setTextDraft(savedText);
+      setContentDraft(savedContent);
+      setTextVersion((version) => version + 1);
+    }
   }
+
+  const updateDraft = (text: string, content: string) => {
+    setTextDraft(text);
+    setContentDraft(content);
+  };
 
   const saveText = async () => {
     if (!activeChapter) return;
     setIsSavingText(true);
     try {
-      await chapterService.updateChapter(bookId, activeChapter.id, { rawText: textDraft });
-      setChapters((prev) =>
-        prev.map((c) => (c.id === activeChapter.id ? { ...c, rawText: textDraft } : c))
+      await chapterService.updateChapter(
+        bookId,
+        activeChapter.id,
+        contentDraft ? { contentJson: contentDraft } : { rawText: textDraft }
       );
-      setIsEditingText(false);
+      setChapters((prev) =>
+        prev.map((c) => (c.id === activeChapter.id ? { ...c, rawText: textDraft, contentJson: contentDraft } : c))
+      );
     } catch (error) {
       console.error('Error saving chapter text:', error);
-      alert('Không thể lưu nội dung chương. Vui lòng thử lại.');
+      showAlert('Không thể lưu nội dung chương. Vui lòng thử lại.');
     } finally {
       setIsSavingText(false);
     }
   };
 
-  const copyText = () => {
-    if (!activeChapter?.rawText) return;
-    copy(activeChapter.rawText, 'chapter-text');
-  };
+  const hasUnsavedChanges = textDraft !== savedText || contentDraft !== savedContent;
 
   return {
-    isEditingText,
-    setIsEditingText,
     textDraft,
-    setTextDraft,
+    contentDraft,
+    savedContent,
+    textVersion,
+    updateDraft,
     isSavingText,
-    fontSize,
-    setFontSize,
-    copyFeedback: copiedKey === 'chapter-text',
+    hasUnsavedChanges,
     saveText,
-    copyText,
   };
 };

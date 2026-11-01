@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { AppDialogHost } from "@/src/presentation/components/common/AppDialog";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -16,7 +17,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={plusJakarta.variable}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+        <AppDialogHost />
+      </body>
     </html>
   );
 }

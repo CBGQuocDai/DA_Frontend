@@ -6,56 +6,29 @@ import type { Book, Chapter } from '@/src/shared/types';
 
 const POLL_INTERVAL_MS = 4000;
 
-/** Loads the book + its chapters, tracks the selected chapter, and polls while audio is processing. */
+/** Loads the book (chapters included), tracks the selected chapter, and polls while audio is processing. */
 export const useBookDetailData = (bookId: number) => {
   const [book, setBook] = useState<Book | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapterId, setSelectedChapterId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = useCallback(
-    async () => {
-      try {
-        const [chaptersRes, bookRes] = await Promise.allSettled([
-          chapterService.getChapters(bookId),
-          bookService.getBookById(bookId),
-        ]);
-
-        const chaptersData: Chapter[] =
-          chaptersRes.status === 'fulfilled' ? chaptersRes.value ?? [] : [];
-        setChapters(chaptersData);
-
-        setSelectedChapterId((prev) => {
-          if (prev && chaptersData.some((c) => c.id === prev)) return prev;
-          return chaptersData.length > 0 ? chaptersData[0].id : null;
-        });
-
-        let bookData: Book | null = bookRes.status === 'fulfilled' ? bookRes.value : null;
-
-        // Fall back to the book embedded in the chapter payload when the detail request failed
-        bookData ??= (chaptersData[0] as (Chapter & { book?: Book }) | undefined)?.book ?? null;
-
-        if (bookData && (!bookData.coverImage || !bookData.coverImage.startsWith('http'))) {
-          try {
-            const listRes = await bookService.getBooks({ page: 0, size: 100 });
-            const found = listRes?.content?.find((b) => b.id === Number(bookId));
-            if (found?.coverImage) {
-              bookData = { ...bookData, coverImage: found.coverImage };
-            }
-          } catch {
-            // ignore
-          }
-        }
-
-        setBook(bookData);
-      } catch (error) {
-        console.error('Error fetching book detail:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [bookId]
-  );
+  const loadData = useCallback(async () => {
+    try {
+      // The detail payload already carries chapters, voice, authors, categories and signed file URLs
+      const { chapters: chaptersData = [], ...bookData } = await bookService.getBookById(bookId);
+      setBook(bookData);
+      setChapters(chaptersData);
+      setSelectedChapterId((prev) => {
+        if (prev && chaptersData.some((c) => c.id === prev)) return prev;
+        return chaptersData.length > 0 ? chaptersData[0].id : null;
+      });
+    } catch (error) {
+      console.error('Error fetching book detail:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [bookId]);
 
   useEffect(() => {
     loadData();

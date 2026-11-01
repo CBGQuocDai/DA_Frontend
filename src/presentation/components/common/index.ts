@@ -2,6 +2,7 @@ export * from './Button';
 export * from './Badge';
 export * from './Modal';
 export * from './ConfirmDeleteModal';
+export { showAlert, showConfirm } from './AppDialog';
 export { MultiSelectCombobox } from './MultiSelectCombobox';
 export { DropSearch } from './DropSearch';
 export { FileDropzone } from './FileDropzone';

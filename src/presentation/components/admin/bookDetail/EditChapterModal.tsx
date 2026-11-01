@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button } from '@/src/presentation/components/common';
+import { Modal, Button, showAlert } from '@/src/presentation/components/common';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
 
@@ -25,7 +25,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!infoForm.title.trim()) {
-      alert('Vui lòng nhập tiêu đề chương');
+      showAlert('Vui lòng nhập tiêu đề chương', 'warning');
       return;
     }
     const title = infoForm.title.trim();
@@ -39,7 +39,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error updating chapter:', error);
-      alert('Không thể cập nhật thông tin chương. Vui lòng thử lại.');
+      showAlert('Không thể cập nhật thông tin chương. Vui lòng thử lại.');
     }
   };
 
