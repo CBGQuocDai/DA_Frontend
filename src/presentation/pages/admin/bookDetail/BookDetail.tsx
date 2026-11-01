@@ -54,7 +54,6 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
     activeChapter,
     setChapters,
     setSelectedChapterId,
-    reload,
     onChapterCreated: () => setMobileTab('detail'),
   });
   const search = useChapterSearch(sortedChapters);
@@ -197,7 +196,7 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
           bookId={bookId}
           onClose={chapterActions.editModal.close}
           chapter={activeChapter}
-          onSuccess={chapterActions.handleEditSuccess}
+          onSuccess={chapterActions.reloadChapters}
         />
       )}
 
