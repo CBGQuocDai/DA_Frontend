@@ -4,4 +4,5 @@ export * from './useCategoryShelves';
 export * from './useCustomerBookDetail';
 export * from './useRelatedBooks';
 export * from './useBookPayment';
+export * from './useBookFavorite';
 export * from './useAuthRedirect';

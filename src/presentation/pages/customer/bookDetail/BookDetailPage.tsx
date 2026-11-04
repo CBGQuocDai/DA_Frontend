@@ -6,6 +6,7 @@ import { CustomerLayout } from '@/src/presentation/layouts';
 import { useAudioPlayer } from '@/src/presentation/hooks/common';
 import {
   useBookPayment,
+  useBookFavorite,
   useCustomerAuth,
   useCustomerBookDetail,
   useRelatedBooks,
@@ -31,8 +32,9 @@ const FREE_PREVIEW_CHAPTERS = 3;
 
 export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId }) => {
   const { book, chapters, isLoading } = useCustomerBookDetail(bookId);
-  const { isAuthenticated } = useCustomerAuth();
+  const { user, isAuthenticated, isReady } = useCustomerAuth();
   const payment = useBookPayment(bookId, isAuthenticated);
+  const favorite = useBookFavorite(bookId, user?.id, isReady);
   const related = useRelatedBooks(book);
   const player = useAudioPlayer();
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
@@ -81,6 +83,10 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           chapterCount={chapters.length}
           totalDuration={totalDuration}
           isPurchased={payment.isPurchased}
+          isFavorite={favorite.isFavorite}
+          isFavoriteBusy={favorite.isBusy}
+          favoriteError={favorite.error}
+          onToggleFavorite={favorite.toggle}
           onPreview={() => chapters[0] && playChapter(chapters[0])}
           onBuy={payment.openPayment}
         />

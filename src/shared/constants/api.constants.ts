@@ -56,4 +56,9 @@ export const API_ENDPOINTS = {
     DETAIL: (paymentId: string | number) => `/payments/${paymentId}`,
     CHECK: (bookId: string | number) => `/payments/check/${bookId}`,
   },
+  
+  BOOK_FAVORITES: {
+    CHECK: (bookId: string | number) => `/book-favorite/${bookId}/check`,
+    TOGGLE: (bookId: string | number) => `/book-favorite/${bookId}/toggle`,
+  },
 } as const;

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Clock, Heart, ListOrdered, Play, ShoppingCart, Star } from 'lucide-react';
+import React from 'react';
+import { Clock, Heart, ListOrdered, LoaderCircle, Play, ShoppingCart, Star } from 'lucide-react';
 import type { Book } from '@/src/shared/types';
 import { formatListeningTime, formatVnd } from '@/src/shared/utils';
 import { BookCover } from '../book';
@@ -14,6 +14,10 @@ interface BookOverviewProps {
   chapterCount: number;
   totalDuration: number;
   isPurchased: boolean;
+  isFavorite: boolean;
+  isFavoriteBusy: boolean;
+  favoriteError: string | null;
+  onToggleFavorite: () => void;
   onPreview: () => void;
   onBuy: () => void;
 }
@@ -26,12 +30,13 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
   chapterCount,
   totalDuration,
   isPurchased,
+  isFavorite,
+  isFavoriteBusy,
+  favoriteError,
+  onToggleFavorite,
   onPreview,
   onBuy,
 }) => {
-  // No favourites API yet, so this only lives for the visit
-  const [isFavorite, setIsFavorite] = useState(false);
-
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-8 md:p-10">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8 lg:gap-12">
@@ -47,18 +52,26 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
               </h1>
               <button
                 type="button"
-                onClick={() => setIsFavorite((value) => !value)}
-                className={`p-2.5 rounded-full border transition-all ${
+                onClick={onToggleFavorite}
+                disabled={isFavoriteBusy}
+                aria-busy={isFavoriteBusy}
+                className={`p-2.5 rounded-full border transition-all disabled:opacity-50 disabled:cursor-wait ${
                   isFavorite
                     ? 'bg-accent-light border-rose-200 text-accent shadow-sm'
                     : 'bg-white border-slate-200 text-slate-400 hover:text-accent hover:border-rose-200'
                 }`}
                 aria-pressed={isFavorite}
-                aria-label={isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+                aria-label={isFavoriteBusy ? 'Đang cập nhật yêu thích' : isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
               >
-                <Heart className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                {isFavoriteBusy ? (
+                  <LoaderCircle className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Heart className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                )}
               </button>
             </div>
+
+            {favoriteError && <p role="alert" className="mt-2 text-xs text-red-600">{favoriteError}</p>}
 
             <div className="mt-3 space-y-1 text-sm text-slate-600">
               <p>
