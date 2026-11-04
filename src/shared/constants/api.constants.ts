@@ -67,4 +67,11 @@ export const API_ENDPOINTS = {
     CHECK: (bookId: string | number) => `/book-favorite/${bookId}/check`,
     TOGGLE: (bookId: string | number) => `/book-favorite/${bookId}/toggle`,
   },
+
+  REVIEWS: {
+    CREATE: '/review',
+    PAGE: (bookId: number) => `/review/${bookId}/page`,
+    SUMMARY: (bookId: number) => `/review/${bookId}/summary`,
+    MINE: (bookId: number) => `/review/${bookId}/me`,
+  },
 } as const;

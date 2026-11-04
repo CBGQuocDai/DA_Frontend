@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Clock, Heart, ListOrdered, LoaderCircle, Play, ShoppingCart, Star } from 'lucide-react';
-import type { Book } from '@/src/shared/types';
+import { ArrowDown, Clock, Heart, ListOrdered, LoaderCircle, Play, ShoppingCart } from 'lucide-react';
+import { StarRating } from '@/src/presentation/components/common';
+import type { Book, ReviewSummary } from '@/src/shared/types';
 import { formatListeningTime, formatVnd } from '@/src/shared/utils';
 import { BookCover } from '../book';
 
@@ -20,6 +21,9 @@ interface BookOverviewProps {
   onToggleFavorite: () => void;
   onPreview: () => void;
   onBuy: () => void;
+  onViewReviews: () => void;
+  reviewSummary: ReviewSummary | null;
+  isReviewSummaryLoading: boolean;
 }
 
 export const BookOverview: React.FC<BookOverviewProps> = ({
@@ -36,7 +40,12 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
   onToggleFavorite,
   onPreview,
   onBuy,
+  onViewReviews,
+  reviewSummary,
+  isReviewSummaryLoading,
 }) => {
+  const averageRating = reviewSummary?.averageRating ?? 0;
+  const ratingCount = reviewSummary?.totalReviews ?? 0;
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-8 md:p-10">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8 lg:gap-12">
@@ -97,17 +106,18 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
               )}
             </div>
 
-            <div className="flex items-center justify-center md:justify-start gap-2 mt-4 text-xs">
-              <Star className="w-4 h-4 text-amber-400" fill="currentColor" />
-              {book.averageRating ? (
+            <button type="button" onClick={onViewReviews} className="mt-4 flex w-full flex-wrap items-center justify-center gap-2 rounded-md text-xs transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:w-auto md:justify-start">
+              {reviewSummary && <StarRating value={averageRating} className="h-3.5 w-3.5" />}
+              {isReviewSummaryLoading ? <span className="text-slate-400">Đang tải đánh giá…</span> : !reviewSummary ? null : ratingCount > 0 ? (
                 <>
-                  <span className="font-bold text-slate-900">{book.averageRating.toFixed(1)}</span>
-                  <span className="text-slate-400">({book.ratingCount ?? 0} đánh giá)</span>
+                  <span className="font-bold text-slate-900">{averageRating.toFixed(1)}</span>
+                  <span className="text-slate-400">({ratingCount} đánh giá)</span>
                 </>
               ) : (
                 <span className="text-slate-400">Chưa có đánh giá</span>
               )}
-            </div>
+              <span className="inline-flex items-center gap-1 font-semibold text-accent">Xem đánh giá<ArrowDown className="h-3 w-3" /></span>
+            </button>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3.5">

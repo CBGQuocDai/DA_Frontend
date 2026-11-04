@@ -5,4 +5,5 @@ export * from './useCustomerBookDetail';
 export * from './useRelatedBooks';
 export * from './useBookPayment';
 export * from './useBookFavorite';
+export * from './useBookReviews';
 export * from './useAuthRedirect';

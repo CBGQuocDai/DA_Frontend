@@ -7,6 +7,7 @@ import { useAudioPlayer } from '@/src/presentation/hooks/common';
 import {
   useBookPayment,
   useBookFavorite,
+  useBookReviews,
   useCustomerAuth,
   useCustomerBookDetail,
   useRelatedBooks,
@@ -19,6 +20,7 @@ import {
   BookDetailSkeleton,
   BookIntroduction,
   BookOverview,
+  BookReviews,
   ChapterGrid,
   DetailSection,
   PaymentModal,
@@ -38,6 +40,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   const { user, isAuthenticated, isReady } = useCustomerAuth();
   const payment = useBookPayment(bookId, isAuthenticated);
   const favorite = useBookFavorite(bookId, user?.id, isReady);
+  const reviews = useBookReviews(bookId, user?.role === 'CUSTOMER' ? user.id : undefined, isReady);
   const related = useRelatedBooks(book);
   const player = useAudioPlayer();
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
@@ -61,6 +64,11 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   const startListening = () => {
     payment.closePayment();
     if (firstChapter) playChapter(firstChapter);
+  };
+
+  const scrollToReviews = () => {
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    document.getElementById('book-reviews')?.scrollIntoView({ behavior, block: 'start' });
   };
 
   return (
@@ -91,6 +99,9 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           onToggleFavorite={favorite.toggle}
           onPreview={() => firstChapter && playChapter(firstChapter)}
           onBuy={payment.openPayment}
+          onViewReviews={scrollToReviews}
+          reviewSummary={reviews.summary}
+          isReviewSummaryLoading={reviews.isSummaryLoading}
         />
 
         <BookIntroduction description={book.description} tags={categories.map((category) => category.name)} />
@@ -111,6 +122,16 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           isPlaying={player.isPlaying}
           onPlay={playChapter}
           onLocked={payment.openPayment}
+        />
+
+        <BookReviews
+          key={`${bookId}:${user?.id ?? 'guest'}`}
+          bookId={bookId}
+          state={reviews}
+          user={user}
+          isReady={isReady}
+          isPurchased={payment.isPurchased}
+          onBuy={payment.openPayment}
         />
 
         {(related.isLoading || related.sameAuthor.length > 0) && (

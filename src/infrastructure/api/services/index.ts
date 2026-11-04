@@ -7,4 +7,5 @@ export * from "./author.service";
 export * from "./chapter.service";
 export * from "./customerBook.service";
 export * from "./payment.service";
+export * from "./review.service";
 export * from "./upload.service";
