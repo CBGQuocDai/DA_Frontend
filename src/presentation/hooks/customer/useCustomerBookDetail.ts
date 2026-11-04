@@ -1,34 +1,44 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { bookService, chapterService } from '@/src/infrastructure/api/services';
-import type { Book, Chapter } from '@/src/shared/types';
+import { useCallback, useState } from 'react';
+import { customerBookService } from '@/src/infrastructure/api/services';
 import { useAsyncData } from '../common';
 
-interface BookDetailData {
-  book: Book | null;
-  chapters: Chapter[];
-}
+const CHAPTER_PAGE_SIZE = 10;
 
-/** Loads a book and its chapters for the customer detail page. */
+/** Book metadata stays loaded while only the chapter list changes pages. */
 export const useCustomerBookDetail = (bookId: number) => {
-  const load = useCallback(async (): Promise<BookDetailData> => {
-    const [bookRes, chaptersRes] = await Promise.allSettled([
-      bookService.getBookById(bookId),
-      chapterService.getChapters(bookId),
-    ]);
-    return {
-      book: bookRes.status === 'fulfilled' ? bookRes.value : null,
-      chapters: chaptersRes.status === 'fulfilled' ? chaptersRes.value ?? [] : [],
-    };
-  }, [bookId]);
-
-  const { data, isLoading } = useAsyncData(load);
-
-  const chapters = useMemo(
-    () => [...(data?.chapters ?? [])].sort((a, b) => a.chapterOrder - b.chapterOrder),
-    [data]
+  const [pageState, setPageState] = useState({ bookId, page: 0 });
+  const page = pageState.bookId === bookId ? pageState.page : 0;
+  const loadOverview = useCallback(() => customerBookService.getOverview(bookId), [bookId]);
+  const overview = useAsyncData(loadOverview);
+  const loadChapters = useCallback(
+    () => customerBookService.getChaptersPage(bookId, page, CHAPTER_PAGE_SIZE),
+    [bookId, page]
   );
+  const chapterPage = useAsyncData(loadChapters);
+  const chapterCount = chapterPage.data?.total ?? overview.data?.chapterCount ?? 0;
+  const totalPage = chapterPage.data?.totalPage ?? Math.ceil(chapterCount / CHAPTER_PAGE_SIZE);
 
-  return { book: data?.book ?? null, chapters, isLoading };
+  const goToPage = useCallback((nextPage: number) => {
+    if (Number.isInteger(nextPage) && nextPage >= 0 && nextPage < totalPage) {
+      setPageState({ bookId, page: nextPage });
+    }
+  }, [bookId, totalPage]);
+
+  return {
+    book: overview.data?.book ?? null,
+    chapterCount,
+    totalDuration: overview.data?.totalDuration ?? 0,
+    firstChapter: overview.data?.firstChapter ?? null,
+    chapters: chapterPage.data?.content ?? [],
+    isLoading: overview.isLoading,
+    isChaptersLoading: chapterPage.isLoading,
+    chaptersError: chapterPage.error ? 'Không thể tải danh sách chương. Vui lòng thử lại.' : null,
+    reloadChapters: chapterPage.reload,
+    page,
+    pageSize: CHAPTER_PAGE_SIZE,
+    totalPage,
+    goToPage,
+  };
 };

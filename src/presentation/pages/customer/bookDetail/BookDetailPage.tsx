@@ -31,7 +31,10 @@ import { getBookAuthorNames, getBookCategories, getBookPrice } from '@/src/share
 const FREE_PREVIEW_CHAPTERS = 3;
 
 export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId }) => {
-  const { book, chapters, isLoading } = useCustomerBookDetail(bookId);
+  const {
+    book, chapters, chapterCount, totalDuration, firstChapter, isLoading,
+    isChaptersLoading, chaptersError, reloadChapters, page, pageSize, totalPage, goToPage,
+  } = useCustomerBookDetail(bookId);
   const { user, isAuthenticated, isReady } = useCustomerAuth();
   const payment = useBookPayment(bookId, isAuthenticated);
   const favorite = useBookFavorite(bookId, user?.id, isReady);
@@ -46,7 +49,6 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   const authorName = getBookAuthorNames(book);
   const categories = getBookCategories(book);
   const price = getBookPrice(book) ?? 0;
-  const totalDuration = chapters.reduce((sum, chapter) => sum + (chapter.duration ?? 0), 0);
 
   const isChapterUnlocked = (index: number) => payment.isPurchased || index < FREE_PREVIEW_CHAPTERS;
   const isPreviewChapter = (index: number) => !payment.isPurchased && index < FREE_PREVIEW_CHAPTERS;
@@ -58,7 +60,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
 
   const startListening = () => {
     payment.closePayment();
-    if (chapters[0]) playChapter(chapters[0]);
+    if (firstChapter) playChapter(firstChapter);
   };
 
   return (
@@ -80,14 +82,14 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           authorName={authorName}
           categoryName={categories[0]?.name}
           price={price}
-          chapterCount={chapters.length}
+          chapterCount={chapterCount}
           totalDuration={totalDuration}
           isPurchased={payment.isPurchased}
           isFavorite={favorite.isFavorite}
           isFavoriteBusy={favorite.isBusy}
           favoriteError={favorite.error}
           onToggleFavorite={favorite.toggle}
-          onPreview={() => chapters[0] && playChapter(chapters[0])}
+          onPreview={() => firstChapter && playChapter(firstChapter)}
           onBuy={payment.openPayment}
         />
 
@@ -95,6 +97,14 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
 
         <ChapterGrid
           chapters={chapters}
+          total={chapterCount}
+          page={page}
+          pageSize={pageSize}
+          totalPage={totalPage}
+          isLoading={isChaptersLoading}
+          error={chaptersError}
+          onRetry={reloadChapters}
+          onPageChange={goToPage}
           isChapterUnlocked={isChapterUnlocked}
           isPreviewChapter={isPreviewChapter}
           activeChapterId={activeChapter?.id ?? null}
@@ -146,7 +156,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           bookTitle={book.title}
           coverImage={book.coverImage?.url}
           price={price}
-          chapterCount={chapters.length}
+          chapterCount={chapterCount}
           payment={payment.payment}
           isLoading={payment.isCreating}
           isPaid={payment.isPaid}

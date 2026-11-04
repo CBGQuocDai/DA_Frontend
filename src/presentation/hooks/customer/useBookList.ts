@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { bookService } from '@/src/infrastructure/api/services';
+import { customerBookService } from '@/src/infrastructure/api/services';
 import { useAsyncData } from '../common';
 
 interface UseBookListOptions {
@@ -16,7 +16,7 @@ export const useBookList = ({ pageSize = 8, bookName }: UseBookListOptions = {})
   const page = pageState.bookName === bookName ? pageState.page : 0;
 
   const load = useCallback(
-    () => bookService.getBooks({ page, size: pageSize, bookName: bookName || undefined }),
+    () => customerBookService.getBooks({ page, size: pageSize, bookName: bookName || undefined }),
     [page, pageSize, bookName]
   );
   const { data, error, isLoading, reload } = useAsyncData(load);

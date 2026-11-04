@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { bookService } from '@/src/infrastructure/api/services';
+import { customerBookService } from '@/src/infrastructure/api/services';
 import type { Book } from '@/src/shared/types';
 import { getBookAuthors, getBookCategories } from '@/src/shared/utils';
 import { useAsyncData } from '../common';
@@ -26,10 +26,10 @@ export const useRelatedBooks = (book: Book | null) => {
 
     const [authorRes, categoryRes] = await Promise.allSettled([
       authorId != null
-        ? bookService.getBooks({ page: 0, size: RELATED_LIMIT, authorId })
+        ? customerBookService.getBooks({ page: 0, size: RELATED_LIMIT, authorId })
         : Promise.resolve(null),
       categoryId != null
-        ? bookService.getBooksByCategory(categoryId, { page: 0, size: RELATED_LIMIT })
+        ? customerBookService.getBooksByCategory(categoryId, { page: 0, size: RELATED_LIMIT })
         : Promise.resolve(null),
     ]);
 

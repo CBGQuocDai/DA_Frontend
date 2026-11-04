@@ -54,7 +54,13 @@ export const API_ENDPOINTS = {
   PAYMENTS: {
     CREATE: '/payments',
     DETAIL: (paymentId: string | number) => `/payments/${paymentId}`,
-    CHECK: (bookId: string | number) => `/payments/check/${bookId}`,
+  },
+
+  CUSTOMER_BOOKS: {
+    LIST: '/books/catalog',
+    OVERVIEW: (bookId: string | number) => `/books/${bookId}/overview`,
+    CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/page`,
+    CHECK_OWNERSHIP: (bookId: string | number) => `/customer/books/${bookId}/check`,
   },
   
   BOOK_FAVORITES: {

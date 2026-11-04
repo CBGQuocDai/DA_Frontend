@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { bookService, categoryService } from '@/src/infrastructure/api/services';
+import { customerBookService, categoryService } from '@/src/infrastructure/api/services';
 import type { Book, Category } from '@/src/shared/types';
 import { useAsyncData } from '../common';
 
@@ -17,7 +17,7 @@ const loadShelves = async (): Promise<CategoryShelf[]> => {
   const categories = await categoryService.getCategories();
   const results = await Promise.allSettled(
     categories.map((category) =>
-      bookService.getBooksByCategory(category.id, { page: 0, size: BOOKS_PER_SHELF })
+      customerBookService.getBooksByCategory(category.id, { page: 0, size: BOOKS_PER_SHELF })
     )
   );
 
