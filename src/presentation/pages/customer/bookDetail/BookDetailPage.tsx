@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { CustomerLayout } from '@/src/presentation/layouts';
 import { useAudioPlayer } from '@/src/presentation/hooks/common';
 import {
@@ -27,7 +26,7 @@ import {
 } from '@/src/presentation/components/customer/bookDetail';
 import { ROUTES } from '@/src/shared/constants';
 import type { Chapter } from '@/src/shared/types';
-import { getBookAuthorNames, getBookCategories, getBookPrice } from '@/src/shared/utils';
+import { getBookAuthorNames, getBookAuthors, getBookCategories, getBookPrice } from '@/src/shared/utils';
 
 /** The first chapters can be listened to before buying the book. */
 const FREE_PREVIEW_CHAPTERS = 3;
@@ -50,6 +49,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   }
 
   const authorName = getBookAuthorNames(book);
+  const authors = getBookAuthors(book);
   const categories = getBookCategories(book);
   const price = getBookPrice(book) ?? 0;
 
@@ -136,7 +136,12 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
 
         {(related.isLoading || related.sameAuthor.length > 0) && (
           <DetailSection>
-            <BookShelf title="Cùng tác giả" books={related.sameAuthor} isLoading={related.isLoading} />
+            <BookShelf
+              title="Cùng tác giả"
+              books={related.sameAuthor}
+              isLoading={related.isLoading}
+              viewAllHref={authors[0] ? `${ROUTES.CUSTOMER.STORE}?author=${authors[0].id}` : undefined}
+            />
           </DetailSection>
         )}
 
@@ -146,16 +151,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
               title="Đầu sách tương tự"
               books={related.sameCategory}
               isLoading={related.isLoading}
-              actions={
-                categories[0] && (
-                  <Link
-                    href={`${ROUTES.CUSTOMER.STORE}?category=${categories[0].id}`}
-                    className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-accent transition-colors"
-                  >
-                    Xem tất cả →
-                  </Link>
-                )
-              }
+              viewAllHref={categories[0] ? `${ROUTES.CUSTOMER.STORE}?category=${categories[0].id}` : undefined}
             />
           </DetailSection>
         )}

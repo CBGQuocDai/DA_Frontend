@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import type { Book } from '@/src/shared/types';
 import { EmptyState, ScrollButtons } from '@/src/presentation/components/common';
-import { BOOK_CARD_WIDTH, BookCard } from './BookCard';
+import { BookCard } from './BookCard';
 import { BookRowSkeleton } from './BookCardSkeleton';
+import styles from './BookShelf.module.css';
 
-const SCROLL_STEP_PX = 320;
+const BOOKS_PER_SHELF = 10;
 
 interface BookShelfProps {
   title: React.ReactNode;
@@ -15,12 +16,12 @@ interface BookShelfProps {
   isLoading?: boolean;
   /** Rendered next to the title, e.g. a book count. */
   badge?: React.ReactNode;
-  /** Rendered before the scroll buttons, e.g. a "Xem tất cả" link. */
+  /** Destination for the full list with this shelf's filters. */
+  viewAllHref?: string;
+  /** Additional header actions. */
   actions?: React.ReactNode;
   emptyMessage?: string;
   showStatusBadge?: boolean;
-  /** Large arrow on the right edge, revealed on hover. */
-  showEdgeArrow?: boolean;
   id?: string;
   className?: string;
 }
@@ -31,24 +32,53 @@ export const BookShelf: React.FC<BookShelfProps> = ({
   books,
   isLoading = false,
   badge,
+  viewAllHref,
   actions,
   emptyMessage = 'Chưa có sách nào',
   showStatusBadge = false,
-  showEdgeArrow = false,
   id,
   className = '',
 }) => {
   const rowRef = useRef<HTMLDivElement>(null);
+  const visibleBooks = books.slice(0, BOOKS_PER_SHELF);
+  const [scrollState, setScrollState] = useState({ left: false, right: false });
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row || isLoading) return;
+
+    const updateScrollState = () => {
+      const left = row.scrollLeft > 1;
+      const right = row.scrollLeft + row.clientWidth < row.scrollWidth - 1;
+      setScrollState((previous) =>
+        previous.left === left && previous.right === right ? previous : { left, right }
+      );
+    };
+
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(row);
+    row.addEventListener('scroll', updateScrollState, { passive: true });
+    return () => {
+      observer.disconnect();
+      row.removeEventListener('scroll', updateScrollState);
+    };
+  }, [isLoading, visibleBooks.length]);
 
   const scroll = (direction: 'left' | 'right') => {
-    rowRef.current?.scrollBy({
-      left: direction === 'left' ? -SCROLL_STEP_PX : SCROLL_STEP_PX,
+    const row = rowRef.current;
+    const card = row?.firstElementChild;
+    if (!row || !card) return;
+
+    const gap = parseFloat(window.getComputedStyle(row).columnGap) || 0;
+    const step = card.getBoundingClientRect().width + gap;
+    row.scrollBy({
+      left: direction === 'left' ? -step : step,
       behavior: 'smooth',
     });
   };
 
   return (
-    <section id={id} className={`relative group/shelf ${className}`}>
+    <section id={id} className={`relative ${className}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{title}</h2>
@@ -56,7 +86,14 @@ export const BookShelf: React.FC<BookShelfProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {actions}
-          {books.length > 0 && <ScrollButtons onScroll={scroll} className="hidden sm:flex" />}
+          {viewAllHref && (
+            <Link
+              href={viewAllHref}
+              className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-accent transition-colors"
+            >
+              Xem tất cả
+            </Link>
+          )}
         </div>
       </div>
 
@@ -68,28 +105,28 @@ export const BookShelf: React.FC<BookShelfProps> = ({
         ) : (
           <div
             ref={rowRef}
-            className="flex items-stretch gap-4 sm:gap-5 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className={`${styles.row} overflow-x-auto snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
           >
-            {books.map((book) => (
+            {visibleBooks.map((book) => (
               <BookCard
                 key={book.id}
                 book={book}
                 showStatusBadge={showStatusBadge}
-                className={BOOK_CARD_WIDTH}
+                className="min-w-0 w-full"
               />
             ))}
           </div>
         )}
 
-        {showEdgeArrow && !isLoading && books.length > 3 && (
-          <button
-            type="button"
-            onClick={() => scroll('right')}
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 w-9 h-9 rounded-full bg-white/95 hover:bg-accent text-slate-700 hover:text-white border border-slate-200 shadow-lg shadow-slate-300/60 items-center justify-center transition-all opacity-0 group-hover/shelf:opacity-100 hover:scale-110 active:scale-95"
-            aria-label="Xem tiếp"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+        {!isLoading && visibleBooks.length > 1 && (scrollState.left || scrollState.right) && (
+          <div className={styles.controlsArea}>
+            <ScrollButtons
+              onScroll={scroll}
+              canScrollLeft={scrollState.left}
+              canScrollRight={scrollState.right}
+              className="absolute -left-2 -right-2 top-1/2 -translate-y-1/2 z-20 sm:-left-4 sm:-right-4"
+            />
+          </div>
         )}
       </div>
     </section>

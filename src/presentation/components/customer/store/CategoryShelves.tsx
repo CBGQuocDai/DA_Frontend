@@ -4,6 +4,7 @@ import React from 'react';
 import type { CategoryShelf } from '@/src/presentation/hooks/customer';
 import { BookRowSkeleton, BookShelf } from '../book';
 import { EmptyState, ErrorState } from '@/src/presentation/components/common';
+import { ROUTES } from '@/src/shared/constants';
 
 export const categorySectionId = (categoryId: number | string) => `category-${categoryId}`;
 
@@ -48,7 +49,7 @@ export const CategoryShelves: React.FC<CategoryShelvesProps> = ({ shelves, isLoa
           title={category.name}
           books={books}
           showStatusBadge
-          showEdgeArrow
+          viewAllHref={`${ROUTES.CUSTOMER.STORE}?category=${category.id}`}
           emptyMessage={`Chưa có sách nào trong danh mục "${category.name}"`}
           badge={
             <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
