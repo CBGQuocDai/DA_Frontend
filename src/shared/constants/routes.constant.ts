@@ -16,6 +16,7 @@ export const ROUTES = {
     FORGOT_PASSWORD: '/customer/forgot-password',
     STORE: '/customer/store',
     AUTHORS: '/customer/authors',
+    AUTHOR_DETAIL: (id: string) => `/customer/authors/${encodeURIComponent(id)}`,
     PROFILE: '/customer/profile',
     BOOK_DETAIL: (id: number | string) => `/customer/books/${id}`,
   },

@@ -30,6 +30,10 @@ export const API_ENDPOINTS = {
 
   CATEGORIES: '/categories',
   AUTHORS: '/authors',
+  CUSTOMER_AUTHORS: {
+    PAGE: '/authors/page',
+    DETAIL: (authorId: string | number) => `/authors/${authorId}`,
+  },
 
   VOICES: {
     LIST: '/voice',

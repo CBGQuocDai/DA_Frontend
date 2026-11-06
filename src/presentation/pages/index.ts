@@ -5,6 +5,7 @@ export { ManageVoicePage } from './admin/manageVoice/ManageVoicePage';
 export { ViewStatisticPage } from './admin/viewStatistic/ViewStatisticPage';
 export { CustomerHomePage } from './customer/home/HomePage';
 export { CustomerStorePage } from './customer/store/StorePage';
+export { CustomerAuthorsPage } from './customer/authors/AuthorsPage';
 export { CustomerBookDetailPage } from './customer/bookDetail/BookDetailPage';
 export { CustomerProfilePage } from './customer/profile/ProfilePage';
 export { CustomerLoginPage } from './customer/auth/CustomerLoginPage';
