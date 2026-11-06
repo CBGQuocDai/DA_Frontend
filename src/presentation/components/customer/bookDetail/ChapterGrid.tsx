@@ -22,7 +22,7 @@ interface ChapterGridProps {
   isPreviewChapter: (index: number) => boolean;
   activeChapterId: number | null;
   isPlaying: boolean;
-  onPlay: (chapter: Chapter) => void;
+  onPlay: (chapter: Chapter, index: number) => void;
   onLocked: () => void;
 }
 
@@ -72,7 +72,7 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
           const globalIndex = page * pageSize + index;
           const isUnlocked = isChapterUnlocked(globalIndex);
           const isActive = chapter.id === activeChapterId;
-          const handleClick = () => (isUnlocked ? onPlay(chapter) : onLocked());
+          const handleClick = () => (isUnlocked ? onPlay(chapter, globalIndex) : onLocked());
 
           return (
             <div

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { CustomerLayout } from '@/src/presentation/layouts';
 import { useAudioPlayer } from '@/src/presentation/hooks/common';
 import {
@@ -35,6 +35,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   const {
     book, chapters, chapterCount, totalDuration, firstChapter, isLoading,
     isChaptersLoading, chaptersError, reloadChapters, page, pageSize, totalPage, goToPage,
+    chapterPlayback, playbackState,
   } = useCustomerBookDetail(bookId);
   const { user, isAuthenticated, isReady } = useCustomerAuth();
   const payment = useBookPayment(bookId, isAuthenticated);
@@ -42,7 +43,10 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   const reviews = useBookReviews(bookId, user?.role === 'CUSTOMER' ? user.id : undefined, isReady);
   const related = useRelatedBooks(book);
   const player = useAudioPlayer();
-  const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
+  const activeChapter = playbackState.current?.chapter ?? null;
+
+  // Invalidate an in-flight chapter change when the book, rights or mounted page changes.
+  useEffect(() => () => chapterPlayback.cancelNavigation(), [chapterPlayback, payment.isPurchased]);
 
   if (isLoading || !book) {
     return <CustomerLayout>{isLoading ? <BookDetailSkeleton /> : <BookDetailNotFound />}</CustomerLayout>;
@@ -55,15 +59,36 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
 
   const isChapterUnlocked = (index: number) => payment.isPurchased || index < FREE_PREVIEW_CHAPTERS;
   const isPreviewChapter = (index: number) => !payment.isPurchased && index < FREE_PREVIEW_CHAPTERS;
+  const activeChapterIndex = playbackState.current?.index ?? -1;
 
-  const playChapter = (chapter: Chapter) => {
+  const playChapter = (chapter: Chapter, index: number) => {
+    if (index < 0 || index >= chapterCount) return;
+    if (!isChapterUnlocked(index)) {
+      void payment.openPayment();
+      return;
+    }
     if (chapter.id === activeChapter?.id) player.togglePlay();
-    else setActiveChapter(chapter);
+    else player.pause();
+    chapterPlayback.select(chapter, index);
+  };
+
+  const navigateChapter = (direction: 'previous' | 'next') => {
+    void chapterPlayback.navigate(direction, {
+      total: chapterCount,
+      isUnlocked: isChapterUnlocked,
+      onLocked: () => { void payment.openPayment(); },
+      beforeChange: player.pause,
+    });
+  };
+
+  const closePlayer = () => {
+    player.pause();
+    chapterPlayback.close();
   };
 
   const startListening = () => {
     payment.closePayment();
-    if (firstChapter) playChapter(firstChapter);
+    if (firstChapter) playChapter(firstChapter, 0);
   };
 
   const scrollToReviews = () => {
@@ -97,7 +122,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           isFavoriteBusy={favorite.isBusy}
           favoriteError={favorite.error}
           onToggleFavorite={favorite.toggle}
-          onPreview={() => firstChapter && playChapter(firstChapter)}
+          onPreview={() => firstChapter && playChapter(firstChapter, 0)}
           onBuy={payment.openPayment}
           onViewReviews={scrollToReviews}
           reviewSummary={reviews.summary}
@@ -160,11 +185,34 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
       {activeChapter && (
         <AudioPlayerBar
           chapter={activeChapter}
+          bookTitle={book.title}
+          coverImage={book.coverImage?.url}
           subtitle={`${book.title} • ${authorName}`}
           player={player}
+          chapterList={{
+            chapters,
+            total: chapterCount,
+            page,
+            pageSize,
+            totalPage,
+            isLoading: isChaptersLoading,
+            error: chaptersError,
+            onRetry: reloadChapters,
+            onPageChange: goToPage,
+            isChapterUnlocked,
+            onPlay: playChapter,
+          }}
+          nextBook={related.sameCategory[0] ?? related.sameAuthor[0]}
+          isFavorite={favorite.isFavorite}
+          isFavoriteBusy={favorite.isBusy}
+          onToggleFavorite={favorite.toggle}
+          onPreviousChapter={activeChapterIndex > 0 ? () => navigateChapter('previous') : undefined}
+          onNextChapter={activeChapterIndex + 1 < chapterCount ? () => navigateChapter('next') : undefined}
+          isChangingChapter={playbackState.isNavigating}
+          chapterNavigationError={playbackState.error}
           showBuyButton={!payment.isPurchased}
           onBuy={payment.openPayment}
-          onClose={() => setActiveChapter(null)}
+          onClose={closePlayer}
         />
       )}
 
