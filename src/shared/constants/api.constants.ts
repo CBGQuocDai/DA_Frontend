@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     CUSTOMER_REGISTER: '/customer/register',
     CUSTOMER_PROFILE: '/customer/profile',
     CHANGE_PASSWORD: '/customer/profile/change-password',
+    ADMIN_CHANGE_PASSWORD: '/admin/change-password',
   },
 
   BOOKS: {
@@ -28,8 +29,17 @@ export const API_ENDPOINTS = {
     BY_CATEGORY: (categoryId: string | number) => `/books/category/${categoryId}`,
   },
 
-  CATEGORIES: '/categories',
-  AUTHORS: '/authors',
+  CATEGORIES: {
+    LIST: '/categories',
+    SEARCH: '/categories/search',
+    DETAIL: (id: string | number) => `/categories/${id}`,
+  },
+
+  AUTHORS: {
+    LIST: '/authors',
+    SEARCH: '/authors/search',
+    DETAIL: (id: string | number) => `/authors/${id}`,
+  },
 
   VOICES: {
     LIST: '/voice',

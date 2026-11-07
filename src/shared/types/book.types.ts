@@ -36,6 +36,8 @@ export interface Chapter {
   /** Editor document with formatting; empty when the chapter is plain text */
   contentJson?: string;
   status?: ChapterStatus;
+  /** TTS speed of the last audio generation; null for chapters created before it was stored */
+  readingSpeed?: number | null;
 }
 
 export interface Voice {
@@ -58,7 +60,7 @@ export interface BookAuthor {
 export interface Author {
   id: number;
   fullName?: string;
-  avatar?: string;
+  avatar?: StoredFile | null;
   bio?: string;
 }
 

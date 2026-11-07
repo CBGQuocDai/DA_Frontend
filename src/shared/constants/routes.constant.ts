@@ -5,6 +5,8 @@ export const ROUTES = {
     MANAGE_BOOK: '/admin/manage-book',
     BOOK_DETAIL: (id: number | string) => `/admin/books/${id}`,
     MANAGE_VOICE: '/admin/manage-voice',
+    MANAGE_AUTHOR: '/admin/manage-author',
+    MANAGE_CATEGORY: '/admin/manage-category',
     STATISTICS: '/admin/statistics',
   },
   CUSTOMER: {

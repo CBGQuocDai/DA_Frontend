@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ROUTES } from '@/src/shared/constants';
-import { BarChart3, BookOpen, Mic, LogOut, Radio } from 'lucide-react';
+import { BarChart3, BookOpen, Mic, LogOut, PenLine, Radio, Tags } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -20,6 +20,16 @@ const navItems = [
     label: 'Quản lý sách',
     href: ROUTES.ADMIN.MANAGE_BOOK,
     icon: <BookOpen className="w-5 h-5" />,
+  },
+  {
+    label: 'Quản lý tác giả',
+    href: ROUTES.ADMIN.MANAGE_AUTHOR,
+    icon: <PenLine className="w-5 h-5" />,
+  },
+  {
+    label: 'Quản lý thể loại',
+    href: ROUTES.ADMIN.MANAGE_CATEGORY,
+    icon: <Tags className="w-5 h-5" />,
   },
   {
     label: 'Quản lý giọng nói',

@@ -59,7 +59,6 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
   onToggleSidebar,
   onEditInfo,
   onGenerateVoice,
-  onAudioSpeedChange,
   onUploadAudio,
   onDeleteChapter,
   onDraftChange,
@@ -194,11 +193,10 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
               hasAudio={!!activeChapter.audioUrl}
               hasUnsavedChanges={hasUnsavedChanges}
               voiceName={voiceName}
-              speed={audioSpeed}
+              savedSpeed={audioSpeed}
               isProcessing={isCurrentProcessing}
               isGenerating={isCurrentGenerating}
               isUploading={isCurrentUploading}
-              onSpeedChange={onAudioSpeedChange}
               onGenerate={(speed) => onGenerateVoice(activeChapter.id, speed)}
               onUpload={() => onUploadAudio(activeChapter.id)}
             />

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Plus } from 'lucide-react';
 import {
   Button,
   FileDropzone,
@@ -9,6 +9,8 @@ import {
   MultiSelectCombobox,
   Spinner,
 } from '@/src/presentation/components/common';
+import { AuthorModal, CategoryModal } from '@/src/presentation/components/admin/catalog';
+import { invalidateBookFormOptions } from '@/src/presentation/hooks/admin/useBookFormOptions';
 import type { Book, Category, Author, Voice } from '@/src/shared/types';
 import { formatVnd } from '@/src/shared/utils';
 import {
@@ -64,18 +66,23 @@ interface FieldProps {
   optional?: boolean;
   error?: string;
   hint?: React.ReactNode;
+  /** Shown at the end of the label row, e.g. a "create" button */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }
 
-const Field = ({ name, label, htmlFor, optional, error, hint, children }: FieldProps) => (
+const Field = ({ name, label, htmlFor, optional, error, hint, action, children }: FieldProps) => (
   <div data-field={name}>
-    <label
-      htmlFor={htmlFor}
-      className="mb-1.5 block text-sm font-medium text-text-primary"
-    >
-      {label}
-      {!optional && <span className="text-error">*</span>}
-    </label>
+    <div className="mb-1.5 flex items-center justify-between gap-3">
+      <label
+        htmlFor={htmlFor}
+        className="block text-sm font-medium text-text-primary"
+      >
+        {label}
+        {!optional && <span className="text-error">*</span>}
+      </label>
+      {action}
+    </div>
     {children}
     {error ? (
       <p
@@ -90,6 +97,32 @@ const Field = ({ name, label, htmlFor, optional, error, hint, children }: FieldP
     )}
   </div>
 );
+
+const CreateOptionButton = ({
+  label,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-accent hover:bg-accent-light cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+  >
+    <Plus className="h-3.5 w-3.5" />
+    {label}
+  </button>
+);
+
+/** Adds the items created from inside the form to the lists the page passed in. */
+const withCreated = <T extends { id: number }>(base: T[], created: T[]) =>
+  created.length === 0 ? base : [...base, ...created.filter((c) => !base.some((b) => b.id === c.id))];
+
+type CreatingOption = { kind: 'author' | 'category'; name: string } | null;
 
 export const BookFormModal: React.FC<BookFormModalProps> = ({
   mode,
@@ -118,6 +151,16 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  // Authors/categories created from the form, until the page's lists refetch them
+  const [createdAuthors, setCreatedAuthors] = useState<Author[]>([]);
+  const [createdCategories, setCreatedCategories] = useState<Category[]>([]);
+  const [creating, setCreating] = useState<CreatingOption>(null);
+
+  const authorOptions = useMemo(() => withCreated(authors, createdAuthors), [authors, createdAuthors]);
+  const categoryOptions = useMemo(
+    () => withCreated(categories, createdCategories),
+    [categories, createdCategories],
+  );
 
   // Object URL for the chosen cover; revoked when replaced or on unmount
   const coverUrl = useMemo(
@@ -204,7 +247,22 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   const comboboxWrap = (name: FieldName) =>
     `rounded-lg ${shown(name) ? 'ring-1 ring-error' : ''}`;
 
+  // A new author/category joins the options and is selected straight away
+  const handleAuthorCreated = (author: Author) => {
+    invalidateBookFormOptions();
+    setCreatedAuthors((list) => [...list, author]);
+    setForm((f) => ({ ...f, authorIds: [...f.authorIds, author.id] }));
+    touch('authorIds');
+  };
+  const handleCategoryCreated = (category: Category) => {
+    invalidateBookFormOptions();
+    setCreatedCategories((list) => [...list, category]);
+    setForm((f) => ({ ...f, categoryIds: [...f.categoryIds, category.id] }));
+    touch('categoryIds');
+  };
+
   return (
+    <>
     <Modal
       title={isEdit ? 'Chỉnh sửa thông tin sách' : 'Thêm sách mới'}
       onClose={onClose}
@@ -380,27 +438,47 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
 
             <Field
               name="categoryIds"
-              label="Danh mục"
+              label="Thể loại"
               error={shown('categoryIds')}
+              action={
+                <CreateOptionButton
+                  label="Thể loại mới"
+                  onClick={() => setCreating({ kind: 'category', name: '' })}
+                  disabled={isSubmitting}
+                />
+              }
             >
               <div className={comboboxWrap('categoryIds')}>
                 <MultiSelectCombobox
-                  options={categories.map((c) => ({ id: c.id, name: c.name }))}
+                  options={categoryOptions.map((c) => ({ id: c.id, name: c.name }))}
                   selectedIds={form.categoryIds}
                   onChange={(ids) => {
                     update({ categoryIds: ids });
                     touch('categoryIds');
                   }}
-                  placeholder="Tìm kiếm và chọn danh mục..."
+                  placeholder="Tìm kiếm và chọn thể loại..."
                   disabled={isSubmitting}
+                  onCreate={(name) => setCreating({ kind: 'category', name })}
+                  createLabel="Thêm thể loại"
                 />
               </div>
             </Field>
 
-            <Field name="authorIds" label="Tác giả" error={shown('authorIds')}>
+            <Field
+              name="authorIds"
+              label="Tác giả"
+              error={shown('authorIds')}
+              action={
+                <CreateOptionButton
+                  label="Tác giả mới"
+                  onClick={() => setCreating({ kind: 'author', name: '' })}
+                  disabled={isSubmitting}
+                />
+              }
+            >
               <div className={comboboxWrap('authorIds')}>
                 <MultiSelectCombobox
-                  options={authors.map((a) => ({
+                  options={authorOptions.map((a) => ({
                     id: a.id,
                     name: a.fullName || `Tác giả #${a.id}`,
                   }))}
@@ -411,6 +489,8 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
                   }}
                   placeholder="Tìm kiếm và chọn tác giả..."
                   disabled={isSubmitting}
+                  onCreate={(name) => setCreating({ kind: 'author', name })}
+                  createLabel="Thêm tác giả"
                 />
               </div>
             </Field>
@@ -457,5 +537,22 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
         </div>
       </form>
     </Modal>
+
+    {/* Siblings of the book modal, not children: they stack on top of it and stay outside its form */}
+    {creating?.kind === 'author' && (
+      <AuthorModal
+        initialName={creating.name}
+        onClose={() => setCreating(null)}
+        onSuccess={handleAuthorCreated}
+      />
+    )}
+    {creating?.kind === 'category' && (
+      <CategoryModal
+        initialName={creating.name}
+        onClose={() => setCreating(null)}
+        onSuccess={handleCategoryCreated}
+      />
+    )}
+    </>
   );
 };

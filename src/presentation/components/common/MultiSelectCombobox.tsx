@@ -42,6 +42,13 @@ export interface MultiSelectComboboxProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * Adds a "create" row at the bottom of the list; receives the typed text so the
+   * create form can start from it.
+   */
+  onCreate?: (query: string) => void;
+  /** Text of the create row, e.g. "Thêm tác giả" */
+  createLabel?: string;
 }
 
 export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
@@ -51,6 +58,8 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
   placeholder = "Tìm kiếm hoặc chọn...",
   disabled = false,
   className = "",
+  onCreate,
+  createLabel = "Thêm mới",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -142,6 +151,14 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     setIsOpen(false);
   };
 
+  const trimmedQuery = searchQuery.trim();
+  const handleCreate = () => {
+    onCreate?.(trimmedQuery);
+    setSearchQuery("");
+    setIsOpen(false);
+    inputRef.current?.blur();
+  };
+
   const handleRemove = (id: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
     onChange(selectedIds.filter((item) => item !== id));
@@ -211,6 +228,8 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
               e.preventDefault();
               if (filteredOptions.length > 0) {
                 handleSelect(filteredOptions[0].id);
+              } else if (onCreate && trimmedQuery) {
+                handleCreate();
               }
             }
           }}
@@ -281,10 +300,34 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
                     : "Không tìm thấy kết quả phù hợp"}
               </div>
             )}
-            {filteredOptions.length > MAX_RESULTS && (
-              <div className="sticky bottom-0 border-t border-border bg-surface px-3 py-1.5 text-center text-xs text-text-muted">
-                Hiển thị {MAX_RESULTS}/{filteredOptions.length} kết quả · nhập để
-                tìm thêm
+            {(filteredOptions.length > MAX_RESULTS || onCreate) && (
+              <div className="sticky bottom-0 border-t border-border bg-surface">
+                {filteredOptions.length > MAX_RESULTS && (
+                  <div className="px-3 py-1.5 text-center text-xs text-text-muted">
+                    Hiển thị {MAX_RESULTS}/{filteredOptions.length} kết quả · nhập để
+                    tìm thêm
+                  </div>
+                )}
+                {onCreate && (
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-accent hover:bg-accent-light cursor-pointer transition-colors"
+                  >
+                    <svg
+                      className="h-4 w-4 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeWidth="2" d="M12 5v14M5 12h14" />
+                    </svg>
+                    <span className="min-w-0 truncate">
+                      {trimmedQuery ? `${createLabel} “${trimmedQuery}”` : createLabel}
+                    </span>
+                  </button>
+                )}
               </div>
             )}
           </div>
