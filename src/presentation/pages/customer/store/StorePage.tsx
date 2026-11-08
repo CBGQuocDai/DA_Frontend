@@ -15,12 +15,20 @@ import {
 // Leaves room for the sticky header when jumping to a category
 const HEADER_OFFSET_PX = 85;
 
+const parseFilterId = (value: string | null) => {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : undefined;
+};
+
 export const CustomerStorePage: React.FC = () => {
   const searchParams = useSearchParams();
   const keyword = searchParams.get('search')?.trim() ?? '';
-  const [activeTab, setActiveTab] = useState(searchParams.get('category') || ALL_CATEGORIES);
-  // Shelves are hidden while searching, so don't fetch them
-  const { shelves, isLoading, error, reload } = useCategoryShelves(!keyword);
+  const categoryId = parseFilterId(searchParams.get('category'));
+  const authorId = parseFilterId(searchParams.get('author'));
+  const showResults = Boolean(keyword || categoryId || authorId || searchParams.get('view') === 'all');
+  const [activeTab, setActiveTab] = useState(ALL_CATEGORIES);
+  // Fetch shelf previews only when they are visible.
+  const { shelves, isLoading, error, reload } = useCategoryShelves(!showResults);
 
   const jumpToCategory = (id: string) => {
     setActiveTab(id);
@@ -45,7 +53,7 @@ export const CustomerStorePage: React.FC = () => {
               Thưởng thức các tác phẩm audio bản quyền chất lượng cao cùng giọng đọc truyền cảm
             </p>
           </div>
-          {!keyword && (
+          {!showResults && (
             <CategoryTabs
               categories={shelves.map((shelf) => shelf.category)}
               activeId={activeTab}
@@ -54,8 +62,8 @@ export const CustomerStorePage: React.FC = () => {
           )}
         </section>
 
-        {keyword ? (
-          <SearchResults keyword={keyword} />
+        {showResults ? (
+          <SearchResults keyword={keyword} categoryId={categoryId} authorId={authorId} />
         ) : (
           <CategoryShelves shelves={shelves} isLoading={isLoading} error={error} onRetry={reload} />
         )}

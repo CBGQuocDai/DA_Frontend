@@ -14,10 +14,23 @@ export interface AuthorPayload {
   avatar?: string;
 }
 
+export interface GetAuthorPageParams {
+  keyword?: string;
+  page?: number;
+  size?: number;
+}
+
 export const authorService = {
   /** Every author, for pickers. */
   getAuthors: async (): Promise<Author[]> =>
     unwrap<Author[]>(await apiClient.get(API_ENDPOINTS.AUTHORS.LIST)) ?? [],
+
+  /** Public paged list (GET /authors/page), filtered by name. */
+  getAuthorPage: async (params: GetAuthorPageParams = {}): Promise<PaginatedResponse<Author>> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.AUTHORS.PAGE, { params })),
+
+  getAuthor: async (authorId: number): Promise<Author> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.AUTHORS.DETAIL(authorId))),
 
   /** Admin list, filtered by name, newest first. */
   searchAuthors: async (params: SearchParams): Promise<PaginatedResponse<Author>> =>

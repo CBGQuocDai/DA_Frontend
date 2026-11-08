@@ -11,21 +11,29 @@ import { EmptyState, ErrorState } from '@/src/presentation/components/common';
 const PAGE_SIZE = 12;
 const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-5';
 
-export const SearchResults: React.FC<{ keyword: string }> = ({ keyword }) => {
+interface SearchResultsProps {
+  keyword?: string;
+  categoryId?: number;
+  authorId?: number;
+}
+
+export const SearchResults: React.FC<SearchResultsProps> = ({ keyword, categoryId, authorId }) => {
   const { books, total, totalPage, page, isLoading, error, goToPage, reload } = useBookList({
     pageSize: PAGE_SIZE,
     bookName: keyword,
+    categoryId,
+    authorId,
   });
 
   return (
     <section>
       <div className="flex items-center justify-between gap-3 mb-5">
         <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-          Kết quả cho “{keyword}”
+          {keyword ? `Kết quả cho “${keyword}”` : categoryId ? 'Sách theo danh mục' : authorId ? 'Sách cùng tác giả' : 'Tất cả sách'}
           {!isLoading && !error && <span className="ml-2 text-xs font-semibold text-slate-400">{total} cuốn</span>}
         </h2>
         <Link href={ROUTES.CUSTOMER.STORE} className="text-xs font-semibold text-slate-500 hover:text-accent">
-          Xóa tìm kiếm
+          {keyword ? 'Xóa tìm kiếm' : 'Xóa bộ lọc'}
         </Link>
       </div>
 
@@ -38,7 +46,7 @@ export const SearchResults: React.FC<{ keyword: string }> = ({ keyword }) => {
           ))}
         </div>
       ) : books.length === 0 ? (
-        <EmptyState title="Không tìm thấy sách phù hợp" description="Hãy thử từ khóa khác." />
+        <EmptyState title="Không tìm thấy sách phù hợp" description="Hãy thử từ khóa hoặc bộ lọc khác." />
       ) : (
         <div className={GRID_CLASS}>
           {books.map((book) => (
@@ -47,7 +55,7 @@ export const SearchResults: React.FC<{ keyword: string }> = ({ keyword }) => {
         </div>
       )}
 
-      {totalPage > 1 && <Pagination page={page} totalPage={totalPage} onPageChange={goToPage} />}
+      {!isLoading && !error && totalPage > 1 && <Pagination page={page} totalPage={totalPage} onPageChange={goToPage} />}
     </section>
   );
 };

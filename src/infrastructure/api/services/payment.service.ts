@@ -9,11 +9,4 @@ export const paymentService = {
 
   getPayment: async (paymentId: number): Promise<Payment> =>
     unwrap(await apiClient.get(API_ENDPOINTS.PAYMENTS.DETAIL(paymentId))),
-
-  hasPurchased: async (bookId: number): Promise<boolean> => {
-    const data = unwrap<{ purchased?: boolean } | null>(
-      await apiClient.get(API_ENDPOINTS.PAYMENTS.CHECK(bookId))
-    );
-    return Boolean(data?.purchased);
-  },
 };

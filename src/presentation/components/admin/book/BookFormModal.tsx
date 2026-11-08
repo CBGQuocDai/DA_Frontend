@@ -497,7 +497,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
           </div>
         </div>
 
-        <div className="sticky bottom-0 -mb-4 mt-8 border-t border-border bg-surface pb-4 pt-4">
+        <div className="sticky -bottom-4 -mb-4 mt-8 border-t border-border bg-surface pb-4 pt-4">
           {serverError && (
             <div
               role="alert"

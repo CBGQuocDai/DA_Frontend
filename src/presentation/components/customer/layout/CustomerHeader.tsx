@@ -30,7 +30,7 @@ export const CustomerHeader: React.FC = () => {
                 key={item.href}
                 href={item.href}
                 className={`text-sm font-semibold transition-colors duration-200 ${
-                  pathname === item.href
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
                     ? 'text-accent font-bold'
                     : 'text-slate-600 hover:text-accent'
                 }`}

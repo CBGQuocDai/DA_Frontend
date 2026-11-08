@@ -9,6 +9,7 @@ export interface PaginationProps {
   page: number;
   totalPage: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }
 
 const getPageItems = (page: number, totalPage: number): (number | 'ellipsis')[] => {
@@ -24,11 +25,11 @@ const getPageItems = (page: number, totalPage: number): (number | 'ellipsis')[] 
   return items;
 };
 
-export const Pagination: React.FC<PaginationProps> = ({ page, totalPage, onPageChange }) => {
+export const Pagination: React.FC<PaginationProps> = ({ page, totalPage, onPageChange, className = 'mt-6' }) => {
   const items = getPageItems(page, totalPage);
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-6">
+    <nav aria-label="Phân trang" className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 ${className}`}>
       <Button
         variant="ghost"
         size="sm"
@@ -46,9 +47,10 @@ export const Pagination: React.FC<PaginationProps> = ({ page, totalPage, onPageC
         ) : (
           <button
             key={item}
+            type="button"
             onClick={() => onPageChange(item)}
             aria-current={item === page ? 'page' : undefined}
-            className={`w-9 h-9 rounded-md text-sm font-medium transition-colors ${
+            className={`min-w-9 h-9 px-1 rounded-md text-sm font-medium transition-colors ${
               item === page ? 'bg-accent text-white' : 'text-text-secondary hover:bg-bg'
             }`}
           >
@@ -65,6 +67,6 @@ export const Pagination: React.FC<PaginationProps> = ({ page, totalPage, onPageC
       >
         <ChevronRight className="w-4 h-4" />
       </Button>
-    </div>
+    </nav>
   );
 };

@@ -1,4 +1,5 @@
-export const formatVnd = (n: number) => `${n.toLocaleString('vi-VN')} ₫`;
+/** Whole đồng: averages would otherwise print "199.333,333 ₫". */
+export const formatVnd = (n: number) => `${Math.round(n).toLocaleString('vi-VN')} ₫`;
 
 /** 4980 -> "1 giờ 23 phút" */
 export const formatListeningTime = (totalSeconds: number) => {

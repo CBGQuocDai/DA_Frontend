@@ -148,7 +148,7 @@ export function CatalogTable<T extends { id: number }>({
   };
 
   return (
-    <table className="w-full border-collapse">
+    <table className="w-full min-w-[640px] border-collapse">
       <thead className="sticky top-0 bg-bg/95 backdrop-blur-sm z-10 border-b border-border">
         <tr className="text-text-secondary text-xs font-semibold">
           <th className="text-center px-4 py-3.5 w-14">#</th>
@@ -157,7 +157,7 @@ export function CatalogTable<T extends { id: number }>({
               {column.header}
             </th>
           ))}
-          <th className="text-right px-4 py-3.5 w-28 pr-5">Thao tác</th>
+          <th className="text-right px-4 py-3.5 w-28 pr-5 whitespace-nowrap">Thao tác</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-border-light">{renderBody()}</tbody>

@@ -1,0 +1,46 @@
+.row,
+.controlsArea {
+  --shelf-columns: 2;
+  --shelf-gap: 1rem;
+  --shelf-card-width: calc(
+    (100% - (var(--shelf-columns) - 1) * var(--shelf-gap)) / var(--shelf-columns)
+  );
+}
+
+.row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--shelf-card-width);
+  gap: var(--shelf-gap);
+  padding-block: 0.375rem 0.75rem;
+}
+
+/* Match the cover height so the arrows stay centered above the book details. */
+.controlsArea {
+  position: absolute;
+  inset-inline: 0;
+  top: 0.375rem;
+  pointer-events: none;
+}
+
+.controlsArea::before {
+  content: '';
+  display: block;
+  width: var(--shelf-card-width);
+  aspect-ratio: 3 / 4.2;
+}
+
+@media (min-width: 640px) {
+  .row,
+  .controlsArea {
+    --shelf-columns: 3;
+    --shelf-gap: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .row,
+  .controlsArea {
+    --shelf-columns: 5;
+  }
+}

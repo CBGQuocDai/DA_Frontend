@@ -31,7 +31,6 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
   const [fullName, setFullName] = useState(author?.fullName ?? initialName);
   const [bio, setBio] = useState(author?.bio ?? '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [removeAvatar, setRemoveAvatar] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -41,12 +40,17 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
     if (fileUrl) URL.revokeObjectURL(fileUrl);
   }, [fileUrl]);
 
-  const currentAvatar = !removeAvatar ? author?.avatar ?? null : null;
+  const currentAvatar = author?.avatar ?? null;
   const previewUrl = fileUrl ?? (currentAvatar ? resolveMediaUrl(currentAvatar.url) : null);
 
   const nameError = !fullName.trim() ? 'Nhập tên tác giả' : undefined;
-  const avatarError = validateAvatar(avatarFile);
+  const bioError = !bio.trim() ? 'Nhập tiểu sử tác giả' : undefined;
+  // A bad file is reported at once; a missing one only after the first submit
+  const fileError = validateAvatar(avatarFile);
+  const missingAvatarError = !avatarFile && !currentAvatar ? 'Chọn ảnh tác giả' : undefined;
+  const avatarError = fileError ?? (submitAttempted ? missingAvatarError : undefined);
   const shownNameError = submitAttempted ? nameError : undefined;
+  const shownBioError = submitAttempted ? bioError : undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +59,7 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
     if (isSubmitting) return;
     setSubmitAttempted(true);
     setServerError(null);
-    if (nameError || avatarError) return;
+    if (nameError || bioError || fileError || missingAvatarError) return;
 
     setIsSubmitting(true);
     try {
@@ -84,7 +88,9 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
       <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-[8rem_1fr]">
           <div>
-            <span className="mb-1.5 block text-sm font-medium text-text-primary">Ảnh</span>
+            <span className="mb-1.5 block text-sm font-medium text-text-primary">
+              Ảnh<span className="text-error">*</span>
+            </span>
             <FileDropzone
               id="author-avatar"
               accept={AVATAR_ACCEPT}
@@ -100,32 +106,10 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
               disabled={isSubmitting}
               className="aspect-square w-32"
             />
-            {avatarError ? (
+            {avatarError && (
               <p role="alert" className="mt-1.5 text-xs text-error">
                 {avatarError}
               </p>
-            ) : (
-              currentAvatar &&
-              !avatarFile && (
-                <button
-                  type="button"
-                  onClick={() => setRemoveAvatar(true)}
-                  disabled={isSubmitting}
-                  className="mt-1.5 text-xs font-medium text-text-secondary hover:text-error cursor-pointer"
-                >
-                  Gỡ ảnh
-                </button>
-              )
-            )}
-            {removeAvatar && !avatarFile && (
-              <button
-                type="button"
-                onClick={() => setRemoveAvatar(false)}
-                disabled={isSubmitting}
-                className="mt-1.5 text-xs font-medium text-accent hover:underline cursor-pointer"
-              >
-                Giữ ảnh cũ
-              </button>
             )}
           </div>
 
@@ -152,16 +136,23 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
             <CatalogField
               id="author-bio"
               label="Tiểu sử"
+              required
+              error={shownBioError}
               hint={`${bio.length}/${CATALOG_LIMITS.text} ký tự`}
             >
               <textarea
                 id="author-bio"
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => {
+                  setServerError(null);
+                  setBio(e.target.value);
+                }}
                 maxLength={CATALOG_LIMITS.text}
                 rows={4}
+                aria-invalid={Boolean(shownBioError)}
+                aria-describedby={shownBioError ? 'author-bio-error' : undefined}
                 disabled={isSubmitting}
-                className={`${inputClass(false)} resize-none`}
+                className={`${inputClass(Boolean(shownBioError))} resize-none`}
                 placeholder="Vài dòng giới thiệu tác giả"
               />
             </CatalogField>

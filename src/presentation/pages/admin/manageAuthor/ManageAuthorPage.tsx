@@ -129,9 +129,9 @@ export const ManageAuthorPage = () => {
             />
           </div>
 
-          {!list.isLoading && list.totalPage > 1 && (
+          {!list.isLoading && list.items.length > 0 && (
             <div className="flex-shrink-0 px-4 py-3 border-t border-border">
-              <Pagination page={list.page} totalPage={list.totalPage} onPageChange={list.setPage} />
+              <Pagination page={list.page} totalPage={list.totalPage} onPageChange={list.setPage} className="" />
             </div>
           )}
         </div>

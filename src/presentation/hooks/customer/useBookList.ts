@@ -1,29 +1,32 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { bookService } from '@/src/infrastructure/api/services';
+import { customerBookService } from '@/src/infrastructure/api/services';
 import { useAsyncData } from '../common';
 
 interface UseBookListOptions {
   pageSize?: number;
   bookName?: string;
+  categoryId?: number;
+  authorId?: number;
 }
 
 /** Paginated book list; `page` is zero-based to match the shared Pagination component. */
-export const useBookList = ({ pageSize = 8, bookName }: UseBookListOptions = {}) => {
+export const useBookList = ({ pageSize = 8, bookName, categoryId, authorId }: UseBookListOptions = {}) => {
   // Keep the page together with the query it belongs to, so a new search starts at page 0
-  const [pageState, setPageState] = useState({ bookName, page: 0 });
-  const page = pageState.bookName === bookName ? pageState.page : 0;
+  const queryKey = JSON.stringify([bookName ?? '', categoryId, authorId, pageSize]);
+  const [pageState, setPageState] = useState({ queryKey, page: 0 });
+  const page = pageState.queryKey === queryKey ? pageState.page : 0;
 
   const load = useCallback(
-    () => bookService.getBooks({ page, size: pageSize, bookName: bookName || undefined }),
-    [page, pageSize, bookName]
+    () => customerBookService.getBooks({ page, size: pageSize, bookName: bookName || undefined, categoryId, authorId }),
+    [page, pageSize, bookName, categoryId, authorId]
   );
   const { data, error, isLoading, reload } = useAsyncData(load);
 
   const goToPage = useCallback(
-    (nextPage: number) => setPageState({ bookName, page: nextPage }),
-    [bookName]
+    (nextPage: number) => setPageState({ queryKey, page: nextPage }),
+    [queryKey]
   );
 
   return {

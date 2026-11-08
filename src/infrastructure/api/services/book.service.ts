@@ -1,6 +1,6 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { Book, BookStatus, PaginatedResponse } from '@/src/shared/types';
+import type { BestsellerPeriod, Book, BookStatus, PaginatedResponse } from '@/src/shared/types';
 
 export interface GetBooksParams {
   page?: number;
@@ -28,14 +28,12 @@ export interface BookPayload {
 }
 
 export const bookService = {
+  /** Admin dashboard: top books by purchases in the period, with `purchases`, `previousPurchases` and `revenue`. */
+  getBestsellers: async (period: BestsellerPeriod): Promise<Book[]> =>
+    unwrap<Book[]>(await apiClient.get(API_ENDPOINTS.BOOKS.BESTSELLERS, { params: { period } })) ?? [],
+
   getBooks: async (params?: GetBooksParams): Promise<PaginatedResponse<Book>> =>
     unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.LIST, { params })),
-
-  getBooksByCategory: async (
-    categoryId: number,
-    params?: Pick<GetBooksParams, 'page' | 'size'>
-  ): Promise<PaginatedResponse<Book>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.BY_CATEGORY(categoryId), { params })),
 
   getBookById: async (id: number): Promise<Book> =>
     unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.DETAIL(id))),

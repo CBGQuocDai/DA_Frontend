@@ -1,6 +1,7 @@
 export { authService } from './auth.service';
 export { bookService } from './book.service';
 export type { BookPayload } from './book.service';
+export { bookFavoriteService } from './bookFavorite.service';
 export { voiceService } from './voice.service';
 export type { VoicePayload } from './voice.service';
 export { categoryService } from './category.service';
@@ -9,6 +10,9 @@ export { authorService } from './author.service';
 export type { AuthorPayload } from './author.service';
 export type { SearchParams } from './search.params';
 export { chapterService } from './chapter.service';
+export { customerBookService } from './customerBook.service';
 export { paymentService } from './payment.service';
+export { reviewService } from './review.service';
 export { uploadService } from './upload.service';
 export type { UploadType } from './upload.service';
+export { statisticsService } from './statistics.service';

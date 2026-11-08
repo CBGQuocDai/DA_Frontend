@@ -45,10 +45,6 @@ export const authService = {
     await apiClient.post(API_ENDPOINTS.AUTH.ADMIN_CHANGE_PASSWORD, data);
   },
 
-  isAuthenticated: (): boolean => storageString.get(STORAGE_KEYS.ACCESS_TOKEN) !== null,
-
-  getStoredUser: (): User | null => storageJson.get<User>(STORAGE_KEYS.USER),
-
   storeUser: (user: User): void => storageJson.set(STORAGE_KEYS.USER, user),
 
   logout: (): void => {

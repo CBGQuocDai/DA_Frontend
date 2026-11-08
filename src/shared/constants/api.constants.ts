@@ -18,6 +18,11 @@ export const API_ENDPOINTS = {
     ADMIN_CHANGE_PASSWORD: '/admin/change-password',
   },
 
+  STATISTICS: {
+    OVERVIEW: '/admin/statistics',
+    PURCHASES: '/admin/statistics/purchases',
+  },
+
   BOOKS: {
     LIST: '/books',
     DETAIL: (id: string | number) => `/books/${id}`,
@@ -26,17 +31,19 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/books/${id}`,
     PUBLISH: (id: string | number) => `/books/${id}/publish`,
     UNPUBLISH: (id: string | number) => `/books/${id}/unpublish`,
-    BY_CATEGORY: (categoryId: string | number) => `/books/category/${categoryId}`,
+    BESTSELLERS: '/books/bestsellers',
   },
 
   CATEGORIES: {
     LIST: '/categories',
     SEARCH: '/categories/search',
     DETAIL: (id: string | number) => `/categories/${id}`,
+    BESTSELLERS: '/categories/bestsellers',
   },
 
   AUTHORS: {
     LIST: '/authors',
+    PAGE: '/authors/page',
     SEARCH: '/authors/search',
     DETAIL: (id: string | number) => `/authors/${id}`,
   },
@@ -64,6 +71,24 @@ export const API_ENDPOINTS = {
   PAYMENTS: {
     CREATE: '/payments',
     DETAIL: (paymentId: string | number) => `/payments/${paymentId}`,
-    CHECK: (bookId: string | number) => `/payments/check/${bookId}`,
+  },
+
+  CUSTOMER_BOOKS: {
+    LIST: '/books/catalog',
+    OVERVIEW: (bookId: string | number) => `/books/${bookId}/overview`,
+    CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/page`,
+    CHECK_OWNERSHIP: (bookId: string | number) => `/customer/books/${bookId}/check`,
+  },
+  
+  BOOK_FAVORITES: {
+    CHECK: (bookId: string | number) => `/book-favorite/${bookId}/check`,
+    TOGGLE: (bookId: string | number) => `/book-favorite/${bookId}/toggle`,
+  },
+
+  REVIEWS: {
+    CREATE: '/review',
+    PAGE: (bookId: number) => `/review/${bookId}/page`,
+    SUMMARY: (bookId: number) => `/review/${bookId}/summary`,
+    MINE: (bookId: number) => `/review/${bookId}/me`,
   },
 } as const;

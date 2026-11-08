@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { paymentService } from '@/src/infrastructure/api/services';
+import { customerBookService, paymentService } from '@/src/infrastructure/api/services';
 import { PAYMENT_POLL_INTERVAL_MS, ROUTES } from '@/src/shared/constants';
 import type { Payment } from '@/src/shared/types';
 import {
@@ -22,7 +22,7 @@ export const useBookPayment = (bookId: number, isAuthenticated: boolean) => {
   const loadOwnership = useCallback(
     () =>
       isAuthenticated
-        ? paymentService.hasPurchased(bookId).catch(() => false)
+        ? customerBookService.checkOwnership(bookId).catch(() => false)
         : Promise.resolve(false),
     [bookId, isAuthenticated]
   );

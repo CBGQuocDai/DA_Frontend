@@ -11,6 +11,39 @@ export const useAudioPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolumeState] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackRate, setPlaybackRateState] = useState(1);
+
+  const pause = useCallback(() => audioRef.current?.pause(), []);
+
+  const setVolume = useCallback((value: number) => {
+    if (!Number.isFinite(value)) return;
+    const next = clamp(value, 0, 1);
+    setVolumeState(next);
+    setIsMuted(next === 0);
+    if (audioRef.current) {
+      audioRef.current.volume = next;
+      audioRef.current.muted = next === 0;
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const next = !isMuted;
+    setIsMuted(next);
+    if (!next && volume === 0) setVolumeState(1);
+    if (audioRef.current) {
+      audioRef.current.muted = next;
+      if (!next && volume === 0) audioRef.current.volume = 1;
+    }
+  }, [isMuted, volume]);
+
+  const setPlaybackRate = useCallback((value: number) => {
+    if (!Number.isFinite(value)) return;
+    const next = clamp(value, 0.5, 2);
+    setPlaybackRateState(next);
+    if (audioRef.current) audioRef.current.playbackRate = next;
+  }, []);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -40,6 +73,9 @@ export const useAudioPlayer = () => {
     onEnded: () => setIsPlaying(false),
     onTimeUpdate: (e: SyntheticEvent<HTMLAudioElement>) => setCurrentTime(e.currentTarget.currentTime),
     onLoadedMetadata: (e: SyntheticEvent<HTMLAudioElement>) => {
+      e.currentTarget.volume = volume;
+      e.currentTarget.muted = isMuted;
+      e.currentTarget.playbackRate = playbackRate;
       setDuration(e.currentTarget.duration);
       setCurrentTime(0);
       // A new element mounts per track; autoplay may have been blocked
@@ -47,5 +83,8 @@ export const useAudioPlayer = () => {
     },
   };
 
-  return { audioProps, isPlaying, currentTime, duration, togglePlay, skip, seek };
+  return {
+    audioProps, isPlaying, currentTime, duration, togglePlay, pause, skip, seek,
+    volume, isMuted, playbackRate, setVolume, toggleMute, setPlaybackRate,
+  };
 };

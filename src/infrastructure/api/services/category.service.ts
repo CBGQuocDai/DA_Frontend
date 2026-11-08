@@ -1,6 +1,6 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { Category, PaginatedResponse } from '@/src/shared/types';
+import type { BestsellerPeriod, Category, PaginatedResponse } from '@/src/shared/types';
 import { toSearchQuery, type SearchParams } from './search.params';
 
 /** Body of both create (POST) and update (PUT, full replacement). */
@@ -10,6 +10,10 @@ export interface CategoryPayload {
 }
 
 export const categoryService = {
+  /** Admin dashboard: categories by purchases in the period, with `purchases` and `previousPurchases`. */
+  getBestsellers: async (period: BestsellerPeriod): Promise<Category[]> =>
+    unwrap<Category[]>(await apiClient.get(API_ENDPOINTS.CATEGORIES.BESTSELLERS, { params: { period } })) ?? [],
+
   /** Every category, for the store tabs and pickers. */
   getCategories: async (): Promise<Category[]> =>
     unwrap<Category[]>(await apiClient.get(API_ENDPOINTS.CATEGORIES.LIST)) ?? [],
