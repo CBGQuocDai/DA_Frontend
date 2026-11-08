@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { BookOpen, Mic, Star } from 'lucide-react';
-import { Badge, EmptyState, Spinner } from '@/src/presentation/components/common';
+import { Badge, EmptyState, Spinner, getMenuAnchor, type MenuAnchor } from '@/src/presentation/components/common';
 import { getBookStatusBadge } from '@/src/presentation/utils/admin';
 import type { Book } from '@/src/shared/types';
 import { formatBookPrice, getBookAuthorNames, getBookCategories, isBookPublished } from '@/src/shared/utils';
@@ -38,10 +38,24 @@ interface BookTableProps extends BookRowHandlers {
   busyBookId: number | null;
 }
 
-const BookRow: React.FC<BookRowHandlers & { book: Book; index: number; isBusy: boolean }> = ({
+const MENU_HEIGHT = 170;
+
+interface BookRowProps extends BookRowHandlers {
+  book: Book;
+  index: number;
+  isBusy: boolean;
+  menuAnchor: MenuAnchor | null;
+  onToggleMenu: (book: Book, trigger: HTMLElement) => void;
+  onCloseMenu: () => void;
+}
+
+const BookRow: React.FC<BookRowProps> = ({
   book,
   index,
   isBusy,
+  menuAnchor,
+  onToggleMenu,
+  onCloseMenu,
   onOpen,
   onViewReviews,
   onTogglePublish,
@@ -125,6 +139,9 @@ const BookRow: React.FC<BookRowHandlers & { book: Book; index: number; isBusy: b
       <td className="px-3 py-3.5 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-center">
           <BookRowActions
+            anchor={menuAnchor}
+            onToggle={(trigger) => onToggleMenu(book, trigger)}
+            onClose={onCloseMenu}
             isPublished={isBookPublished(book)}
             isBusy={isBusy}
             onViewReviews={() => onViewReviews(book)}
@@ -138,11 +155,20 @@ const BookRow: React.FC<BookRowHandlers & { book: Book; index: number; isBusy: b
   );
 };
 
-export const BookTable: React.FC<BookTableProps> = ({ books, isLoading, startIndex, busyBookId, ...handlers }) => (
-  <div className="overflow-x-auto">
+export const BookTable: React.FC<BookTableProps> = ({ books, isLoading, startIndex, busyBookId, ...handlers }) => {
+  // One open row menu at a time: opening another row's menu replaces this one
+  const [menu, setMenu] = useState<{ bookId: number; anchor: MenuAnchor } | null>(null);
+  const closeMenu = useCallback(() => setMenu(null), []);
+  const toggleMenu = useCallback((book: Book, trigger: HTMLElement) => {
+    setMenu((current) =>
+      current?.bookId === book.id ? null : { bookId: book.id, anchor: getMenuAnchor(trigger, MENU_HEIGHT) },
+    );
+  }, []);
+
+  return (
     <table className="w-full min-w-[880px] border-collapse">
-      <thead>
-        <tr className="border-b border-border bg-bg/80 text-text-secondary text-xs font-semibold uppercase tracking-wider">
+      <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur-sm">
+        <tr className="border-b border-border text-text-secondary text-xs font-semibold uppercase tracking-wider">
           {COLUMNS.map((column) => (
             <th key={column.label} className={`py-3.5 whitespace-nowrap ${column.className}`}>
               {column.label}
@@ -178,11 +204,14 @@ export const BookTable: React.FC<BookTableProps> = ({ books, isLoading, startInd
               book={book}
               index={startIndex + index}
               isBusy={busyBookId === book.id}
+              menuAnchor={menu?.bookId === book.id ? menu.anchor : null}
+              onToggleMenu={toggleMenu}
+              onCloseMenu={closeMenu}
               {...handlers}
             />
           ))
         )}
       </tbody>
     </table>
-  </div>
-);
+  );
+};

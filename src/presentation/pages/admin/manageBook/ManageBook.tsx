@@ -96,7 +96,7 @@ export const ManageBookPage = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="w-full h-full flex-1 flex flex-col min-h-0 gap-4">
         <BookFilterToolbar
           filters={list.filters}
           hasFilters={list.hasFilters}
@@ -107,25 +107,28 @@ export const ManageBookPage = () => {
           onCreate={() => setShowCreateModal(true)}
         />
 
-        <div className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm">
-          <BookTable
-            books={list.books}
-            isLoading={list.isLoading}
-            startIndex={list.page * ADMIN_BOOKS_PER_PAGE}
-            busyBookId={busyBookId}
-            onOpen={(book) => router.push(ROUTES.ADMIN.BOOK_DETAIL(book.id))}
-            onViewReviews={setViewingReviewsBook}
-            onTogglePublish={handleTogglePublish}
-            onEdit={handleOpenEditModal}
-            onDelete={setDeletingBook}
-          />
+        <div className="flex-1 min-h-[16rem] bg-surface rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
+          <div className="flex-1 min-h-0 overflow-auto">
+            <BookTable
+              books={list.books}
+              isLoading={list.isLoading}
+              startIndex={list.page * ADMIN_BOOKS_PER_PAGE}
+              busyBookId={busyBookId}
+              onOpen={(book) => router.push(ROUTES.ADMIN.BOOK_DETAIL(book.id))}
+              onViewReviews={setViewingReviewsBook}
+              onTogglePublish={handleTogglePublish}
+              onEdit={handleOpenEditModal}
+              onDelete={setDeletingBook}
+            />
+          </div>
 
           {!list.isLoading && list.books.length > 0 && (
-            <div className="px-4 py-3 border-t border-border">
+            <div className="flex-shrink-0 px-4 py-3 border-t border-border">
               <Pagination
                 page={list.page}
                 totalPage={list.totalPage}
                 onPageChange={list.goToPage}
+                className=""
               />
             </div>
           )}

@@ -29,7 +29,6 @@ export const useChapterActions = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [generatingChapterId, setGeneratingChapterId] = useState<number | null>(null);
   const [uploadingChapterId, setUploadingChapterId] = useState<number | null>(null);
-  const [audioSpeed, setAudioSpeed] = useState(1);
 
   // The backend may renumber other chapters, so both flows re-read the list
   const reloadChapters = async () => {
@@ -66,7 +65,9 @@ export const useChapterActions = ({
       await chapterService.generateAudio(bookId, chapterId, speed);
       setChapters((prev) =>
         prev.map((c) =>
-          c.id === chapterId ? { ...c, status: 'PROCESSING_AUDIO' as ChapterStatus } : c
+          c.id === chapterId
+            ? { ...c, status: 'PROCESSING_AUDIO' as ChapterStatus, readingSpeed: speed }
+            : c
         )
       );
     } catch (error) {
@@ -104,8 +105,6 @@ export const useChapterActions = ({
   return {
     generatingChapterId,
     uploadingChapterId,
-    audioSpeed,
-    setAudioSpeed,
     addModal: {
       isOpen: showAddModal,
       open: () => setShowAddModal(true),

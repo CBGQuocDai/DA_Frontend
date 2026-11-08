@@ -15,6 +15,12 @@ export const API_ENDPOINTS = {
     CUSTOMER_REGISTER: '/customer/register',
     CUSTOMER_PROFILE: '/customer/profile',
     CHANGE_PASSWORD: '/customer/profile/change-password',
+    ADMIN_CHANGE_PASSWORD: '/admin/change-password',
+  },
+
+  STATISTICS: {
+    OVERVIEW: '/admin/statistics',
+    PURCHASES: '/admin/statistics/purchases',
   },
 
   BOOKS: {
@@ -25,14 +31,21 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/books/${id}`,
     PUBLISH: (id: string | number) => `/books/${id}/publish`,
     UNPUBLISH: (id: string | number) => `/books/${id}/unpublish`,
-    BY_CATEGORY: (categoryId: string | number) => `/books/category/${categoryId}`,
+    BESTSELLERS: '/books/bestsellers',
   },
 
-  CATEGORIES: '/categories',
-  AUTHORS: '/authors',
-  CUSTOMER_AUTHORS: {
+  CATEGORIES: {
+    LIST: '/categories',
+    SEARCH: '/categories/search',
+    DETAIL: (id: string | number) => `/categories/${id}`,
+    BESTSELLERS: '/categories/bestsellers',
+  },
+
+  AUTHORS: {
+    LIST: '/authors',
     PAGE: '/authors/page',
-    DETAIL: (authorId: string | number) => `/authors/${authorId}`,
+    SEARCH: '/authors/search',
+    DETAIL: (id: string | number) => `/authors/${id}`,
   },
 
   VOICES: {

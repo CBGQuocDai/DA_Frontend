@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { authorService } from '@/src/infrastructure/api/services';
-import type { CustomerAuthorSort } from '@/src/shared/types';
 import { getApiErrorMessage } from '@/src/shared/utils/error.utils';
 import { useAsyncData } from '../common';
 
-export const useAuthorList = (keyword: string, sort: CustomerAuthorSort, pageSize = 8) => {
+export const useAuthorList = (keyword: string, pageSize = 8) => {
   const search = keyword.trim();
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   useEffect(() => {
@@ -14,12 +13,12 @@ export const useAuthorList = (keyword: string, sort: CustomerAuthorSort, pageSiz
     return () => clearTimeout(timer);
   }, [search]);
 
-  const queryKey = JSON.stringify([search, sort, pageSize]);
+  const queryKey = JSON.stringify([search, pageSize]);
   const [pageState, setPageState] = useState({ queryKey, page: 0 });
   const page = pageState.queryKey === queryKey ? pageState.page : 0;
   const load = useCallback(
-    () => authorService.getCustomerPage({ keyword: debouncedSearch || undefined, sort, page, size: pageSize }),
-    [debouncedSearch, sort, page, pageSize]
+    () => authorService.getAuthorPage({ keyword: debouncedSearch || undefined, page, size: pageSize }),
+    [debouncedSearch, page, pageSize]
   );
   const { data, error, isLoading, reload } = useAsyncData(load);
   const isPending = isLoading || search !== debouncedSearch;

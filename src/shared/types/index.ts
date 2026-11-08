@@ -4,4 +4,4 @@ export * from './customerBook.types';
 export * from './review.types';
 export * from './payment.types';
 export * from './common.types';
-export * from './author.types';
+export * from './statistics.types';

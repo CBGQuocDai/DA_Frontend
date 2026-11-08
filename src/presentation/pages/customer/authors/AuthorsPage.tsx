@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Search, SearchX, X } from "lucide-react";
+import { Search, SearchX, X } from "lucide-react";
 import { CustomerLayout } from "@/src/presentation/layouts";
 import { AuthorCard } from "@/src/presentation/components/customer/authors/AuthorCard";
 import { AuthorCardSkeleton } from "@/src/presentation/components/customer/authors/AuthorCardSkeleton";
 import { ErrorState, Pagination } from "@/src/presentation/components/common";
 import { useAuthorList } from "@/src/presentation/hooks/customer/useAuthorList";
-import type { CustomerAuthorSort } from "@/src/shared/types";
 
 const PAGE_SIZE = 8;
 const GRID_CLASS =
@@ -15,7 +14,6 @@ const GRID_CLASS =
 
 export const CustomerAuthorsPage = () => {
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<CustomerAuthorSort>("name_asc");
   const {
     authors,
     total,
@@ -25,7 +23,7 @@ export const CustomerAuthorsPage = () => {
     error,
     goToPage,
     reload,
-  } = useAuthorList(query, sort, PAGE_SIZE);
+  } = useAuthorList(query, PAGE_SIZE);
 
   return (
     <CustomerLayout>
@@ -97,31 +95,6 @@ export const CustomerAuthorsPage = () => {
                 </>
               )}
             </p>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <label
-                htmlFor="author-sort"
-                className="text-xs font-medium text-slate-500"
-              >
-                Sắp xếp:
-              </label>
-              <div className="relative">
-                <select
-                  id="author-sort"
-                  value={sort}
-                  onChange={(event) =>
-                    setSort(event.target.value as CustomerAuthorSort)
-                  }
-                  className="cursor-pointer appearance-none rounded-lg bg-transparent py-2 pl-2 pr-7 text-xs font-semibold text-slate-800 outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  <option value="name_asc">Tên A – Z</option>
-                  <option value="book_count_desc">Nhiều sách nói nhất</option>
-                </select>
-                <ChevronDown
-                  className="pointer-events-none absolute right-1 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
-                  aria-hidden="true"
-                />
-              </div>
-            </div>
           </div>
 
           {error ? (

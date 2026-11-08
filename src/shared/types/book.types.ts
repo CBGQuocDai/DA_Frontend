@@ -24,6 +24,10 @@ export interface Book {
   chapters?: Chapter[];
   averageRating?: number;
   ratingCount?: number;
+  /** Bestseller lists only: purchases in the chosen period, paid or free */
+  purchases?: number;
+  /** Bestseller lists only: purchases in the period before; absent for all time */
+  previousPurchases?: number | null;
 }
 
 export interface Chapter {
@@ -36,6 +40,8 @@ export interface Chapter {
   /** Editor document with formatting; empty when the chapter is plain text */
   contentJson?: string;
   status?: ChapterStatus;
+  /** TTS speed of the last audio generation; null for chapters created before it was stored */
+  readingSpeed?: number | null;
 }
 
 export interface Voice {
@@ -58,7 +64,7 @@ export interface BookAuthor {
 export interface Author {
   id: number;
   fullName?: string;
-  avatar?: string;
+  avatar?: StoredFile | null;
   bio?: string;
 }
 
@@ -66,6 +72,10 @@ export interface Category {
   id: number;
   name: string;
   description?: string;
+  /** Bestseller lists only: purchases of books in the category in the chosen period */
+  purchases?: number;
+  /** Bestseller lists only: purchases in the period before; absent for all time */
+  previousPurchases?: number | null;
 }
 
 export type BookStatus = 'PROCESSING' | 'UNPUBLISHED' | 'PUBLISHED' | 'FAILED';

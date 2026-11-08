@@ -107,9 +107,8 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-[420px]">
           <div
-            className={`w-full lg:w-[350px] xl:w-[380px] 2xl:w-[410px] lg:flex-shrink-0 flex flex-col h-full min-h-0 ${
-              !isSidebarOpen ? 'lg:hidden' : ''
-            } ${mobileTab === 'detail' ? 'hidden lg:flex' : 'flex'}`}
+            className={`w-full lg:w-[350px] xl:w-[380px] 2xl:w-[410px] lg:flex-shrink-0 flex flex-col h-full min-h-0 ${!isSidebarOpen ? 'lg:hidden' : ''
+              } ${mobileTab === 'detail' ? 'hidden lg:flex' : 'flex'}`}
           >
             <ChapterList
               chapters={chapters}
@@ -130,9 +129,8 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
           </div>
 
           <div
-            className={`flex-1 min-w-0 flex flex-col h-full min-h-0 ${
-              mobileTab === 'list' ? 'hidden lg:flex' : 'flex'
-            }`}
+            className={`flex-1 min-w-0 flex flex-col h-full min-h-0 ${mobileTab === 'list' ? 'hidden lg:flex' : 'flex'
+              }`}
           >
             <ChapterWorkspace
               activeChapter={activeChapter}
@@ -145,7 +143,7 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               textVersion={editor.textVersion}
               isSavingText={editor.isSavingText}
               hasUnsavedChanges={hasUnsavedChanges}
-              audioSpeed={chapterActions.audioSpeed}
+              audioSpeed={activeChapter?.readingSpeed}
               isCurrentProcessing={activeChapter?.status === 'PROCESSING_AUDIO'}
               isCurrentGenerating={
                 !!activeChapter && chapterActions.generatingChapterId === activeChapter.id
@@ -157,7 +155,6 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
               onEditInfo={chapterActions.editModal.open}
               onGenerateVoice={chapterActions.generateVoice}
-              onAudioSpeedChange={chapterActions.setAudioSpeed}
               onUploadAudio={chapterActions.triggerUpload}
               onDeleteChapter={chapterActions.deleteModal.open}
               onDraftChange={editor.updateDraft}

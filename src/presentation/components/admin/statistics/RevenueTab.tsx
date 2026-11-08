@@ -1,38 +1,49 @@
 import React from 'react';
-import { MOCK_REVENUE, MOCK_REVENUE_CHART, revenueGrowthPercent } from './statistics.mock';
-import { BarChart, StatCard, formatCompact, formatMillions } from './StatParts';
+import { Receipt, Wallet } from 'lucide-react';
+import type { Statistics } from '@/src/shared/types';
+import { Panel, StatTile } from './Panel';
+import { RangeToggle, RevenueChart, type MonthRange } from './RevenueChart';
+import { formatVnd } from '@/src/shared/utils';
+import { formatCount } from './format';
 
-export const RevenueTab: React.FC = () => {
-  const data = MOCK_REVENUE;
-  const growth = revenueGrowthPercent(data);
+interface RevenueTabProps {
+  statistics: Statistics;
+  range: MonthRange;
+  onRangeChange: (range: MonthRange) => void;
+}
+
+/** Revenue in the chosen range: the total, the average purchase, and how it spreads over the months. */
+export const RevenueTab: React.FC<RevenueTabProps> = ({ statistics, range, onRangeChange }) => {
+  const { months } = statistics;
+  const revenue = months.reduce((sum, m) => sum + m.revenue, 0);
+  const purchases = months.reduce((sum, m) => sum + m.purchases, 0);
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Tổng doanh thu" value={formatCompact(data.totalRevenue)} sublabel="toàn thời gian" accent="success" />
-        <StatCard
-          label="Tháng này"
-          value={formatCompact(data.monthlyRevenue)}
-          sublabel={`${growth >= 0 ? '+' : ''}${growth}% so tháng trước`}
-          accent="accent"
-        />
-        <StatCard label="Tháng trước" value={formatCompact(data.prevMonthRevenue)} sublabel="doanh thu thực" accent="indigo" />
-        <StatCard label="Tổng đơn hàng" value={data.totalOrders} sublabel="đơn đã thanh toán" accent="amber" />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary">
+          Số liệu {range} tháng gần nhất, tính theo ngày khách thanh toán thành công.
+        </p>
+        <RangeToggle value={range} onChange={onRangeChange} />
       </div>
 
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-base font-semibold text-text-primary">Biểu đồ doanh thu</h2>
-            <p className="text-xs text-text-muted mt-0.5">Theo tháng — 8 tháng gần nhất</p>
-          </div>
-          <span className="flex items-center gap-1.5 text-xs">
-            <span className="w-3 h-3 rounded-sm bg-accent inline-block" />
-            Doanh thu
-          </span>
-        </div>
-        <BarChart data={MOCK_REVENUE_CHART} maxValue={30000000} formatValue={formatMillions} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatTile icon={Wallet} label={`Doanh thu ${range} tháng`} value={formatVnd(revenue)}>
+          <p>Từ {formatCount(purchases)} lượt mua</p>
+        </StatTile>
+        <StatTile
+          icon={Receipt}
+          label="Trung bình mỗi lượt mua"
+          value={purchases > 0 ? formatVnd(revenue / purchases) : '—'}
+        >
+          <p>Doanh thu chia cho số lượt mua trong {range} tháng</p>
+        </StatTile>
       </div>
+
+      <Panel title="Doanh thu theo tháng" description="Rê chuột hoặc chọn một cột để xem số lượt mua của tháng">
+        {/* Fills the rest of the viewport on a desktop screen, never shorter than 20rem */}
+        <RevenueChart months={months} className="h-[max(20rem,calc(100dvh-30rem))]" />
+      </Panel>
     </div>
   );
 };

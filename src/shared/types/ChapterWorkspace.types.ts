@@ -13,7 +13,8 @@ export interface ChapterWorkspaceProps {
   textVersion: number;
   isSavingText: boolean;
   hasUnsavedChanges: boolean;
-  audioSpeed: number;
+  /** Reading speed stored by the backend for the active chapter */
+  audioSpeed?: number | null;
   isCurrentProcessing: boolean;
   isCurrentGenerating: boolean;
   isCurrentUploading: boolean;
@@ -21,7 +22,6 @@ export interface ChapterWorkspaceProps {
   onToggleSidebar?: () => void;
   onEditInfo: () => void;
   onGenerateVoice: (chapterId: number, speed: number) => void;
-  onAudioSpeedChange: (speed: number) => void;
   onUploadAudio: (chapterId: number) => void;
   onDeleteChapter: () => void;
   onDraftChange: (text: string, content: string) => void;

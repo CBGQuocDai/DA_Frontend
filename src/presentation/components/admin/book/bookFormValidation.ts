@@ -81,7 +81,7 @@ export const validateBookForm = ({
 
   if (!form.voiceId) errors.voiceId = 'Chọn giọng đọc cho sách.';
   if (form.categoryIds.length === 0)
-    errors.categoryIds = 'Chọn ít nhất một danh mục.';
+    errors.categoryIds = 'Chọn ít nhất một thể loại.';
   if (form.authorIds.length === 0)
     errors.authorIds = 'Chọn ít nhất một tác giả.';
 

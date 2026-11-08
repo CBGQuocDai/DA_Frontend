@@ -1,22 +1,13 @@
 'use client';
 
 import React, { memo } from 'react';
-import { ChevronDown, ChevronUp, Mic, MoreVertical, Plus } from 'lucide-react';
+import { Mic, MoreVertical, Plus } from 'lucide-react';
 import { Button, EmptyState } from '@/src/presentation/components/common';
 import type { Voice } from '@/src/shared/types';
 import { VoicePlayButton } from './VoicePlayButton';
 
-export type VoiceSortField = 'name' | 'id';
-export type SortDir = 'asc' | 'desc';
-
 const SKELETON_ROWS = 5;
 const COLUMN_COUNT = 5;
-
-const SortIndicator: React.FC<{ active: boolean; dir: SortDir }> = ({ active, dir }) => {
-  if (!active) return <span className="opacity-0 group-hover:opacity-30 ml-1">↕</span>;
-  const Icon = dir === 'asc' ? ChevronUp : ChevronDown;
-  return <Icon className="w-3.5 h-3.5 ml-1 inline-block" strokeWidth={2.5} />;
-};
 
 const SkeletonRow: React.FC = () => (
   <tr>
@@ -43,11 +34,8 @@ interface VoiceTableProps {
   startIndex: number;
   isLoading: boolean;
   isFiltered: boolean;
-  sortField: VoiceSortField;
-  sortDir: SortDir;
   playingVoiceId: number | null;
   isPlaying: boolean;
-  onSort: (field: VoiceSortField) => void;
   onTogglePlay: (voice: Voice) => void;
   onOpenMenu: (e: React.MouseEvent<HTMLButtonElement>, voice: Voice) => void;
   onClearSearch: () => void;
@@ -60,11 +48,8 @@ export const VoiceTable = memo(function VoiceTable({
   startIndex,
   isLoading,
   isFiltered,
-  sortField,
-  sortDir,
   playingVoiceId,
   isPlaying,
-  onSort,
   onTogglePlay,
   onOpenMenu,
   onClearSearch,
@@ -164,19 +149,14 @@ export const VoiceTable = memo(function VoiceTable({
   };
 
   return (
-    <table className="w-full border-collapse">
+    <table className="w-full min-w-[640px] border-collapse">
       <thead className="sticky top-0 bg-bg/95 backdrop-blur-sm z-10 border-b border-border">
         <tr className="text-text-secondary text-xs font-semibold uppercase tracking-wider">
           <th className="text-center px-4 py-3.5 w-14 font-mono">#</th>
-          <th onClick={() => onSort('name')} className="text-left px-4 py-3.5 cursor-pointer select-none group w-56">
-            <span className="inline-flex items-center">
-              Tên giọng
-              <SortIndicator active={sortField === 'name'} dir={sortDir} />
-            </span>
-          </th>
+          <th className="text-left px-4 py-3.5 w-56">Tên giọng</th>
           <th className="text-left px-4 py-3.5 w-72">Mô tả</th>
           <th className="text-center px-4 py-3.5 w-48">Mẫu audio</th>
-          <th className="text-right px-4 py-3.5 w-20 pr-5">Thao tác</th>
+          <th className="text-right px-4 py-3.5 w-20 pr-5 whitespace-nowrap">Thao tác</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-border-light">{renderBody()}</tbody>

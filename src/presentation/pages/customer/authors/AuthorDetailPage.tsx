@@ -17,7 +17,7 @@ const PAGE_SIZE = 12;
 const GRID_CLASS = 'grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-6';
 
 export const CustomerAuthorDetailPage = ({ authorId }: { authorId: number }) => {
-  const loadAuthor = useCallback(() => authorService.getCustomerById(authorId), [authorId]);
+  const loadAuthor = useCallback(() => authorService.getAuthor(authorId), [authorId]);
   const { data: author, error: authorError, isLoading: authorLoading, reload: reloadAuthor } = useAsyncData(loadAuthor);
   const { books, total, totalPage, page, isLoading, error, goToPage, reload } = useBookList({ authorId, pageSize: PAGE_SIZE });
   const name = author?.fullName || 'Tác giả';
@@ -38,7 +38,7 @@ export const CustomerAuthorDetailPage = ({ authorId }: { authorId: number }) => 
           <EmptyState title="Không tìm thấy tác giả" action={<Link href={ROUTES.CUSTOMER.AUTHORS} className="text-sm font-semibold text-accent">Quay lại danh sách tác giả</Link>} />
         ) : (
           <>
-            <AuthorOverview author={{ name, bio: author.bio ?? undefined, portrait: resolveMediaUrl(author.avatar ?? undefined), bookCount: author.bookCount }} />
+            <AuthorOverview author={{ name, bio: author.bio ?? undefined, portrait: resolveMediaUrl(author.avatar?.url), bookCount: isLoading || error ? null : total }} />
             <section aria-labelledby="author-works-title" aria-busy={isLoading}>
               <div className="mb-7 flex flex-col gap-4 sm:mb-9 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                 <div className="min-w-0">

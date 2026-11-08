@@ -3,7 +3,6 @@ export const AuthorCardSkeleton = () => (
     <div className="h-24 w-24 rounded-full bg-slate-100" />
     <div className="mt-5 h-5 w-3/4 rounded bg-slate-100" />
     <div className="mt-3 h-3 w-full rounded bg-slate-100" />
-    <div className="mt-4 h-6 w-24 rounded-full bg-slate-100" />
     <div className="mt-5 h-10 w-full rounded-xl bg-slate-100" />
   </div>
 );

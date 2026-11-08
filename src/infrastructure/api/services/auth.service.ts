@@ -40,9 +40,10 @@ export const authService = {
     await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
   },
 
-  isAuthenticated: (): boolean => storageString.get(STORAGE_KEYS.ACCESS_TOKEN) !== null,
-
-  getStoredUser: (): User | null => storageJson.get<User>(STORAGE_KEYS.USER),
+  /** Signed-in admin; the backend refuses a wrong current password or an unchanged one. */
+  changeAdminPassword: async (data: ChangePasswordRequest): Promise<void> => {
+    await apiClient.post(API_ENDPOINTS.AUTH.ADMIN_CHANGE_PASSWORD, data);
+  },
 
   storeUser: (user: User): void => storageJson.set(STORAGE_KEYS.USER, user),
 

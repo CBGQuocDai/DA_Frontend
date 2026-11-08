@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminLayout } from "@/src/presentation/layouts";
 import { voiceService } from "@/src/infrastructure/api/services";
 import type { Voice } from "@/src/shared/types";
-import { resolveMediaUrl } from "@/src/shared/utils";
+import { getApiErrorMessage, resolveMediaUrl } from "@/src/shared/utils";
 import {
   Button,
   ConfirmDeleteModal,
+  ErrorState,
   FloatingMenu,
   getMenuAnchor,
   Pagination,
@@ -19,26 +20,18 @@ import {
   VoiceModal,
   VoicePlayerBar,
   VoiceTable,
-  type SortDir,
-  type VoiceSortField,
 } from "@/src/presentation/components/admin/voice";
 import { useAudioPlayer } from "@/src/presentation/hooks/common";
-import { invalidateBookFormOptions } from "@/src/presentation/hooks/admin";
+import { invalidateBookFormOptions, useAdminSearchList } from "@/src/presentation/hooks/admin";
 import { showAlert } from "@/src/presentation/components/common";
 
-const VOICES_PER_PAGE = 10;
 const MENU_HEIGHT = 88;
 
 const menuItemClass =
   "w-full px-3.5 py-2 text-left text-sm flex items-center gap-2.5 transition-colors cursor-pointer";
 
 export const ManageVoicePage = () => {
-  const [voices, setVoices] = useState<Voice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [sortField, setSortField] = useState<VoiceSortField>("id");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [pageState, setPageState] = useState({ page: 0, filterKey: "" });
+  const list = useAdminSearchList(voiceService.searchVoices);
 
   // `undefined` = closed, `null` = creating, Voice = editing
   const [editingVoice, setEditingVoice] = useState<Voice | null | undefined>(undefined);
@@ -50,32 +43,12 @@ export const ManageVoicePage = () => {
   const player = useAudioPlayer();
   const { togglePlay } = player;
 
-  useEffect(() => {
-    voiceService
-      .getVoices()
-      .then((data) => setVoices(data.content ?? []))
-      .catch((error) => console.error("Error fetching voices:", error))
-      .finally(() => setIsLoading(false));
-  }, []);
-
   const handleTogglePlay = useCallback(
     (voice: Voice) => {
       if (playingVoice?.id === voice.id) togglePlay();
       else setPlayingVoice(voice);
     },
     [playingVoice?.id, togglePlay],
-  );
-
-  const handleSort = useCallback(
-    (field: VoiceSortField) => {
-      if (sortField === field) {
-        setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-      } else {
-        setSortField(field);
-        setSortDir("asc");
-      }
-    },
-    [sortField],
   );
 
   const handleOpenMenu = useCallback((e: React.MouseEvent<HTMLButtonElement>, voice: Voice) => {
@@ -86,38 +59,11 @@ export const ManageVoicePage = () => {
     );
   }, []);
   const closeMenu = useCallback(() => setMenu(null), []);
-  const clearSearch = useCallback(() => setSearchKeyword(""), []);
   const openCreate = useCallback(() => setEditingVoice(null), []);
 
-  const filteredVoices = useMemo(() => {
-    const q = searchKeyword.trim().toLowerCase();
-    const matched = q
-      ? voices.filter(
-          (v) => v.name.toLowerCase().includes(q) || v.description?.toLowerCase().includes(q),
-        )
-      : voices;
-    const sorted = [...matched].sort((a, b) =>
-      sortField === "name" ? a.name.localeCompare(b.name, "vi") : a.id - b.id,
-    );
-    return sortDir === "asc" ? sorted : sorted.reverse();
-  }, [voices, searchKeyword, sortField, sortDir]);
-
-  // Client-side pagination; back to the first page whenever the filter/sort changes
-  const filterKey = `${searchKeyword}|${sortField}|${sortDir}`;
-  const totalPage = Math.max(1, Math.ceil(filteredVoices.length / VOICES_PER_PAGE));
-  const page = Math.min(pageState.filterKey === filterKey ? pageState.page : 0, totalPage - 1);
-  const pagedVoices = useMemo(
-    () => filteredVoices.slice(page * VOICES_PER_PAGE, (page + 1) * VOICES_PER_PAGE),
-    [filteredVoices, page],
-  );
-
-  const handleSaved = (saved: Voice) => {
+  const handleSaved = () => {
     invalidateBookFormOptions();
-    setVoices((prev) =>
-      prev.some((v) => v.id === saved.id)
-        ? prev.map((v) => (v.id === saved.id ? saved : v))
-        : [...prev, saved],
-    );
+    list.reload();
   };
 
   const handleConfirmDelete = async () => {
@@ -127,11 +73,12 @@ export const ManageVoicePage = () => {
       if (playingVoice?.id === deletingVoice.id) setPlayingVoice(null);
       await voiceService.deleteVoice(deletingVoice.id);
       invalidateBookFormOptions();
-      setVoices((prev) => prev.filter((v) => v.id !== deletingVoice.id));
       setDeletingVoice(null);
+      list.reload();
     } catch (error) {
       console.error("Error deleting voice:", error);
-      showAlert("Có lỗi xảy ra khi xóa giọng đọc");
+      setDeletingVoice(null);
+      showAlert(getApiErrorMessage(error, "Có lỗi xảy ra khi xóa giọng đọc"));
     } finally {
       setIsDeleting(false);
     }
@@ -140,45 +87,50 @@ export const ManageVoicePage = () => {
   return (
     <AdminLayout>
       <div className="w-full h-full flex-1 flex flex-col min-h-0 space-y-4">
-        <div className="rounded-xl flex-shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <SearchInput
-            value={searchKeyword}
-            onChange={setSearchKeyword}
-            placeholder="Tìm theo tên hoặc mô tả..."
-            className="flex-1 max-w-md"
-          />
+        <div className="flex-shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-1 items-center gap-3">
+            <SearchInput
+              value={list.keyword}
+              onChange={list.setKeyword}
+              placeholder="Tìm theo tên giọng..."
+              className="flex-1 max-w-md"
+            />
+            {!list.isLoading && (
+              <span className="hidden sm:inline text-xs text-text-muted tabular-nums" aria-live="polite">
+                {list.total} giọng đọc
+              </span>
+            )}
+          </div>
           <Button onClick={openCreate} className="h-10 px-4 rounded-xl shadow-sm hover:shadow">
             <Plus className="w-4 h-4" />
             <span>Thêm giọng mới</span>
           </Button>
         </div>
 
+        {list.error && <ErrorState message={list.error} onRetry={list.reload} className="flex-shrink-0" />}
+
         <div className="flex-1 min-h-0 bg-surface rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
-          <div className="flex-1 min-h-0 overflow-auto">
+          <div
+            className={`flex-1 min-h-0 overflow-auto transition-opacity ${list.isFetching && !list.isLoading ? "opacity-60" : ""}`}
+            aria-busy={list.isFetching}
+          >
             <VoiceTable
-              voices={pagedVoices}
-              startIndex={page * VOICES_PER_PAGE}
-              isLoading={isLoading}
-              isFiltered={Boolean(searchKeyword)}
-              sortField={sortField}
-              sortDir={sortDir}
+              voices={list.items}
+              startIndex={list.page * list.pageSize}
+              isLoading={list.isLoading}
+              isFiltered={list.isFiltered}
               playingVoiceId={playingVoice?.id ?? null}
               isPlaying={player.isPlaying}
-              onSort={handleSort}
               onTogglePlay={handleTogglePlay}
               onOpenMenu={handleOpenMenu}
-              onClearSearch={clearSearch}
+              onClearSearch={list.clearSearch}
               onCreate={openCreate}
             />
           </div>
 
-          {!isLoading && totalPage > 1 && (
+          {!list.isLoading && list.items.length > 0 && (
             <div className="flex-shrink-0 px-4 py-3 border-t border-border">
-              <Pagination
-                page={page}
-                totalPage={totalPage}
-                onPageChange={(next) => setPageState({ page: next, filterKey })}
-              />
+              <Pagination page={list.page} totalPage={list.totalPage} onPageChange={list.setPage} className="" />
             </div>
           )}
 

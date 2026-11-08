@@ -1,6 +1,10 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { Voice } from '@/src/shared/types';
+import type { PaginatedResponse, Voice } from '@/src/shared/types';
+import type { SearchParams } from './search.params';
+
+/** Largest page the pickers ask for; there are only a handful of voices. */
+const ALL_VOICES_SIZE = 100;
 
 /**
  * Body of both create (POST) and update (PUT, full replacement). `exampleAudio`
@@ -14,12 +18,17 @@ export interface VoicePayload {
 }
 
 export const voiceService = {
-  getVoices: async (): Promise<{ content: Voice[]; total: number }> => {
-    const data = unwrap<Voice[] | { content: Voice[]; total: number }>(
-      await apiClient.get(API_ENDPOINTS.VOICES.LIST)
-    );
-    return Array.isArray(data) ? { content: data, total: data.length } : data;
-  },
+  /** Every voice (up to {@link ALL_VOICES_SIZE}), for pickers and counts. */
+  getVoices: async (): Promise<PaginatedResponse<Voice>> =>
+    voiceService.searchVoices({ page: 0, size: ALL_VOICES_SIZE }),
+
+  /** Admin list, filtered by name (GET /voice?voiceName=), newest first. */
+  searchVoices: async ({ keyword, page = 0, size = 10 }: SearchParams): Promise<PaginatedResponse<Voice>> =>
+    unwrap(
+      await apiClient.get(API_ENDPOINTS.VOICES.LIST, {
+        params: { ...(keyword?.trim() ? { voiceName: keyword.trim() } : {}), page, size },
+      }),
+    ),
 
   createVoice: async (payload: VoicePayload): Promise<Voice> =>
     unwrap(await apiClient.post(API_ENDPOINTS.VOICES.LIST, payload)),

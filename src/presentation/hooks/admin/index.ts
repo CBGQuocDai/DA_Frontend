@@ -5,4 +5,5 @@ export * from './useChapterActions';
 export * from './useChapterSearch';
 export * from './useBookFormOptions';
 export * from './useAdminBookList';
-export * from './useStatisticsSummary';
+export * from './useStatistics';
+export * from './useAdminSearchList';
