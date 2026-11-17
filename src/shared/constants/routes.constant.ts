@@ -16,7 +16,7 @@ export const ROUTES = {
     LOGIN_THEN: (path: string) => `/customer/login?redirect=${encodeURIComponent(path)}`,
     REGISTER: '/customer/register',
     FORGOT_PASSWORD: '/customer/forgot-password',
-    STORE: '/customer/store',
+    BOOKS: '/customer/books',
     AUTHORS: '/customer/authors',
     AUTHOR_DETAIL: (id: string) => `/customer/authors/${encodeURIComponent(id)}`,
     PROFILE: '/customer/profile',

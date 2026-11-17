@@ -1,24 +1,22 @@
 "use client";
 
 import React from "react";
-import { useBookList } from "@/src/presentation/hooks/customer";
+import { useHomeBooks } from "@/src/presentation/hooks/customer";
 import { BookShelf } from "../book";
 import { ErrorState } from "@/src/presentation/components/common";
 import { ROUTES } from "@/src/shared/constants";
 
-const PAGE_SIZE = 10;
-
 export const NewBooksSection: React.FC = () => {
-  const { books, isLoading, error, reload } =
-    useBookList({
-      pageSize: PAGE_SIZE,
-    });
+  const { books, isGuest, isLoading, error, reload } = useHomeBooks();
+  const title = isGuest ? "Khám phá sách" : "Sách mới";
+
+  if (isGuest && !isLoading && !error && books.length === 0) return null;
 
   if (error) {
     return (
-      <section>
+      <section aria-label={title} role="alert">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-5">
-          Sách mới
+          {title}
         </h2>
         <ErrorState message={error} onRetry={reload} />
       </section>
@@ -28,10 +26,10 @@ export const NewBooksSection: React.FC = () => {
   return (
     <div>
       <BookShelf
-        title="Sách mới"
+        title={title}
         books={books}
         isLoading={isLoading}
-        viewAllHref={`${ROUTES.CUSTOMER.STORE}?view=all`}
+        viewAllHref={ROUTES.CUSTOMER.BOOKS}
         emptyMessage="Chưa có sách nào trong danh sách"
       />
     </div>

@@ -34,7 +34,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
 
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
-              href={ROUTES.CUSTOMER.STORE}
+              href={ROUTES.CUSTOMER.BOOKS}
               className="p-2 text-slate-500 hover:text-accent hover:bg-accent-light rounded-full transition-colors"
               aria-label="Tìm kiếm"
             >

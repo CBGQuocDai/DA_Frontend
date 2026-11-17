@@ -9,14 +9,17 @@ interface UseBookListOptions {
   bookName?: string;
   categoryId?: number;
   authorId?: number;
+  /** Supply both options when pagination is stored outside this hook (e.g. in the URL). */
+  page?: number;
+  onPageChange?: (page: number) => void;
 }
 
 /** Paginated book list; `page` is zero-based to match the shared Pagination component. */
-export const useBookList = ({ pageSize = 8, bookName, categoryId, authorId }: UseBookListOptions = {}) => {
+export const useBookList = ({ pageSize = 8, bookName, categoryId, authorId, page: controlledPage, onPageChange }: UseBookListOptions = {}) => {
   // Keep the page together with the query it belongs to, so a new search starts at page 0
   const queryKey = JSON.stringify([bookName ?? '', categoryId, authorId, pageSize]);
   const [pageState, setPageState] = useState({ queryKey, page: 0 });
-  const page = pageState.queryKey === queryKey ? pageState.page : 0;
+  const page = controlledPage ?? (pageState.queryKey === queryKey ? pageState.page : 0);
 
   const load = useCallback(
     () => customerBookService.getBooks({ page, size: pageSize, bookName: bookName || undefined, categoryId, authorId }),
@@ -25,8 +28,11 @@ export const useBookList = ({ pageSize = 8, bookName, categoryId, authorId }: Us
   const { data, error, isLoading, reload } = useAsyncData(load);
 
   const goToPage = useCallback(
-    (nextPage: number) => setPageState({ queryKey, page: nextPage }),
-    [queryKey]
+    (nextPage: number) => {
+      if (onPageChange) onPageChange(nextPage);
+      else setPageState({ queryKey, page: nextPage });
+    },
+    [queryKey, onPageChange]
   );
 
   return {

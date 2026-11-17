@@ -14,7 +14,7 @@ const LEGAL_LINES = [
 
 const USEFUL_LINKS = [
   { label: 'Về chúng tôi', href: ROUTES.CUSTOMER.HOME },
-  { label: 'Sách nói', href: ROUTES.CUSTOMER.STORE },
+  { label: 'Sách nói', href: ROUTES.CUSTOMER.BOOKS },
 ];
 
 const HOTLINE = '1900 6868';

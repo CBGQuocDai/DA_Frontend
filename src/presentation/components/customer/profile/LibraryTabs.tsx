@@ -9,9 +9,9 @@ import { EmptyState } from '@/src/presentation/components/common';
 import { TabHeader } from './ProfileParts';
 import type { FavoriteBookItem, PurchasedBookItem } from './profile.types';
 
-const BrowseStoreLink: React.FC<{ label: string }> = ({ label }) => (
+const BrowseBooksLink: React.FC<{ label: string }> = ({ label }) => (
   <Link
-    href={ROUTES.CUSTOMER.STORE}
+    href={ROUTES.CUSTOMER.BOOKS}
     className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-bold shadow-md shadow-accent/30 transition-all"
   >
     {label}
@@ -40,7 +40,7 @@ export const FavoritesTab: React.FC<FavoritesTabProps> = ({ items, onRemove }) =
         icon={<Heart className="w-8 h-8" />}
         title="Chưa có cuốn sách nào trong danh sách yêu thích"
         description="Hãy dạo qua kho sách nói phong phú và bấm nút tim để lưu lại những cuốn sách bạn yêu thích nhé!"
-        action={<BrowseStoreLink label="Khám phá sách nói ngay" />}
+        action={<BrowseBooksLink label="Khám phá sách nói ngay" />}
       />
     ) : (
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -110,7 +110,7 @@ export const PurchasedTab: React.FC<{ items: PurchasedBookItem[] }> = ({ items }
         icon={<BookOpen className="w-8 h-8" />}
         title="Bạn chưa mua cuốn sách bản quyền nào"
         description="Mua sách để sở hữu trọn bộ audio chất lượng cao."
-        action={<BrowseStoreLink label="Xem kho sách nói" />}
+        action={<BrowseBooksLink label="Xem kho sách nói" />}
       />
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -14,7 +14,7 @@ export const HeaderSearch: React.FC = () => {
     e.preventDefault();
     const keyword = query.trim();
     if (!keyword) return;
-    router.push(`${ROUTES.CUSTOMER.STORE}?search=${encodeURIComponent(keyword)}`);
+    router.push(`${ROUTES.CUSTOMER.BOOKS}?search=${encodeURIComponent(keyword)}`);
     setIsOpen(false);
   };
 

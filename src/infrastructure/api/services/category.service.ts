@@ -14,7 +14,7 @@ export const categoryService = {
   getBestsellers: async (period: BestsellerPeriod): Promise<Category[]> =>
     unwrap<Category[]>(await apiClient.get(API_ENDPOINTS.CATEGORIES.BESTSELLERS, { params: { period } })) ?? [],
 
-  /** Every category, for the store tabs and pickers. */
+  /** Every category, for book filters and pickers. */
   getCategories: async (): Promise<Category[]> =>
     unwrap<Category[]>(await apiClient.get(API_ENDPOINTS.CATEGORIES.LIST)) ?? [],
 

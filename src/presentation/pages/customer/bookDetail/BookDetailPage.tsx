@@ -149,7 +149,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           <Breadcrumb
             items={[
               { label: 'Trang chủ', href: ROUTES.CUSTOMER.HOME },
-              { label: 'Sách nói', href: ROUTES.CUSTOMER.STORE },
+              { label: 'Sách nói', href: ROUTES.CUSTOMER.BOOKS },
               ...(categories[0] ? [{ label: categories[0].name }] : []),
               { label: book.title },
             ]}

@@ -77,26 +77,6 @@ export const CustomerAuthorsPage = () => {
         </section>
 
         <section aria-label="Danh sách tác giả" aria-busy={isLoading}>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-slate-200/80 pb-5">
-            <p role="status" className="text-xs leading-5 text-slate-500">
-              {isLoading ? (
-                "Đang tải danh sách tác giả…"
-              ) : error ? (
-                "Danh sách tác giả"
-              ) : (
-                <>
-                  Hiển thị{" "}
-                  <span className="font-semibold text-slate-700">
-                    {total > 0
-                      ? `${page * PAGE_SIZE + 1}–${page * PAGE_SIZE + authors.length} / ${total}`
-                      : "0"}
-                  </span>{" "}
-                  tác giả{query.trim() ? ` cho “${query.trim()}”` : ""}
-                </>
-              )}
-            </p>
-          </div>
-
           {error ? (
             <ErrorState message={error} onRetry={reload} />
           ) : isLoading ? (

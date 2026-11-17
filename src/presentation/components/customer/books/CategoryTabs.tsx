@@ -19,14 +19,14 @@ const tabClass = (isActive: boolean) =>
   }`;
 
 export const CategoryTabs: React.FC<CategoryTabsProps> = ({ categories, activeId, onSelect }) => (
-  <div className="flex items-center gap-2 overflow-x-auto py-3 mt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <button type="button" onClick={() => onSelect(ALL_CATEGORIES)} className={tabClass(activeId === ALL_CATEGORIES)}>
-      Tất cả danh mục
+  <div role="group" aria-label="Lọc theo danh mục" className="flex items-center gap-2 overflow-x-auto py-3 mt-2">
+    <button type="button" aria-pressed={activeId === ALL_CATEGORIES} onClick={() => onSelect(ALL_CATEGORIES)} className={tabClass(activeId === ALL_CATEGORIES)}>
+      Tất cả
     </button>
     {categories.map((category) => {
       const id = String(category.id);
       return (
-        <button key={id} type="button" onClick={() => onSelect(id)} className={tabClass(activeId === id)}>
+        <button key={id} type="button" aria-pressed={activeId === id} onClick={() => onSelect(id)} className={tabClass(activeId === id)}>
           {category.name}
         </button>
       );

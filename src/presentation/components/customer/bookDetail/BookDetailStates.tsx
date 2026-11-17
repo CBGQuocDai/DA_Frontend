@@ -25,7 +25,7 @@ export const BookDetailNotFound: React.FC = () => (
     description="Sách có thể đã bị gỡ hoặc đường dẫn không đúng."
     action={
       <Link
-        href={ROUTES.CUSTOMER.STORE}
+        href={ROUTES.CUSTOMER.BOOKS}
         className="inline-flex px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-bold shadow-md shadow-accent/30 transition-all"
       >
         Xem kho sách nói

@@ -75,6 +75,7 @@ export const API_ENDPOINTS = {
 
   CUSTOMER_BOOKS: {
     LIST: "/books/catalog",
+    RECOMMENDATIONS: "/books/recommendations",
     OVERVIEW: (bookId: string | number) => `/books/${bookId}/overview`,
     CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/list`,
     RELATED: (bookId: string | number) => `/books/${bookId}/recommendations`,
