@@ -40,6 +40,10 @@ export const customerBookService = {
 
   getOverview,
 
+  /** Public recommendations return book cards directly in data, in backend order. */
+  getRelatedBooks: async (bookId: number, limit = 8): Promise<Book[]> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.RELATED(bookId), { params: { limit } })),
+
   getChapters: async (bookId: number): Promise<CustomerChapter[]> =>
     unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.CHAPTERS(bookId))),
 

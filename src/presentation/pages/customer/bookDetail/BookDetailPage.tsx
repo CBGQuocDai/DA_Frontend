@@ -27,7 +27,7 @@ import {
 } from '@/src/presentation/components/customer/bookDetail';
 import { ROUTES } from '@/src/shared/constants';
 import type { Chapter } from '@/src/shared/types';
-import { getBookAuthorNames, getBookAuthors, getBookCategories, getBookPrice } from '@/src/shared/utils';
+import { getBookAuthorNames, getBookCategories, getBookPrice } from '@/src/shared/utils';
 import { useListeningProgress } from '@/src/presentation/hooks/customer/useListeningProgress';
 
 /** The first chapters can be listened to before buying the book. */
@@ -83,7 +83,6 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   }
 
   const authorName = getBookAuthorNames(book);
-  const authors = getBookAuthors(book);
   const categories = getBookCategories(book);
   const price = getBookPrice(book) ?? 0;
 
@@ -217,25 +216,15 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           onBuy={payment.openPayment}
         />
 
-        {(related.isLoading || related.sameAuthor.length > 0) && (
-          <DetailSection>
-            <BookShelf
-              title="Cùng tác giả"
-              books={related.sameAuthor}
-              isLoading={related.isLoading}
-              viewAllHref={authors[0] ? `${ROUTES.CUSTOMER.STORE}?author=${authors[0].id}` : undefined}
-            />
-          </DetailSection>
-        )}
-
-        {(related.isLoading || related.sameCategory.length > 0) && (
-          <DetailSection>
-            <BookShelf
-              title="Đầu sách tương tự"
-              books={related.sameCategory}
-              isLoading={related.isLoading}
-              viewAllHref={categories[0] ? `${ROUTES.CUSTOMER.STORE}?category=${categories[0].id}` : undefined}
-            />
+        {(related.isLoading || related.error || related.books.length > 0) && (
+          <DetailSection title={related.error ? 'Sách liên quan' : undefined}>
+            {related.error ? (
+              <div role="alert">
+                <ErrorState message={related.error} onRetry={related.reload} />
+              </div>
+            ) : (
+              <BookShelf title="Sách liên quan" books={related.books} isLoading={related.isLoading} />
+            )}
           </DetailSection>
         )}
       </div>
@@ -258,7 +247,7 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
             isChapterUnlocked,
             onPlay: playChapter,
           }}
-          nextBook={related.sameCategory[0] ?? related.sameAuthor[0]}
+          nextBook={related.books[0]}
           isFavorite={favorite.isFavorite}
           isFavoriteBusy={favorite.isBusy}
           onToggleFavorite={favorite.toggle}

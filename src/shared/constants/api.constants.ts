@@ -77,6 +77,7 @@ export const API_ENDPOINTS = {
     LIST: "/books/catalog",
     OVERVIEW: (bookId: string | number) => `/books/${bookId}/overview`,
     CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/list`,
+    RELATED: (bookId: string | number) => `/books/${bookId}/recommendations`,
     PROGRESS: (bookId: number) => `/customer/books/${bookId}/progress`,
     SAVE_PROGRESS: (bookId: number, chapterId: number) =>
       `/customer/books/${bookId}/chapters/${chapterId}/progress`,
