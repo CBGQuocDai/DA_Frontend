@@ -20,6 +20,8 @@ interface BookOverviewProps {
   favoriteError: string | null;
   onToggleFavorite: () => void;
   onPreview: () => void;
+  listenLabel?: string;
+  isListeningBusy?: boolean;
   onBuy: () => void;
   onViewReviews: () => void;
   reviewSummary: ReviewSummary | null;
@@ -39,6 +41,8 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
   favoriteError,
   onToggleFavorite,
   onPreview,
+  listenLabel,
+  isListeningBusy = false,
   onBuy,
   onViewReviews,
   reviewSummary,
@@ -124,10 +128,12 @@ export const BookOverview: React.FC<BookOverviewProps> = ({
             <button
               type="button"
               onClick={onPreview}
-              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-accent to-accent-hover hover:from-rose-500 hover:to-accent text-white font-bold text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 shadow-md shadow-accent/30 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+              disabled={isListeningBusy || chapterCount === 0}
+              aria-busy={isListeningBusy}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-accent to-accent-hover hover:from-rose-500 hover:to-accent text-white font-bold text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 shadow-md shadow-accent/30 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:cursor-wait disabled:opacity-60"
             >
-              <Play className="w-4 h-4" fill="currentColor" />
-              <span>{isPurchased ? 'Nghe ngay' : 'Nghe thử miễn phí'}</span>
+              {isListeningBusy ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" fill="currentColor" />}
+              <span>{isListeningBusy ? 'Đang tải…' : listenLabel ?? (isPurchased ? 'Nghe ngay' : 'Nghe thử miễn phí')}</span>
             </button>
 
             {isPurchased ? (

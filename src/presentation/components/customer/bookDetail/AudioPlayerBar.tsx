@@ -51,6 +51,10 @@ interface AudioPlayerBarProps {
   onToggleFavorite: () => void;
   onPreviousChapter?: () => void;
   onNextChapter?: () => void;
+  onPlaybackEnd?: () => void;
+  progressMessage?: string | null;
+  hasProgressError?: boolean;
+  onRetryProgress?: () => void;
   isChangingChapter?: boolean;
   chapterNavigationError?: string | null;
   showBuyButton: boolean;
@@ -72,6 +76,10 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   onToggleFavorite,
   onPreviousChapter,
   onNextChapter,
+  onPlaybackEnd,
+  progressMessage,
+  hasProgressError = false,
+  onRetryProgress,
   isChangingChapter = false,
   chapterNavigationError = null,
   showBuyButton,
@@ -99,7 +107,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   const [dockHeight, setDockHeight] = useState(104);
   const dockRef = useRef<HTMLElement>(null);
   const src = resolveMediaUrl(chapter.audioUrl);
-  const hasDuration = Number.isFinite(duration) && duration > 0;
+  const hasDuration = !player.isRestoring && Number.isFinite(duration) && duration > 0;
   const elapsed = hasDuration
     ? Math.min(Math.max(currentTime, 0), duration)
     : 0;
@@ -162,7 +170,10 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
         aria-label="Trình phát âm thanh"
         className={`${styles.player} fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-white/95 text-slate-900 shadow-[0_-8px_32px_rgba(15,23,42,0.06)] backdrop-blur-xl`}
       >
-        {src && <audio key={src} src={src} {...audioProps} />}
+        {src && <audio key={`${player.trackKey ?? chapter.id}:${src}`} src={src} {...audioProps} onEnded={() => {
+          audioProps.onEnded();
+          onPlaybackEnd?.();
+        }} />}
 
         <div className={styles.layout}>
           <div className="flex min-w-0 items-center gap-3">
@@ -232,7 +243,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
                 <button
                   type="button"
                   onClick={togglePlay}
-                  disabled={!src}
+                  disabled={!src || player.isRestoring}
                   className={`${styles.playButton} flex shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-md shadow-accent/20 ring-4 ring-accent/10 transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent`}
                   aria-label={isPlaying ? "Tạm dừng" : "Tiếp tục phát"}
                 >
@@ -335,6 +346,12 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
             </div>
             {isChangingChapter && <p role="status" className="mt-1 text-center text-[11px] text-slate-500">Đang tải chương...</p>}
             {chapterNavigationError && <p role="alert" className="mt-1 text-center text-[11px] text-red-600">{chapterNavigationError}</p>}
+            {progressMessage && (
+              <p role="status" className={`mt-1 text-center text-[11px] ${hasProgressError ? 'text-amber-700' : 'text-slate-500'}`}>
+                {progressMessage}
+                {hasProgressError && <button type="button" onClick={onRetryProgress} className="ml-2 font-semibold underline">Thử lại</button>}
+              </p>
+            )}
             {!src && (
               <p
                 role="status"

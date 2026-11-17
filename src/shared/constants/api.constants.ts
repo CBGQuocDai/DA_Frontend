@@ -1,60 +1,60 @@
 // Storage Keys
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'da_access_token',
-  REFRESH_TOKEN: 'da_refresh_token',
-  USER: 'da_user',
+  ACCESS_TOKEN: "da_access_token",
+  REFRESH_TOKEN: "da_refresh_token",
+  USER: "da_user",
 } as const;
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api';
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083/api";
 
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
-    ADMIN_LOGIN: '/admin/login',
-    CUSTOMER_LOGIN: '/customer/login',
-    CUSTOMER_REGISTER: '/customer/register',
-    CUSTOMER_PROFILE: '/customer/profile',
-    CHANGE_PASSWORD: '/customer/profile/change-password',
-    ADMIN_CHANGE_PASSWORD: '/admin/change-password',
+    ADMIN_LOGIN: "/admin/login",
+    CUSTOMER_LOGIN: "/customer/login",
+    CUSTOMER_REGISTER: "/customer/register",
+    CUSTOMER_PROFILE: "/customer/profile",
+    CHANGE_PASSWORD: "/customer/profile/change-password",
+    ADMIN_CHANGE_PASSWORD: "/admin/change-password",
   },
 
   STATISTICS: {
-    OVERVIEW: '/admin/statistics',
-    PURCHASES: '/admin/statistics/purchases',
+    OVERVIEW: "/admin/statistics",
+    PURCHASES: "/admin/statistics/purchases",
   },
 
   BOOKS: {
-    LIST: '/books',
+    LIST: "/books",
     DETAIL: (id: string | number) => `/books/${id}`,
-    CREATE: '/books',
+    CREATE: "/books",
     UPDATE: (id: string | number) => `/books/${id}`,
     DELETE: (id: string | number) => `/books/${id}`,
     PUBLISH: (id: string | number) => `/books/${id}/publish`,
     UNPUBLISH: (id: string | number) => `/books/${id}/unpublish`,
-    BESTSELLERS: '/books/bestsellers',
+    BESTSELLERS: "/books/bestsellers",
   },
 
   CATEGORIES: {
-    LIST: '/categories',
-    SEARCH: '/categories/search',
+    LIST: "/categories",
+    SEARCH: "/categories/search",
     DETAIL: (id: string | number) => `/categories/${id}`,
-    BESTSELLERS: '/categories/bestsellers',
+    BESTSELLERS: "/categories/bestsellers",
   },
 
   AUTHORS: {
-    LIST: '/authors',
-    PAGE: '/authors/page',
-    SEARCH: '/authors/search',
+    LIST: "/authors",
+    SEARCH: "/authors/search",
     DETAIL: (id: string | number) => `/authors/${id}`,
   },
 
   VOICES: {
-    LIST: '/voice',
+    LIST: "/voice",
     DETAIL: (voiceId: string | number) => `/voice/${voiceId}`,
   },
 
   UPLOADS: {
-    SIGN_URL: '/uploads/sign-url',
+    SIGN_URL: "/uploads/sign-url",
   },
 
   CHAPTERS: {
@@ -69,26 +69,30 @@ export const API_ENDPOINTS = {
   },
 
   PAYMENTS: {
-    CREATE: '/payments',
+    CREATE: "/payments",
     DETAIL: (paymentId: string | number) => `/payments/${paymentId}`,
   },
 
   CUSTOMER_BOOKS: {
-    LIST: '/books/catalog',
+    LIST: "/books/catalog",
     OVERVIEW: (bookId: string | number) => `/books/${bookId}/overview`,
-    CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/page`,
-    CHECK_OWNERSHIP: (bookId: string | number) => `/customer/books/${bookId}/check`,
+    CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/list`,
+    PROGRESS: (bookId: number) => `/customer/books/${bookId}/progress`,
+    SAVE_PROGRESS: (bookId: number, chapterId: number) =>
+      `/customer/books/${bookId}/chapters/${chapterId}/progress`,
+    CHECK_OWNERSHIP: (bookId: string | number) =>
+      `/customer/books/${bookId}/check`,
   },
-  
+
   BOOK_FAVORITES: {
     CHECK: (bookId: string | number) => `/book-favorite/${bookId}/check`,
     TOGGLE: (bookId: string | number) => `/book-favorite/${bookId}/toggle`,
   },
 
   REVIEWS: {
-    CREATE: '/review',
-    PAGE: (bookId: number) => `/review/${bookId}/page`,
-    SUMMARY: (bookId: number) => `/review/${bookId}/summary`,
-    MINE: (bookId: number) => `/review/${bookId}/me`,
+    CREATE: "/reviews",
+    PAGE: (bookId: number) => `/reviews/${bookId}/page`,
+    SUMMARY: (bookId: number) => `/reviews/${bookId}/summary`,
+    MINE: (bookId: number) => `/reviews/${bookId}/me`,
   },
 } as const;

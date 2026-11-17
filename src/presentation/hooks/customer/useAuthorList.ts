@@ -17,7 +17,7 @@ export const useAuthorList = (keyword: string, pageSize = 8) => {
   const [pageState, setPageState] = useState({ queryKey, page: 0 });
   const page = pageState.queryKey === queryKey ? pageState.page : 0;
   const load = useCallback(
-    () => authorService.getAuthorPage({ keyword: debouncedSearch || undefined, page, size: pageSize }),
+    () => authorService.searchAuthors({ keyword: debouncedSearch || undefined, page, size: pageSize }),
     [debouncedSearch, page, pageSize]
   );
   const { data, error, isLoading, reload } = useAsyncData(load);

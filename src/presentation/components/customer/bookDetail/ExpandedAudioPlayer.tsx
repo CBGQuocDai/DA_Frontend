@@ -4,10 +4,10 @@ import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Lock, Pause, Play } from 'lucide-react';
 import type { useAudioPlayer } from '@/src/presentation/hooks/common';
-import type { Book, Chapter } from '@/src/shared/types';
+import type { Book, Chapter, ChapterProgress } from '@/src/shared/types';
 import { ROUTES } from '@/src/shared/constants';
-import { formatListeningTime, getBookAuthorNames, resolveMediaUrl } from '@/src/shared/utils';
-import { Pagination } from '@/src/presentation/components/common';
+import { formatClock, formatListeningTime, getBookAuthorNames, resolveMediaUrl } from '@/src/shared/utils';
+import { isPlayableChapter } from '@/src/presentation/utils/customer/chapterPlayback';
 import { BookCover } from '../book';
 import { AudioPlaybackControls } from './AudioPlaybackControls';
 import styles from './AudioPlayerBar.module.css';
@@ -15,13 +15,11 @@ import styles from './AudioPlayerBar.module.css';
 export interface PlayerChapterList {
   chapters: Chapter[];
   total: number;
-  page: number;
-  pageSize: number;
-  totalPage: number;
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
-  onPageChange: (page: number) => void;
+  progress?: ReadonlyMap<number, ChapterProgress>;
+  isAccessLoading?: boolean;
   isChapterUnlocked: (index: number) => boolean;
   onPlay: (chapter: Chapter, index: number) => void;
 }
@@ -47,7 +45,7 @@ export const ExpandedAudioPlayer: React.FC<ExpandedAudioPlayerProps> = ({
 }) => {
   const panelRef = useRef<HTMLElement>(null);
   const hasAudio = Boolean(resolveMediaUrl(chapter.audioUrl));
-  const canSeek = hasAudio && Number.isFinite(player.duration) && player.duration > 0;
+  const canSeek = hasAudio && !player.isRestoring && Number.isFinite(player.duration) && player.duration > 0;
 
   useEffect(() => {
     panelRef.current?.focus({ preventScroll: true });
@@ -76,7 +74,7 @@ export const ExpandedAudioPlayer: React.FC<ExpandedAudioPlayerProps> = ({
           </div>
           <AudioPlaybackControls
             player={player}
-            canPlay={hasAudio}
+            canPlay={hasAudio && !player.isRestoring}
             canSeek={canSeek}
             onPreviousChapter={onPreviousChapter}
             onNextChapter={onNextChapter}
@@ -107,13 +105,15 @@ export const ExpandedAudioPlayer: React.FC<ExpandedAudioPlayerProps> = ({
               ) : (
                 <ol className="space-y-3">
                   {chapterList.chapters.map((item, index) => {
-                    const globalIndex = chapterList.page * chapterList.pageSize + index;
+                    const globalIndex = index;
                     const isUnlocked = chapterList.isChapterUnlocked(globalIndex);
+                    const saved = chapterList.progress?.get(item.id);
                     const isActive = item.id === chapter.id;
                     return (
                       <li key={item.id}>
                         <button
                           type="button"
+                          disabled={chapterList.isAccessLoading || (isUnlocked && !isPlayableChapter(item))}
                           onClick={() => isUnlocked ? chapterList.onPlay(item, globalIndex) : onBuy()}
                           aria-current={isActive ? 'true' : undefined}
                           aria-label={`${isUnlocked ? 'Phát' : 'Mở khóa'} chương ${globalIndex + 1}: ${item.title}`}
@@ -124,6 +124,7 @@ export const ExpandedAudioPlayer: React.FC<ExpandedAudioPlayerProps> = ({
                             <span className="mt-1 block text-[11px] font-medium text-slate-500">
                               {!isUnlocked ? 'Mua sách để mở khóa' : item.duration ? formatListeningTime(item.duration) : 'Chưa có thời lượng'}
                             </span>
+                            {saved && <span className="mt-1 block text-[10px] font-semibold text-accent">{saved.isComplete ? 'Đã nghe xong' : `Đã nghe ${formatClock(saved.lastPlayAt)}`}</span>}
                           </span>
                           <span className={`${styles.chapterPlayButton} ${isActive ? 'bg-accent text-white' : 'bg-white text-accent'}`}>
                             {!isUnlocked ? <Lock className="h-4 w-4" /> : isActive && player.isPlaying ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="ml-0.5 h-4 w-4" fill="currentColor" />}
@@ -135,9 +136,6 @@ export const ExpandedAudioPlayer: React.FC<ExpandedAudioPlayerProps> = ({
                 </ol>
               )}
             </div>
-            {!chapterList.isLoading && !chapterList.error && chapterList.totalPage > 1 && (
-              <Pagination page={chapterList.page} totalPage={chapterList.totalPage} onPageChange={chapterList.onPageChange} />
-            )}
           </section>
 
           {nextBook && (
