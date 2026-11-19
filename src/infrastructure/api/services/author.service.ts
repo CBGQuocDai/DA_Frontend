@@ -12,8 +12,8 @@ export const authorService = {
   getAuthor: async (authorId: number): Promise<Author> =>
     unwrap(await apiClient.get(API_ENDPOINTS.AUTHORS.DETAIL(authorId))),
 
-  /** Danh sách có phân trang, lọc theo tên, mới nhất trước (công khai, dùng cho cả admin và khách). */
-  searchAuthors: async (params: SearchParams): Promise<PaginatedResponse<Author>> =>
+  /** Danh sách có phân trang, xếp theo tên A–Z, tìm không phân biệt dấu (công khai, dùng cho cả admin và khách). */
+  searchAuthors: async (params: SearchParams = {}): Promise<PaginatedResponse<Author>> =>
     unwrap(await apiClient.get(API_ENDPOINTS.AUTHORS.SEARCH, { params: toSearchQuery(params) })),
 
   createAuthor: async (payload: AuthorPayload): Promise<Author> =>

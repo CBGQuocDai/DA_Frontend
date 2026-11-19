@@ -35,6 +35,11 @@ export const API_ENDPOINTS = {
     PROFILE: '/customer/profile',
     CHANGE_PASSWORD: '/customer/profile/change-password',
     BOOK_OWNERSHIP: (bookId: Id) => `/customer/books/${bookId}/check`,
+    // GET: tiến trình nghe của cả cuốn sách
+    LISTENING_PROGRESS: (bookId: Id) => `/customer/books/${bookId}/progress`,
+    // PUT: lưu vị trí đang nghe của một chương
+    SAVE_LISTENING_PROGRESS: (bookId: Id, chapterId: Id) =>
+      `/customer/books/${bookId}/chapters/${chapterId}/progress`,
   },
 
   // BookController
@@ -48,6 +53,8 @@ export const API_ENDPOINTS = {
     CATALOG: '/books/catalog',
     OVERVIEW: (bookId: Id) => `/books/${bookId}/overview`,
     CHAPTER_LIST: (bookId: Id) => `/books/${bookId}/chapters/list`,
+    // Sách liên quan do backend chọn theo tác giả và thể loại
+    RECOMMENDATIONS: (bookId: Id) => `/books/${bookId}/recommendations`,
   },
 
   // ChapterController (chỉ admin)

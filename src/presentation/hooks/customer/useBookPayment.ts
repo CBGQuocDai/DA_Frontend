@@ -26,7 +26,7 @@ export const useBookPayment = (bookId: number, isAuthenticated: boolean) => {
         : Promise.resolve(false),
     [bookId, isAuthenticated]
   );
-  const { data: ownedOnServer } = useAsyncData(loadOwnership);
+  const { data: ownedOnServer, isLoading: isCheckingOwnership } = useAsyncData(loadOwnership);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -83,6 +83,7 @@ export const useBookPayment = (bookId: number, isAuthenticated: boolean) => {
 
   return {
     isPurchased,
+    isCheckingOwnership,
     isModalOpen,
     payment,
     isPaid,
