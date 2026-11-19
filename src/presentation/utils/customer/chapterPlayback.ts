@@ -1,106 +1,97 @@
-import type { Chapter, PaginatedResponse } from '@/src/shared/types';
+import type { Chapter } from '@/src/shared/types';
 
-type ChapterPage = PaginatedResponse<Chapter>;
-const PAGE_CACHE_TTL_MS = 5 * 60_000;
+const CACHE_TTL_MS = 5 * 60_000;
+class PlaybackError extends Error {}
 
-interface CurrentChapter {
-  chapter: Chapter;
-  /** Zero-based position in the whole book, independent of the visible chapter page. */
-  index: number;
-}
+export const isPlayableChapter = (chapter: Chapter) => chapter.status === 'AUDIO_READY'
+  && Boolean(chapter.audioUrl) && Number.isFinite(chapter.duration) && (chapter.duration ?? 0) > 0;
 
 interface PlaybackState {
-  current: CurrentChapter | null;
+  current: { chapter: Chapter; index: number } | null;
   isNavigating: boolean;
   error: string | null;
 }
 
 interface NavigationOptions {
-  total: number;
   isUnlocked: (index: number) => boolean;
   onLocked: () => void;
   beforeChange: () => void;
 }
 
-/** One playback cursor and a short-lived chapter-page cache for a single book. */
-export const createChapterPlayback = (
-  fetchPage: (page: number) => Promise<ChapterPage>,
-  pageSize: number,
-) => {
+/** A book's complete chapter list and playback cursor. No chapter pagination is needed. */
+export const createChapterPlayback = (fetchChapters: () => Promise<Chapter[]>) => {
   let state: PlaybackState = { current: null, isNavigating: false, error: null };
   let requestVersion = 0;
+  let cache: { promise: Promise<Chapter[]>; loadedAt: number | null } | null = null;
   const listeners = new Set<() => void>();
-  const pages = new Map<number, { promise: Promise<ChapterPage>; loadedAt: number | null }>();
-
   const update = (next: PlaybackState) => {
     state = next;
     listeners.forEach((listener) => listener());
   };
-
-  const loadPage = (page: number): Promise<ChapterPage> => {
-    const cached = pages.get(page);
-    if (cached && (cached.loadedAt == null || Date.now() - cached.loadedAt < PAGE_CACHE_TTL_MS)) {
-      return cached.promise;
-    }
-
-    const entry = { promise: fetchPage(page), loadedAt: null as number | null };
-    pages.set(page, entry);
+  const load = (): Promise<Chapter[]> => {
+    if (cache && (cache.loadedAt == null || Date.now() - cache.loadedAt < CACHE_TTL_MS)) return cache.promise;
+    const entry = { promise: fetchChapters(), loadedAt: null as number | null };
+    cache = entry;
     entry.promise.then(
       () => { entry.loadedAt = Date.now(); },
-      () => { if (pages.get(page) === entry) pages.delete(page); },
+      () => { if (cache === entry) cache = null; },
     );
     return entry.promise;
   };
-
-  const cancelNavigation = () => {
-    requestVersion += 1;
-    if (state.isNavigating) update({ ...state, isNavigating: false });
+  const change = async (resolveIndex: (chapters: Chapter[]) => number | null | Promise<number | null>, options: NavigationOptions) => {
+    if (state.isNavigating) return;
+    const version = ++requestVersion;
+    update({ ...state, isNavigating: true, error: null });
+    try {
+      const chapters = await load();
+      if (version !== requestVersion) return;
+      const index = await resolveIndex(chapters);
+      if (version !== requestVersion) return;
+      if (index == null) { update({ ...state, isNavigating: false }); return; }
+      const chapter = chapters[index];
+      if (!chapter) throw new PlaybackError('Không tìm thấy chương cần nghe. Vui lòng tải lại danh sách chương.');
+      if (!options.isUnlocked(index)) {
+        update({ ...state, isNavigating: false });
+        options.onLocked();
+        return;
+      }
+      if (!isPlayableChapter(chapter)) throw new PlaybackError('Chương này chưa sẵn sàng để nghe. Vui lòng chọn chương khác.');
+      options.beforeChange();
+      update({ current: { chapter, index }, isNavigating: false, error: null });
+    } catch (error) {
+      if (version !== requestVersion) return;
+      update({ ...state, isNavigating: false, error: error instanceof PlaybackError ? error.message : 'Không thể mở chương. Vui lòng kiểm tra kết nối và thử lại.' });
+    }
   };
-
   return {
     subscribe: (listener: () => void) => {
       listeners.add(listener);
       return () => { listeners.delete(listener); };
     },
     getSnapshot: () => state,
-    loadPage,
-    invalidatePage: (page: number) => { pages.delete(page); },
-    cancelNavigation,
-    select: (chapter: Chapter, index: number) => {
-      requestVersion += 1;
-      update({ current: { chapter, index }, isNavigating: false, error: null });
+    load,
+    invalidate: () => { cache = null; },
+    cancelNavigation: () => {
+      requestVersion++;
+      if (state.isNavigating) update({ ...state, isNavigating: false });
     },
     close: () => {
-      requestVersion += 1;
+      requestVersion++;
       update({ current: null, isNavigating: false, error: null });
     },
-    navigate: async (direction: 'previous' | 'next', options: NavigationOptions) => {
-      const current = state.current;
-      if (!current || state.isNavigating) return;
-      const index = current.index + (direction === 'previous' ? -1 : 1);
-      if (index < 0 || index >= options.total) return;
-      if (!options.isUnlocked(index)) {
-        options.onLocked();
-        return;
-      }
-
-      const version = ++requestVersion;
-      update({ ...state, isNavigating: true, error: null });
-      try {
-        const page = Math.floor(index / pageSize);
-        const result = await loadPage(page);
-        if (version !== requestVersion) return;
-        const chapter = result.content[index % pageSize];
-        if (!chapter) {
-          pages.delete(page);
-          throw new Error('Chapter is no longer available on this page');
-        }
-        options.beforeChange();
-        update({ current: { chapter, index }, isNavigating: false, error: null });
-      } catch {
-        if (version !== requestVersion) return;
-        update({ ...state, isNavigating: false, error: 'Không thể chuyển chương. Vui lòng bấm lại để thử lại.' });
-      }
+    open: (target: number | (() => Promise<number | null>), options: NavigationOptions) => change(async (chapters) => {
+      const id = typeof target === 'function' ? await target() : target;
+      return id == null ? (chapters.length ? 0 : null) : chapters.findIndex((chapter) => chapter.id === id);
+    }, options),
+    navigate: (direction: 'previous' | 'next', options: NavigationOptions) => {
+      const id = state.current?.chapter.id;
+      if (id == null) return Promise.resolve();
+      return change((chapters) => {
+        const current = chapters.findIndex((chapter) => chapter.id === id);
+        if (current < 0) return -1;
+        const index = current + (direction === 'previous' ? -1 : 1);
+        return index < 0 || index >= chapters.length ? null : index;
+      }, options);
     },
   };
 };

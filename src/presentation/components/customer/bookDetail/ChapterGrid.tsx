@@ -2,21 +2,19 @@
 
 import React from 'react';
 import { Lock, Pause, Play } from 'lucide-react';
-import type { Chapter } from '@/src/shared/types';
-import { formatListeningTime } from '@/src/shared/utils';
+import type { Chapter, ChapterProgress } from '@/src/shared/types';
+import { formatClock, formatListeningTime } from '@/src/shared/utils';
 import { DetailSection } from './DetailSection';
-import { Pagination } from '@/src/presentation/components/common';
+import { isPlayableChapter } from '@/src/presentation/utils/customer/chapterPlayback';
 
 interface ChapterGridProps {
   chapters: Chapter[];
   total: number;
-  page: number;
-  pageSize: number;
-  totalPage: number;
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
-  onPageChange: (page: number) => void;
+  progress?: ReadonlyMap<number, ChapterProgress>;
+  isAccessLoading?: boolean;
   isChapterUnlocked: (index: number) => boolean;
   /** Chapters that are free only because they are part of the preview. */
   isPreviewChapter: (index: number) => boolean;
@@ -29,13 +27,11 @@ interface ChapterGridProps {
 export const ChapterGrid: React.FC<ChapterGridProps> = ({
   chapters,
   total,
-  page,
-  pageSize,
-  totalPage,
   isLoading,
   error,
   onRetry,
-  onPageChange,
+  progress,
+  isAccessLoading = false,
   isChapterUnlocked,
   isPreviewChapter,
   activeChapterId,
@@ -53,7 +49,7 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
   >
     {isLoading ? (
       <div role="status" aria-label="Đang tải danh sách chương" className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-        {Array.from({ length: pageSize }, (_, index) => (
+        {Array.from({ length: 6 }, (_, index) => (
           <div key={index} className="h-20 rounded-xl bg-slate-100 animate-pulse" />
         ))}
       </div>
@@ -65,12 +61,14 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
         </button>
       </div>
     ) : chapters.length === 0 ? (
-      <p className="text-sm text-slate-500">{total === 0 ? 'Sách chưa có chương nào.' : 'Trang này không có chương.'}</p>
+      <p className="text-sm text-slate-500">Sách chưa có chương nào.</p>
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {chapters.map((chapter, index) => {
-          const globalIndex = page * pageSize + index;
+          const globalIndex = index;
           const isUnlocked = isChapterUnlocked(globalIndex);
+          const isPlayable = isPlayableChapter(chapter);
+          const saved = progress?.get(chapter.id);
           const isActive = chapter.id === activeChapterId;
           const handleClick = () => (isUnlocked ? onPlay(chapter, globalIndex) : onLocked());
 
@@ -85,7 +83,7 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
                     : 'bg-slate-50/60 border-slate-200/70'
               }`}
             >
-              <button type="button" onClick={handleClick} className="flex-1 min-w-0 pr-2 text-left">
+              <button type="button" onClick={handleClick} disabled={isAccessLoading || (isUnlocked && !isPlayable)} className="flex-1 min-w-0 pr-2 text-left disabled:cursor-not-allowed disabled:opacity-60">
                 <h3
                   className={`text-xs sm:text-sm font-semibold truncate ${
                     isUnlocked ? 'text-slate-900 hover:text-accent' : 'text-slate-500'
@@ -94,7 +92,7 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
                 >
                   {chapter.title || `Chương ${globalIndex + 1}`}
                 </h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   {chapter.duration ? (
                     <span className="text-[11px] text-slate-400">{formatListeningTime(chapter.duration)}</span>
                   ) : null}
@@ -103,12 +101,17 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
                       Miễn phí
                     </span>
                   )}
+                  {isUnlocked && !isPlayable && <span className="text-[10px] text-amber-700">Audio chưa sẵn sàng</span>}
+                  {saved && (saved.isComplete
+                    ? <span className="text-[10px] font-semibold text-emerald-700">Đã nghe xong</span>
+                    : saved.lastPlayAt > 0 && <span className="text-[10px] font-semibold text-accent">Đã nghe {formatClock(saved.lastPlayAt)}</span>)}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={handleClick}
+                disabled={isAccessLoading || (isUnlocked && !isPlayable)}
                 className={`w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center border transition-all ${
                   !isUnlocked
                     ? 'bg-slate-100 text-slate-400 hover:text-accent hover:bg-accent-light border-slate-200'
@@ -131,11 +134,5 @@ export const ChapterGrid: React.FC<ChapterGridProps> = ({
         })}
       </div>
     )}
-    {!isLoading && !error && chapters.length > 0 && (
-      <p className="mt-4 text-center text-xs text-slate-500" aria-live="polite">
-        Hiển thị {page * pageSize + 1}–{page * pageSize + chapters.length} / {total} chương
-      </p>
-    )}
-    {totalPage > 1 && <Pagination page={page} totalPage={totalPage} onPageChange={onPageChange} />}
   </DetailSection>
 );

@@ -1,21 +1,56 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SyntheticEvent } from 'react';
+import { createAudioProgress } from '@/src/presentation/utils/customer/audioProgress';
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+interface AudioPlayerOptions {
+  trackKey?: string;
+  restorePosition?: () => Promise<number>;
+  restoreAvailable?: boolean;
+  onCheckpoint?: (position: number, complete: boolean) => void;
+}
+
 /** Trạng thái và điều khiển cho một thẻ <audio>; spread `audioProps` vào thẻ đó. */
-export const useAudioPlayer = () => {
+export const useAudioPlayer = ({ trackKey, restorePosition, restoreAvailable = true, onCheckpoint }: AudioPlayerOptions = {}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const progressRef = useRef<ReturnType<typeof createAudioProgress> | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRateState] = useState(1);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const pause = useCallback(() => audioRef.current?.pause(), []);
+  const attachAudio = useCallback((audio: HTMLAudioElement | null) => {
+    progressRef.current?.dispose();
+    progressRef.current = null;
+    audioRef.current?.pause();
+    audioRef.current = audio;
+    setIsRestoring(Boolean(audio && restorePosition));
+    if (audio) setError(null);
+    if (audio && restorePosition) {
+      progressRef.current = createAudioProgress(audio, {
+        restorePosition, onCheckpoint, onRestoring: setIsRestoring,
+        onRestored: (position) => {
+          setCurrentTime(position);
+          setDuration(audio.duration);
+        },
+      });
+    }
+  }, [restorePosition, onCheckpoint]);
+
+  const restore = useCallback(() => progressRef.current?.restore() ?? Promise.resolve(), []);
+  useEffect(() => { if (restoreAvailable) void restore(); }, [restoreAvailable, restore]);
+
+  const pause = useCallback(() => {
+    if (progressRef.current) progressRef.current.pause();
+    else audioRef.current?.pause();
+  }, []);
 
   const setVolume = useCallback((value: number) => {
     if (!Number.isFinite(value)) return;
@@ -46,6 +81,7 @@ export const useAudioPlayer = () => {
   }, []);
 
   const togglePlay = useCallback(() => {
+    if (progressRef.current) { progressRef.current.toggle(); return; }
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) audio.play().catch(() => setIsPlaying(false));
@@ -53,6 +89,7 @@ export const useAudioPlayer = () => {
   }, []);
 
   const skip = useCallback((seconds: number) => {
+    if (progressRef.current?.isRestoring()) return;
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(audio.duration)) return;
     audio.currentTime = clamp(audio.currentTime + seconds, 0, audio.duration);
@@ -60,17 +97,23 @@ export const useAudioPlayer = () => {
 
   /** Tua tới vị trí tính theo tỉ lệ 0..1 của bản audio. */
   const seek = useCallback((fraction: number) => {
+    if (progressRef.current?.isRestoring()) return;
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(audio.duration)) return;
     audio.currentTime = clamp(fraction, 0, 1) * audio.duration;
   }, []);
 
   const audioProps = {
-    ref: audioRef,
-    autoPlay: true,
+    ref: attachAudio,
+    autoPlay: !restorePosition,
     onPlay: () => setIsPlaying(true),
     onPause: () => setIsPlaying(false),
     onEnded: () => setIsPlaying(false),
+    onError: () => {
+      setIsPlaying(false);
+      setIsRestoring(false);
+      setError('Không thể tải audio. Vui lòng thử mở lại chương.');
+    },
     onTimeUpdate: (e: SyntheticEvent<HTMLAudioElement>) => setCurrentTime(e.currentTarget.currentTime),
     onLoadedMetadata: (e: SyntheticEvent<HTMLAudioElement>) => {
       e.currentTarget.volume = volume;
@@ -84,7 +127,7 @@ export const useAudioPlayer = () => {
   };
 
   return {
-    audioProps, isPlaying, currentTime, duration, togglePlay, pause, skip, seek,
+    audioProps, trackKey, isPlaying, isRestoring, error, currentTime, duration, togglePlay, pause, skip, seek, restore,
     volume, isMuted, playbackRate, setVolume, toggleMute, setPlaybackRate,
   };
 };
