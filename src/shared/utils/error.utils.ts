@@ -3,6 +3,7 @@ interface ApiError {
   message?: string;
 }
 
+/** Thông báo lỗi do backend trả về (ApiResponse.message), hoặc `fallback` khi không có. */
 export const getApiErrorMessage = (error: unknown, fallback: string) =>
   (error as ApiError)?.response?.data?.message || fallback;
 

@@ -7,7 +7,7 @@ import { ROUTES } from '@/src/shared/constants';
 import { Panel } from './Panel';
 import { formatCount } from './format';
 
-/** Bar order and colour; labels come from the status badges so both read the same */
+/** Thứ tự và màu của các thanh; nhãn lấy từ badge trạng thái để hai nơi hiển thị giống nhau */
 const PARTS: { key: BookStatus; color: string }[] = [
   { key: 'PUBLISHED', color: 'bg-success' },
   { key: 'UNPUBLISHED', color: 'bg-text-muted' },
@@ -15,7 +15,7 @@ const PARTS: { key: BookStatus; color: string }[] = [
   { key: 'FAILED', color: 'bg-error' },
 ];
 
-/** How many books customers can see, and how many are still in, or stuck in, processing. */
+/** Bao nhiêu sách khách hàng đang thấy, và bao nhiêu sách còn đang xử lý hoặc xử lý lỗi. */
 export const CatalogPanel: React.FC<{ bookStatus: Record<BookStatus, number> }> = ({ bookStatus }) => {
   const parts = PARTS.map((part) => ({
     ...part,

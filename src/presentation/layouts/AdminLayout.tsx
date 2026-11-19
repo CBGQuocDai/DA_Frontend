@@ -10,7 +10,7 @@ import { BarChart3, BookOpen, KeyRound, LogOut, Menu, Mic, PenLine, Radio, Tags,
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  /** Tighter page gutter for full-height workspaces */
+  /** Thu hẹp lề trang cho các màn làm việc chiếm trọn chiều cao */
   compact?: boolean;
 }
 
@@ -34,12 +34,14 @@ const Logo = () => (
   </Link>
 );
 
+/** Khung chung của các trang admin: sidebar điều hướng, đổi mật khẩu và đăng xuất. */
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, compact }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  // Phím Esc đóng ngăn kéo menu
   useEffect(() => {
     if (!isDrawerOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -49,6 +51,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, compact }) =
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isDrawerOpen]);
 
+  // Xóa phiên ở client và thu hồi token phía backend rồi về trang đăng nhập
   const handleLogout = () => {
     authService.logout();
     router.replace(ROUTES.ADMIN.LOGIN);
@@ -117,12 +120,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, compact }) =
 
   return (
     <div className="h-screen h-[100dvh] max-h-[100dvh] bg-bg flex overflow-hidden">
-      {/* Desktop sidebar */}
+      {/* Sidebar trên desktop */}
       <aside className="hidden lg:flex w-64 bg-surface border-r border-border flex-col flex-shrink-0 h-full">
         {sidebar}
       </aside>
 
-      {/* Mobile / tablet drawer */}
+      {/* Ngăn kéo menu trên mobile / tablet */}
       {isDrawerOpen && (
         <div className="lg:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsDrawerOpen(false)} aria-hidden="true" />
@@ -138,7 +141,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, compact }) =
       )}
 
       <div className="flex-1 flex flex-col h-full min-w-0">
-        {/* Mobile / tablet top bar */}
+        {/* Thanh trên cùng của mobile / tablet */}
         <header className="lg:hidden h-14 flex items-center gap-2 px-3 bg-surface border-b border-border flex-shrink-0">
           <button
             type="button"

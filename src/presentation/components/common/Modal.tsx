@@ -18,19 +18,19 @@ export const Modal = ({ onClose, title, children, size = 'md' }: ModalProps) => 
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
+      {/* Lớp nền mờ */}
       <div
         className="fixed inset-0 bg-black/50 transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {/* Khung modal */}
       <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         <div
           className={`relative flex max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] w-full flex-col ${sizeClasses[size]} bg-surface rounded-xl shadow-xl transform transition-all`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
+          {/* Tiêu đề */}
           <div className="flex flex-shrink-0 items-center justify-between px-4 sm:px-6 py-4 border-b border-border">
             <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
             <button
@@ -43,7 +43,7 @@ export const Modal = ({ onClose, title, children, size = 'md' }: ModalProps) => 
             </button>
           </div>
 
-          {/* Content */}
+          {/* Nội dung */}
           <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
             {children}
           </div>

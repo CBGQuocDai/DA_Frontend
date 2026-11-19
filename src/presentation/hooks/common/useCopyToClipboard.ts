@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const RESET_AFTER_MS = 2000;
 
-/** Copies text and remembers which field was copied for a short moment. */
+/** Sao chép văn bản và ghi nhớ trong chốc lát trường nào vừa được sao chép. */
 export const useCopyToClipboard = () => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

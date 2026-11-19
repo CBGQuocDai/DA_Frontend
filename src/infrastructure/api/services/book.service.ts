@@ -1,58 +1,37 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { BestsellerPeriod, Book, BookStatus, PaginatedResponse } from '@/src/shared/types';
+import type { BestsellerPeriod, Book, BookPayload, GetBooksParams, PaginatedResponse } from '@/src/shared/types';
 
-export interface GetBooksParams {
-  page?: number;
-  size?: number;
-  bookName?: string;
-  categoryId?: number;
-  authorId?: number;
-  status?: BookStatus;
-}
-
-/**
- * Body of both create (POST) and update (PUT, full replacement). Files are
- * uploaded beforehand (uploadService) and sent as storage paths; both are always
- * required, and an update keeps a file by sending its current path.
- */
-export interface BookPayload {
-  title: string;
-  description: string;
-  price: number;
-  voiceId: number;
-  categoryIds: number[];
-  authorIds: number[];
-  contentFile?: string;
-  coverImage?: string;
-}
-
+/** Các API quản lý sách của admin (BookController). */
 export const bookService = {
-  /** Admin dashboard: top books by purchases in the period, with `purchases`, `previousPurchases` and `revenue`. */
+  /** Danh sách sách có lọc và phân trang cho bảng quản lý. */
+  getBooks: async (params: GetBooksParams): Promise<PaginatedResponse<Book>> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.ROOT, { params })),
+
+  /** Sách bán chạy trong kỳ, kèm `purchases` và `previousPurchases` để so với kỳ trước. */
   getBestsellers: async (period: BestsellerPeriod): Promise<Book[]> =>
     unwrap<Book[]>(await apiClient.get(API_ENDPOINTS.BOOKS.BESTSELLERS, { params: { period } })) ?? [],
 
-  getBooks: async (params?: GetBooksParams): Promise<PaginatedResponse<Book>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.LIST, { params })),
-
-  getBookById: async (id: number): Promise<Book> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.DETAIL(id))),
+  /** Chi tiết sách, gồm cả danh sách chương, giọng đọc và URL file đã ký. */
+  getBookById: async (bookId: number): Promise<Book> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.DETAIL(bookId))),
 
   createBook: async (payload: BookPayload): Promise<Book> =>
-    unwrap(await apiClient.post(API_ENDPOINTS.BOOKS.CREATE, payload)),
+    unwrap(await apiClient.post(API_ENDPOINTS.BOOKS.ROOT, payload)),
 
   updateBook: async (bookId: number, payload: BookPayload): Promise<Book> =>
-    unwrap(await apiClient.put(API_ENDPOINTS.BOOKS.UPDATE(bookId), payload)),
+    unwrap(await apiClient.put(API_ENDPOINTS.BOOKS.DETAIL(bookId), payload)),
 
+  /** Backend từ chối khi sách còn chương chưa có audio. */
   publishBook: async (bookId: number): Promise<void> => {
-    await apiClient.put(API_ENDPOINTS.BOOKS.PUBLISH(bookId));
+    await apiClient.patch(API_ENDPOINTS.BOOKS.PUBLISH(bookId));
   },
 
   unpublishBook: async (bookId: number): Promise<void> => {
-    await apiClient.put(API_ENDPOINTS.BOOKS.UNPUBLISH(bookId));
+    await apiClient.patch(API_ENDPOINTS.BOOKS.UNPUBLISH(bookId));
   },
 
   deleteBook: async (bookId: number): Promise<void> => {
-    await apiClient.delete(API_ENDPOINTS.BOOKS.DELETE(bookId));
+    await apiClient.delete(API_ENDPOINTS.BOOKS.DETAIL(bookId));
   },
 };

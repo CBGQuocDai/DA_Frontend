@@ -1,19 +1,19 @@
 import type { Chapter } from '@/src/shared/types';
 
 export interface ChapterWorkspaceProps {
+  bookId: number;
   activeChapter: Chapter | null;
   sortedChapters: Chapter[];
   activeChapterIndex: number;
   voiceName?: string;
-  textDraft: string;
   contentDraft: string;
-  /** Stored formatting of the active chapter, empty if none or stale */
+  /** Tài liệu đã lưu của chương đang mở; rỗng nếu chương chưa có nội dung */
   savedContent: string;
-  /** Changes when the editor must reload `textDraft` */
+  /** Thay đổi khi trình soạn thảo cần nạp lại `contentDraft` */
   textVersion: number;
   isSavingText: boolean;
   hasUnsavedChanges: boolean;
-  /** Reading speed stored by the backend for the active chapter */
+  /** Tốc độ đọc backend đang lưu cho chương đang mở */
   audioSpeed?: number | null;
   isCurrentProcessing: boolean;
   isCurrentGenerating: boolean;
@@ -24,7 +24,7 @@ export interface ChapterWorkspaceProps {
   onGenerateVoice: (chapterId: number, speed: number) => void;
   onUploadAudio: (chapterId: number) => void;
   onDeleteChapter: () => void;
-  onDraftChange: (text: string, content: string) => void;
+  onDraftChange: (content: string) => void;
   onSaveText: () => void;
   onSelectChapter: (chapterId: number) => void;
 }

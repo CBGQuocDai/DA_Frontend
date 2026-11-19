@@ -17,3 +17,4 @@ export { SearchInput } from './SearchInput';
 export { FloatingMenu, getMenuAnchor } from './FloatingMenu';
 export type { MenuAnchor } from './FloatingMenu';
 export { StarRating } from './StarRating';
+export { ChapterAttachmentsPdfViewer } from './ChapterAttachmentsPdfViewer';

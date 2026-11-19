@@ -8,14 +8,14 @@ interface FileDropzoneProps {
   accept: string;
   file: File | null;
   onChange: (file: File | null) => void;
-  /** Shown when no file is chosen, e.g. "Kéo thả hoặc chọn file PDF" */
+  /** Hiển thị khi chưa chọn file, vd: "Kéo thả hoặc chọn file PDF" */
   prompt: string;
   hint?: string;
   hasError?: boolean;
   disabled?: boolean;
-  /** Image URL to render instead of the file name (cover preview) */
+  /** URL ảnh hiển thị thay cho tên file (xem trước ảnh bìa) */
   previewUrl?: string | null;
-  /** Already-uploaded file shown while no new file is chosen (edit mode) */
+  /** File đã upload trước đó, hiển thị khi chưa chọn file mới (chế độ sửa) */
   currentFile?: { name: string; url: string } | null;
   className?: string;
 }
@@ -41,7 +41,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
   const pick = (next: File | null) => {
     onChange(next);
-    // allow re-selecting the same file after removing it
+    // cho phép chọn lại đúng file đó sau khi đã gỡ
     if (inputRef.current) inputRef.current.value = '';
   };
 

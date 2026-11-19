@@ -12,7 +12,7 @@ export interface BookFormOptions {
 
 const EMPTY_OPTIONS: BookFormOptions = { categories: [], authors: [], voices: [] };
 
-// Shared by every admin screen that edits or filters books; the lists rarely change
+// Dùng chung cho mọi màn admin có sửa hoặc lọc sách; các danh sách này hiếm khi thay đổi
 let optionsPromise: Promise<BookFormOptions> | null = null;
 
 const loadOptions = async (): Promise<BookFormOptions> => {
@@ -24,23 +24,23 @@ const loadOptions = async (): Promise<BookFormOptions> => {
   const options = {
     categories: categories.status === 'fulfilled' ? categories.value : [],
     authors: authors.status === 'fulfilled' ? authors.value : [],
-    voices: voices.status === 'fulfilled' ? voices.value.content ?? [] : [],
+    voices: voices.status === 'fulfilled' ? voices.value : [],
   };
-  // Retry on next mount when anything failed
+  // Có danh sách tải lỗi thì lần mount sau tải lại
   if ([categories, authors, voices].some((result) => result.status === 'rejected')) {
     optionsPromise = null;
   }
   return options;
 };
 
-/** Call after creating/editing voices, categories or authors so the next mount refetches. */
+/** Gọi sau khi thêm/sửa/xóa giọng đọc, thể loại hoặc tác giả để lần mount sau tải lại. */
 export const invalidateBookFormOptions = () => {
   optionsPromise = null;
 };
 
 /**
- * Categories, authors and voices used by the book form and filters, fetched once per session.
- * Pass `enabled = false` to defer the fetch until the options are actually needed.
+ * Thể loại, tác giả và giọng đọc cho form sách và bộ lọc, chỉ tải một lần mỗi phiên.
+ * Truyền `enabled = false` để hoãn việc tải cho tới khi thực sự cần.
  */
 export const useBookFormOptions = (enabled = true): BookFormOptions => {
   const [options, setOptions] = useState<BookFormOptions>(EMPTY_OPTIONS);

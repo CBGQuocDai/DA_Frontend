@@ -8,7 +8,7 @@ import { formatCompact, formatCount, niceCeil, parseMonth } from './format';
 const MONTH_RANGES = [6, 12] as const;
 export type MonthRange = (typeof MONTH_RANGES)[number];
 
-/** 6 / 12 month switch; sits in the heading row of whatever it filters. */
+/** Nút chuyển 6 / 12 tháng; đặt ở dòng tiêu đề của phần mà nó lọc. */
 export const RangeToggle: React.FC<{ value: MonthRange; onChange: (range: MonthRange) => void }> = ({
   value,
   onChange,
@@ -33,8 +33,8 @@ export const RangeToggle: React.FC<{ value: MonthRange; onChange: (range: MonthR
 const TICKS = 4;
 
 /**
- * Revenue per month as columns on one baseline; the current month is solid, earlier months
- * lighter. Hover or focus a month for its revenue and purchases.
+ * Doanh thu từng tháng dạng cột trên cùng một đường gốc; tháng hiện tại tô đậm, các tháng
+ * trước nhạt hơn. Rê chuột hoặc focus vào một tháng để xem doanh thu và lượt mua.
  */
 export const RevenueChart: React.FC<{ months: StatisticsMonth[]; className?: string }> = ({
   months,
@@ -132,7 +132,7 @@ export const RevenueChart: React.FC<{ months: StatisticsMonth[]; className?: str
               className={`flex-1 min-w-0 text-center ${i === months.length - 1 ? 'font-semibold text-text-primary' : ''}`}
             >
               {label.short}
-              {/* Year under the first label and each January, unless January sits right next to the first */}
+              {/* Ghi năm dưới nhãn đầu tiên và mỗi tháng 1, trừ khi tháng 1 nằm sát nhãn đầu */}
               {(i === 0 || (label.month === 1 && i >= 2)) && (
                 <span className="block text-[10px] text-text-muted font-normal">{label.year}</span>
               )}

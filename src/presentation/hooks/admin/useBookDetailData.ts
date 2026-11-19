@@ -3,10 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { bookService, chapterService } from '@/src/infrastructure/api/services';
 import type { Book, Chapter } from '@/src/shared/types';
+import { useAdminEvents } from './useAdminEvents';
 
-const POLL_INTERVAL_MS = 4000;
-
-/** Loads the book (chapters included), tracks the selected chapter, and polls while audio is processing. */
+/** Tải sách (kèm các chương), theo dõi chương đang chọn và nhận trạng thái OCR, gen audio qua SSE. */
 export const useBookDetailData = (bookId: number) => {
   const [book, setBook] = useState<Book | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -15,7 +14,7 @@ export const useBookDetailData = (bookId: number) => {
 
   const loadData = useCallback(async () => {
     try {
-      // The detail payload already carries chapters, voice, authors, categories and signed file URLs
+      // Response chi tiết đã có sẵn chương, giọng đọc, tác giả, thể loại và URL file đã ký
       const { chapters: chaptersData = [], ...bookData } = await bookService.getBookById(bookId);
       setBook(bookData);
       setChapters(chaptersData);
@@ -34,23 +33,29 @@ export const useBookDetailData = (bookId: number) => {
     loadData();
   }, [loadData]);
 
-  const hasProcessing = chapters.some((c) => c.status === 'PROCESSING_AUDIO');
-  useEffect(() => {
-    if (!hasProcessing) return;
-
-    const interval = setInterval(async () => {
-      // No need to poll while the tab is in the background
-      if (document.hidden) return;
-      try {
-        const updated = await chapterService.getChapters(bookId);
-        setChapters(updated ?? []);
-      } catch (err) {
-        console.error('Error polling chapters:', err);
+  // Trạng thái OCR và gen audio về qua SSE; nối lại sau khi rớt thì tải lại vì event đã lỡ không được phát lại
+  useAdminEvents({
+    onChapterStatus: (event) => {
+      if (event.bookId !== bookId) return;
+      setChapters((prev) =>
+        prev.map((c) =>
+          c.id === event.chapterId ? { ...c, status: event.status, duration: event.duration ?? c.duration } : c
+        )
+      );
+      // `audioUrl` trong event là đường dẫn storage chưa ký, nên đọc lại danh sách chương để lấy URL đã ký
+      if (event.status === 'AUDIO_READY') {
+        chapterService
+          .getChapters(bookId)
+          .then(setChapters)
+          .catch((error) => console.error('Error reloading chapters:', error));
       }
-    }, POLL_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [hasProcessing, bookId]);
+    },
+    // OCR xong mới có danh sách chương nên tải lại cả sách
+    onBookStatus: (event) => {
+      if (event.bookId === bookId) loadData();
+    },
+    onReconnect: loadData,
+  });
 
   const sortedChapters = useMemo(
     () => [...chapters].sort((a, b) => a.chapterOrder - b.chapterOrder),

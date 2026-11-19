@@ -5,7 +5,7 @@ import type { SyntheticEvent } from 'react';
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-/** State and controls for a single <audio> element; spread `audioProps` onto it. */
+/** Trạng thái và điều khiển cho một thẻ <audio>; spread `audioProps` vào thẻ đó. */
 export const useAudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -58,7 +58,7 @@ export const useAudioPlayer = () => {
     audio.currentTime = clamp(audio.currentTime + seconds, 0, audio.duration);
   }, []);
 
-  /** Jump to a position given as a 0..1 fraction of the track. */
+  /** Tua tới vị trí tính theo tỉ lệ 0..1 của bản audio. */
   const seek = useCallback((fraction: number) => {
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(audio.duration)) return;
@@ -78,7 +78,7 @@ export const useAudioPlayer = () => {
       e.currentTarget.playbackRate = playbackRate;
       setDuration(e.currentTarget.duration);
       setCurrentTime(0);
-      // A new element mounts per track; autoplay may have been blocked
+      // Mỗi bản audio mount một thẻ mới; autoplay có thể đã bị trình duyệt chặn
       setIsPlaying(!e.currentTarget.paused);
     },
   };

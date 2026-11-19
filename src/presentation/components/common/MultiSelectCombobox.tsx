@@ -11,7 +11,7 @@ import React, {
 const MAX_RESULTS = 10;
 const MAX_LIST_HEIGHT = 224;
 const MIN_LIST_HEIGHT = 96;
-/** Gap between input and list, plus breathing room from the clipping edge */
+/** Khoảng hở giữa ô nhập và danh sách, cộng thêm khoảng đệm với mép bị cắt */
 const LIST_OFFSET = 12;
 
 interface ListPlacement {
@@ -19,7 +19,7 @@ interface ListPlacement {
   maxHeight: number;
 }
 
-/** Nearest scrolling ancestor's box (a modal body, say), or the viewport. */
+/** Khung của phần tử cha có thanh cuộn gần nhất (vd: thân modal), hoặc viewport. */
 const getClipBounds = (element: HTMLElement) => {
   for (let el = element.parentElement; el; el = el.parentElement) {
     const { overflowY } = getComputedStyle(el);
@@ -43,11 +43,11 @@ export interface MultiSelectComboboxProps {
   disabled?: boolean;
   className?: string;
   /**
-   * Adds a "create" row at the bottom of the list; receives the typed text so the
-   * create form can start from it.
+   * Thêm dòng "tạo mới" ở cuối danh sách; nhận chữ đã gõ để form tạo mới
+   * dùng làm giá trị ban đầu.
    */
   onCreate?: (query: string) => void;
-  /** Text of the create row, e.g. "Thêm tác giả" */
+  /** Chữ hiển thị ở dòng tạo mới, vd: "Thêm tác giả" */
   createLabel?: string;
 }
 
@@ -71,7 +71,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     maxHeight: MAX_LIST_HEIGHT,
   });
 
-  // Close dropdown on click outside
+  // Đóng dropdown khi bấm ra ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -88,8 +88,8 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     };
   }, []);
 
-  // Flip the list above the input when it would not fit below. Runs on open,
-  // not on every keystroke, so the list does not jump sides while typing.
+  // Lật danh sách lên phía trên ô nhập khi bên dưới không đủ chỗ. Chỉ chạy lúc mở,
+  // không chạy sau mỗi phím gõ, nên danh sách không nhảy qua lại trong lúc gõ.
   useLayoutEffect(() => {
     if (!isOpen) return;
 
@@ -125,14 +125,14 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     };
   }, [isOpen]);
 
-  // Map option lookup by ID
+  // Tra cứu lựa chọn theo ID
   const optionMap = useMemo(() => {
     const map = new Map<number, MultiSelectComboboxOption>();
     options.forEach((opt) => map.set(opt.id, opt));
     return map;
   }, [options]);
 
-  // Filter options: not yet selected & matches search query
+  // Lọc lựa chọn: chưa được chọn và khớp từ khóa tìm kiếm
   const filteredOptions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return options.filter((opt) => {
@@ -166,7 +166,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
 
   return (
     <div ref={containerRef} className={`relative space-y-2 ${className}`}>
-      {/* Selected chips list */}
+      {/* Danh sách chip đã chọn */}
       {selectedIds.length > 0 && (
         <div className="flex flex-wrap gap-1.5 min-h-[28px]">
           {selectedIds.map((id) => {
@@ -206,7 +206,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
         </div>
       )}
 
-      {/* Input container */}
+      {/* Khung ô nhập */}
       <div className="relative">
         <input
           ref={inputRef}
@@ -240,7 +240,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
           }`}
         />
 
-        {/* Action / Arrow indicator icon */}
+        {/* Icon thao tác / mũi tên */}
         <div
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
@@ -266,7 +266,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
           </svg>
         </div>
 
-        {/* Dropdown list */}
+        {/* Danh sách xổ xuống */}
         {isOpen && (
           <div
             ref={listRef}

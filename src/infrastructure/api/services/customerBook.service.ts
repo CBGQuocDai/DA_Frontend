@@ -1,36 +1,37 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { Book, CustomerBookOverview, CustomerChapter, PaginatedResponse } from '@/src/shared/types';
+import type { Book, CustomerBookOverview, CustomerChapter, GetCustomerBooksParams, PaginatedResponse } from '@/src/shared/types';
 
-export interface GetCustomerBooksParams {
-  page?: number;
-  size?: number;
-  bookName?: string;
-  categoryId?: number;
-  authorId?: number;
-}
-
-/** Separate customer reads; the admin API still returns the full editable chapter list. */
+/**
+ * Các endpoint công khai của BookController dành cho khách hàng (catalog, overview, danh sách chương);
+ * phần quản lý của admin nằm ở bookService và chapterService.
+ */
 export const customerBookService = {
   getBooks: async (params?: GetCustomerBooksParams): Promise<PaginatedResponse<Book>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.LIST, { params })),
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.CATALOG, { params })),
 
   getBooksByCategory: async (
     categoryId: number,
     params?: Pick<GetCustomerBooksParams, 'page' | 'size'>
   ): Promise<PaginatedResponse<Book>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.LIST, { params: { ...params, categoryId } })),
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.CATALOG, { params: { ...params, categoryId } })),
 
   getOverview: async (bookId: number): Promise<CustomerBookOverview> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.OVERVIEW(bookId))),
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.OVERVIEW(bookId))),
 
-  getChaptersPage: async (bookId: number, page = 0, size = 10): Promise<PaginatedResponse<CustomerChapter>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.CHAPTERS(bookId), { params: { page, size } })),
-
-  checkOwnership: async (bookId: number): Promise<boolean> => {
-    const data = unwrap<{ purchased?: boolean } | null>(
-      await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.CHECK_OWNERSHIP(bookId))
-    );
-    return Boolean(data?.purchased);
+  /**
+   * Backend trả toàn bộ chương trong một lần gọi (GET /books/{bookId}/chapters/list),
+   * nên việc chia trang được làm ở client.
+   */
+  getChaptersPage: async (bookId: number, page = 0, size = 10): Promise<PaginatedResponse<CustomerChapter>> => {
+    const chapters =
+      unwrap<CustomerChapter[]>(await apiClient.get(API_ENDPOINTS.BOOKS.CHAPTER_LIST(bookId))) ?? [];
+    return {
+      content: chapters.slice(page * size, (page + 1) * size),
+      total: chapters.length,
+      totalPage: Math.ceil(chapters.length / size),
+      page,
+      pageSize: size,
+    };
   },
 };

@@ -4,12 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Button, FileDropzone, showAlert } from '@/src/presentation/components/common';
 import { uploadService, voiceService } from '@/src/infrastructure/api/services';
 import type { Voice } from '@/src/shared/types';
-import { resolveMediaUrl } from '@/src/shared/utils';
+import { getApiErrorMessage, resolveMediaUrl } from '@/src/shared/utils';
 
 const AUDIO_HINT = 'MP3, WAV (Tối đa 10MB)';
+const TRANSCRIPT_MAX_LENGTH = 1000;
 
 interface VoiceModalProps {
-  /** Voice to edit; omit to create a new one. The modal is mounted per open. */
+  /** Giọng đọc cần sửa; bỏ trống để tạo mới. Modal được mount lại mỗi lần mở. */
   voice?: Voice | null;
   onClose: () => void;
   onSuccess: (saved: Voice) => void;
@@ -24,6 +25,7 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
   const [name, setName] = useState(voice?.name ?? '');
   const [description, setDescription] = useState(voice?.description ?? '');
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [exampleTranscript, setExampleTranscript] = useState(voice?.exampleTranscript ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const previewUrl = useMemo(() => (audioFile ? URL.createObjectURL(audioFile) : null), [audioFile]);
@@ -44,11 +46,16 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
 
     setIsSubmitting(true);
     try {
-      // The sample goes straight to cloud storage; the voice only stores its path
+      // File mẫu được đưa thẳng lên cloud storage; giọng đọc chỉ lưu đường dẫn
       const exampleAudio = audioFile
         ? await uploadService.uploadFile(audioFile, 'AUDIO')
         : voice?.exampleAudio?.path;
-      const payload = { name: name.trim(), description: description.trim(), exampleAudio };
+      const payload = {
+        name: name.trim(),
+        description: description.trim(),
+        exampleAudio,
+        exampleTranscript: exampleTranscript.trim(),
+      };
       const saved = voice
         ? await voiceService.updateVoice(voice.id, payload)
         : await voiceService.createVoice(payload);
@@ -56,7 +63,9 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
       onClose();
     } catch (error) {
       console.error('Error saving voice:', error);
-      showAlert(isEditMode ? 'Có lỗi xảy ra khi cập nhật giọng đọc' : 'Có lỗi xảy ra khi tạo giọng đọc');
+      showAlert(
+        getApiErrorMessage(error, isEditMode ? 'Có lỗi xảy ra khi cập nhật giọng đọc' : 'Có lỗi xảy ra khi tạo giọng đọc'),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -112,6 +121,21 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
             className="h-28"
           />
           {previewUrl && <audio controls src={previewUrl} className="h-8 w-full" />}
+        </div>
+
+        <div>
+          <label className={labelClass}>Lời thoại của audio mẫu</label>
+          <textarea
+            value={exampleTranscript}
+            onChange={(e) => setExampleTranscript(e.target.value)}
+            className={`${fieldClass} resize-none`}
+            rows={3}
+            maxLength={TRANSCRIPT_MAX_LENGTH}
+            placeholder="Không bắt buộc. Nhập đúng từng chữ được đọc trong file mẫu"
+          />
+          <p className="mt-1 text-xs text-text-secondary">
+            Bỏ trống thì hệ thống tự nhận dạng lời thoại. Nhớ cập nhật lại khi đổi file mẫu.
+          </p>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-border">

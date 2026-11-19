@@ -5,7 +5,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminLayout } from "@/src/presentation/layouts";
 import { voiceService } from "@/src/infrastructure/api/services";
 import type { Voice } from "@/src/shared/types";
-import { getApiErrorMessage, resolveMediaUrl } from "@/src/shared/utils";
+import { resolveMediaUrl } from "@/src/shared/utils";
 import {
   Button,
   ConfirmDeleteModal,
@@ -22,27 +22,27 @@ import {
   VoiceTable,
 } from "@/src/presentation/components/admin/voice";
 import { useAudioPlayer } from "@/src/presentation/hooks/common";
-import { invalidateBookFormOptions, useAdminSearchList } from "@/src/presentation/hooks/admin";
-import { showAlert } from "@/src/presentation/components/common";
+import { invalidateBookFormOptions, useAdminSearchList, useDeleteConfirm } from "@/src/presentation/hooks/admin";
 
+// Chiều cao ước lượng của menu thao tác, để biết mở lên trên hay xuống dưới
 const MENU_HEIGHT = 88;
 
 const menuItemClass =
   "w-full px-3.5 py-2 text-left text-sm flex items-center gap-2.5 transition-colors cursor-pointer";
 
+/** Trang quản lý giọng đọc: tìm kiếm, nghe thử file mẫu, thêm/sửa/xóa. */
 export const ManageVoicePage = () => {
   const list = useAdminSearchList(voiceService.searchVoices);
 
-  // `undefined` = closed, `null` = creating, Voice = editing
+  // `undefined` = đóng modal, `null` = đang tạo mới, Voice = đang sửa
   const [editingVoice, setEditingVoice] = useState<Voice | null | undefined>(undefined);
-  const [deletingVoice, setDeletingVoice] = useState<Voice | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [menu, setMenu] = useState<{ voice: Voice; anchor: MenuAnchor } | null>(null);
 
   const [playingVoice, setPlayingVoice] = useState<Voice | null>(null);
   const player = useAudioPlayer();
   const { togglePlay } = player;
 
+  // Bấm lại giọng đang phát thì tạm dừng/tiếp tục, bấm giọng khác thì chuyển sang giọng đó
   const handleTogglePlay = useCallback(
     (voice: Voice) => {
       if (playingVoice?.id === voice.id) togglePlay();
@@ -61,28 +61,21 @@ export const ManageVoicePage = () => {
   const closeMenu = useCallback(() => setMenu(null), []);
   const openCreate = useCallback(() => setEditingVoice(null), []);
 
-  const handleSaved = () => {
+  // Thêm/sửa/xóa đều làm thay đổi danh sách lựa chọn của form sách
+  const handleChanged = () => {
     invalidateBookFormOptions();
     list.reload();
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deletingVoice) return;
-    setIsDeleting(true);
-    try {
-      if (playingVoice?.id === deletingVoice.id) setPlayingVoice(null);
-      await voiceService.deleteVoice(deletingVoice.id);
-      invalidateBookFormOptions();
-      setDeletingVoice(null);
-      list.reload();
-    } catch (error) {
-      console.error("Error deleting voice:", error);
-      setDeletingVoice(null);
-      showAlert(getApiErrorMessage(error, "Có lỗi xảy ra khi xóa giọng đọc"));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const deletion = useDeleteConfirm<Voice>({
+    remove: (voice) => voiceService.deleteVoice(voice.id),
+    onDeleted: (voice) => {
+      // Giọng vừa xóa không còn file mẫu để phát tiếp
+      if (playingVoice?.id === voice.id) setPlayingVoice(null);
+      handleChanged();
+    },
+    errorMessage: "Có lỗi xảy ra khi xóa giọng đọc",
+  });
 
   return (
     <AdminLayout>
@@ -171,7 +164,7 @@ export const ManageVoicePage = () => {
           <button
             type="button"
             onClick={() => {
-              setDeletingVoice(menu.voice);
+              deletion.ask(menu.voice);
               closeMenu();
             }}
             className={`${menuItemClass} text-error hover:bg-error-light/50`}
@@ -187,17 +180,17 @@ export const ManageVoicePage = () => {
           key={editingVoice?.id ?? "new"}
           voice={editingVoice}
           onClose={() => setEditingVoice(undefined)}
-          onSuccess={handleSaved}
+          onSuccess={handleChanged}
         />
       )}
 
       <ConfirmDeleteModal
-        isOpen={Boolean(deletingVoice)}
-        onClose={() => setDeletingVoice(null)}
-        onConfirm={handleConfirmDelete}
+        isOpen={deletion.target !== null}
+        onClose={deletion.cancel}
+        onConfirm={deletion.confirm}
         title="Xóa giọng đọc"
-        itemName={deletingVoice?.name}
-        isLoading={isDeleting}
+        itemName={deletion.target?.name}
+        isLoading={deletion.isDeleting}
       />
     </AdminLayout>
   );

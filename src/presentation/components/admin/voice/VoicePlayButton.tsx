@@ -9,7 +9,7 @@ interface VoicePlayButtonProps {
 
 const EQUALIZER_BARS = ['h-3 [animation-delay:-0.3s]', 'h-2 [animation-delay:-0.15s]', 'h-3.5', 'h-2 [animation-delay:-0.2s]'];
 
-/** "Nghe thử" / "Đang phát" / "Tiếp tục" pill for a voice sample. */
+/** Nút dạng viên thuốc "Nghe thử" / "Đang phát" / "Tiếp tục" cho file mẫu của giọng đọc. */
 export const VoicePlayButton: React.FC<VoicePlayButtonProps> = ({ isActive, isPlaying, onClick }) => {
   if (isActive && isPlaying) {
     return (

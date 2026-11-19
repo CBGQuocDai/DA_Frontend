@@ -10,7 +10,7 @@ interface SearchInputProps {
   className?: string;
 }
 
-/** Text search box with a leading icon and a clear button. */
+/** Ô tìm kiếm có icon ở đầu và nút xóa nội dung. */
 export const SearchInput: React.FC<SearchInputProps> = ({ value, onChange, placeholder, className = '' }) => (
   <div className={`relative ${className}`}>
     <input

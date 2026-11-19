@@ -35,21 +35,21 @@ export interface BookFormValues {
   voiceId: number;
   categoryIds: number[];
   authorIds: number[];
-  /** Always set in create mode; only set in edit mode when the cover is replaced */
+  /** Luôn có ở chế độ tạo; ở chế độ sửa chỉ có khi đổi ảnh bìa */
   coverFile: File | null;
-  /** Always set in create mode; only set in edit mode when the PDF is replaced */
+  /** Luôn có ở chế độ tạo; ở chế độ sửa chỉ có khi đổi file PDF */
   pdfFile: File | null;
 }
 
 interface BookFormModalProps {
   mode: 'create' | 'edit';
-  /** Required when mode is "edit" */
+  /** Bắt buộc khi mode là "edit" */
   book?: Book;
   categories: Category[];
   authors: Author[];
   voices: Voice[];
   onClose: () => void;
-  /** Reject to keep the modal open and show the error inside it */
+  /** Ném lỗi (reject) để giữ modal mở và hiển thị lỗi ngay bên trong */
   onSubmit: (values: BookFormValues) => Promise<void>;
 }
 
@@ -66,7 +66,7 @@ interface FieldProps {
   optional?: boolean;
   error?: string;
   hint?: React.ReactNode;
-  /** Shown at the end of the label row, e.g. a "create" button */
+  /** Hiển thị ở cuối dòng nhãn, vd: nút "tạo mới" */
   action?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -118,7 +118,7 @@ const CreateOptionButton = ({
   </button>
 );
 
-/** Adds the items created from inside the form to the lists the page passed in. */
+/** Gộp các mục vừa tạo ngay trong form vào danh sách do trang truyền xuống. */
 const withCreated = <T extends { id: number }>(base: T[], created: T[]) =>
   created.length === 0 ? base : [...base, ...created.filter((c) => !base.some((b) => b.id === c.id))];
 
@@ -151,7 +151,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  // Authors/categories created from the form, until the page's lists refetch them
+  // Tác giả/thể loại tạo từ form, dùng tạm cho tới khi danh sách của trang tải lại
   const [createdAuthors, setCreatedAuthors] = useState<Author[]>([]);
   const [createdCategories, setCreatedCategories] = useState<Category[]>([]);
   const [creating, setCreating] = useState<CreatingOption>(null);
@@ -162,7 +162,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
     [categories, createdCategories],
   );
 
-  // Object URL for the chosen cover; revoked when replaced or on unmount
+  // Object URL của ảnh bìa đã chọn; được thu hồi khi đổi ảnh hoặc khi unmount
   const coverUrl = useMemo(
     () => (coverFile ? URL.createObjectURL(coverFile) : null),
     [coverFile],
@@ -247,7 +247,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
   const comboboxWrap = (name: FieldName) =>
     `rounded-lg ${shown(name) ? 'ring-1 ring-error' : ''}`;
 
-  // A new author/category joins the options and is selected straight away
+  // Tác giả/thể loại mới được thêm vào danh sách lựa chọn và chọn luôn
   const handleAuthorCreated = (author: Author) => {
     invalidateBookFormOptions();
     setCreatedAuthors((list) => [...list, author]);
@@ -270,7 +270,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
     >
       <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[13rem_1fr]">
-          {/* Files */}
+          {/* File đính kèm */}
           <div
             className={`grid items-start gap-4 md:grid-cols-1 ${isEdit ? 'max-w-[13rem] grid-cols-1' : 'grid-cols-2'
               }`}
@@ -328,7 +328,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
             </Field>
           </div>
 
-          {/* Details */}
+          {/* Thông tin chi tiết */}
           <div className="space-y-4">
             <Field
               name="title"
@@ -538,7 +538,7 @@ export const BookFormModal: React.FC<BookFormModalProps> = ({
       </form>
     </Modal>
 
-    {/* Siblings of the book modal, not children: they stack on top of it and stay outside its form */}
+    {/* Nằm ngang hàng chứ không nằm trong modal sách: xếp chồng lên trên và ở ngoài form của nó */}
     {creating?.kind === 'author' && (
       <AuthorModal
         initialName={creating.name}

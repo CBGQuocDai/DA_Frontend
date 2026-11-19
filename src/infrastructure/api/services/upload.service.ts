@@ -1,20 +1,12 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-
-export type UploadType = 'PDF' | 'IMAGE' | 'AUDIO';
-
-interface UploadUrlResponse {
-  uploadUrl: string;
-  filePath: string;
-  /** Must be sent exactly as given, the signature covers them */
-  headers: Record<string, string>;
-}
+import type { UploadType, UploadUrlResponse } from '@/src/shared/types';
 
 export const uploadService = {
   /**
-   * Uploads `file` straight to cloud storage through a URL signed by the backend
-   * and returns its temporary path. Send that path in the book/voice request:
-   * the backend checks the file then, and each path can only be used once.
+   * Upload `file` thẳng lên cloud storage qua URL do backend ký (POST /uploads/sign-url)
+   * rồi trả về đường dẫn tạm. Gửi đường dẫn này trong request tạo/sửa sách, giọng đọc,
+   * tác giả hoặc audio chương: lúc đó backend mới kiểm tra file, và mỗi đường dẫn chỉ dùng được một lần.
    */
   uploadFile: async (file: File, type: UploadType): Promise<string> => {
     const { uploadUrl, filePath, headers } = unwrap<UploadUrlResponse>(
@@ -24,7 +16,7 @@ export const uploadService = {
         size: file.size,
       })
     );
-    // Plain fetch: the signed URL is absolute and must not get the API auth header
+    // Dùng fetch thuần: URL đã ký là URL tuyệt đối và không được kèm header xác thực của API
     const response = await fetch(uploadUrl, { method: 'PUT', headers, body: file });
     if (!response.ok) {
       throw new Error(`Upload of "${file.name}" failed with status ${response.status}`);

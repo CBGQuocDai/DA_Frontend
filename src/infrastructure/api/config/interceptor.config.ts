@@ -2,17 +2,13 @@ import { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { ROUTES, STORAGE_KEYS } from '@/src/shared/constants';
 import { storageString } from '@/src/shared/utils';
 
-/**
- * Hàm lấy Access Token từ Storage an toàn cho cả môi trường Next.js SSR và Client.
- */
-export const getAccessToken = (): string | null => {
-  return storageString.get(STORAGE_KEYS.ACCESS_TOKEN);
-};
+const getAccessToken = (): string | null => storageString.get(STORAGE_KEYS.ACCESS_TOKEN);
 
 /**
- * Admin pages can't work without a session, so don't leave them open sending anonymous requests.
- * The login page keeps its own 401 (wrong password); customer pages stay browsable.
- * A full navigation lets the book editor's beforeunload warning protect unsaved text.
+ * Trang admin không dùng được khi chưa đăng nhập nên đưa về trang login thay vì để mở và
+ * tiếp tục gửi request ẩn danh. Trang login tự xử lý lỗi 401 (sai mật khẩu); trang khách hàng
+ * vẫn xem được khi chưa đăng nhập. Điều hướng cả trang để cảnh báo beforeunload của trình soạn
+ * chương kịp giữ lại nội dung chưa lưu.
  */
 const redirectAdminToLogin = (): void => {
   if (typeof window === 'undefined') return;
@@ -22,32 +18,28 @@ const redirectAdminToLogin = (): void => {
   }
 };
 
-/**
- * Cấu hình Interceptor cho Axios Instance
- */
+/** Gắn interceptor xác thực cho axios instance. */
 export const setupInterceptors = (axiosInstance: AxiosInstance): AxiosInstance => {
-  // 1. Request Interceptor: Tự động đính kèm Bearer Token vào Header
-  axiosInstance.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-      const token = getAccessToken();
-
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error: AxiosError) => {
-      return Promise.reject(error);
+  // Request: tự đính kèm Bearer token, trừ khi request đã tự đặt header Authorization
+  axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    const token = getAccessToken();
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-  );
+    return config;
+  });
 
-  // 2. Response Interceptor: Bắt các lỗi chung (VD: 401 Unauthorized khi token hết hạn)
+  // Response: 401 nghĩa là token hết hạn hoặc đã bị thu hồi nên xóa phiên ở client
   axiosInstance.interceptors.response.use(
     (response) => response,
-    async (error: AxiosError) => {
+    (error: AxiosError) => {
       if (error.response?.status === 401) {
-        storageString.remove(STORAGE_KEYS.ACCESS_TOKEN);
-        redirectAdminToLogin();
+        const token = getAccessToken();
+        // 401 của phiên cũ (vd: request đăng xuất về muộn) không được xóa phiên vừa đăng nhập lại
+        if (!token || error.config?.headers?.Authorization === `Bearer ${token}`) {
+          storageString.remove(STORAGE_KEYS.ACCESS_TOKEN);
+          redirectAdminToLogin();
+        }
       }
       return Promise.reject(error);
     }

@@ -6,6 +6,7 @@ import {
   Check,
   Headphones,
   Heart,
+  Paperclip,
   Maximize,
   Minimize,
   Pause,
@@ -56,6 +57,8 @@ interface AudioPlayerBarProps {
   showBuyButton: boolean;
   onBuy: () => void;
   onClose: () => void;
+  /** Mở file PDF ảnh và bảng của chương đang phát; chỉ tải khi người dùng bấm xem. */
+  onOpenAttachments?: () => void;
 }
 
 /** Compact player with book information, centered playback controls and listening tools. */
@@ -77,6 +80,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   showBuyButton,
   onBuy,
   onClose,
+  onOpenAttachments,
 }) => {
   const {
     audioProps,
@@ -181,6 +185,17 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
                 {chapter.title}
               </p>
             </div>
+            {onOpenAttachments && (
+              <button
+                type="button"
+                onClick={onOpenAttachments}
+                className="flex h-8 shrink-0 items-center gap-1 rounded-full border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition-colors hover:border-accent/30 hover:bg-accent-light hover:text-accent"
+                aria-label="Xem tệp đính kèm của chương"
+                title="Tệp đính kèm"
+              >
+                <Paperclip className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
           <div className={`${styles.playback} min-w-0`}>

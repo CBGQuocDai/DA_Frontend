@@ -11,7 +11,7 @@ import { formatBookPrice, getApiErrorMessage } from '@/src/shared/utils';
 import { Delta, Panel } from './Panel';
 import { formatCount, formatPercent } from './format';
 
-/** `during` finishes a sentence ("6 lượt mua …"); `previous` names the window it is compared with. */
+/** `during` dùng để kết thúc câu ("6 lượt mua …"); `previous` là tên kỳ được đem ra so sánh. */
 const PERIODS: { id: BestsellerPeriod; label: string; during: string; previous: string }[] = [
   { id: 'WEEK', label: '7 ngày qua', during: 'trong 7 ngày qua', previous: '7 ngày trước đó' },
   { id: 'MONTH', label: '30 ngày qua', during: 'trong 30 ngày qua', previous: '30 ngày trước đó' },
@@ -23,7 +23,7 @@ const PERIODS: { id: BestsellerPeriod; label: string; during: string; previous: 
 const BOOK_ROWS = 5;
 const CATEGORY_ROWS = 6;
 
-/** Change against the previous window; nothing for all time, nor when that window had no purchases. */
+/** Mức thay đổi so với kỳ trước; không hiện khi xem toàn thời gian hoặc khi kỳ trước không có lượt mua. */
 const Trend: React.FC<{ current: number; previous?: number | null }> = ({ current, previous }) =>
   previous ? <Delta value={current - previous} format={formatCount} className="text-[11px]" /> : null;
 
@@ -122,7 +122,7 @@ interface BestsellersSectionProps {
   onRetry: () => void;
 }
 
-/** What customers bought in a chosen window, and whether each book or category is rising or falling. */
+/** Khách hàng đã mua gì trong kỳ đã chọn, và từng sách hay thể loại đang tăng hay giảm. */
 export const BestsellersSection: React.FC<BestsellersSectionProps> = ({
   period,
   onPeriodChange,

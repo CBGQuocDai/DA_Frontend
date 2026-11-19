@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
-import { getValidContent } from '@/src/presentation/components/admin/bookDetail/chapterEditor/plainText';
 import { showAlert } from '@/src/presentation/components/common';
+import { getApiErrorMessage } from '@/src/shared/utils';
 
 interface Options {
   bookId: number;
@@ -12,73 +12,60 @@ interface Options {
   setChapters: React.Dispatch<React.SetStateAction<Chapter[]>>;
 }
 
-/** Text and formatting drafts for the active chapter. */
+/** Bản nháp tài liệu của chương đang mở. */
 export const useChapterEditor = ({ bookId, activeChapter, setChapters }: Options) => {
-  const [textDraft, setTextDraft] = useState('');
   const [contentDraft, setContentDraft] = useState('');
   const [isSavingText, setIsSavingText] = useState(false);
-  // Bumped when the draft must be reloaded into the already open editor
+  // Tăng lên khi cần nạp lại bản nháp vào trình soạn thảo đang mở
   const [textVersion, setTextVersion] = useState(0);
 
-  const savedText = activeChapter?.rawText || '';
-  const contentJson = activeChapter?.contentJson;
-  const savedContent = useMemo(() => getValidContent(contentJson, savedText), [contentJson, savedText]);
+  const savedContent = activeChapter?.content || '';
 
-  // Reset the draft whenever a different chapter becomes active
+  // Đặt lại bản nháp mỗi khi chuyển sang chương khác
   const [draftChapterId, setDraftChapterId] = useState<number | undefined>(undefined);
-  const [syncedText, setSyncedText] = useState('');
   const [syncedContent, setSyncedContent] = useState('');
   if (activeChapter && activeChapter.id !== draftChapterId) {
     setDraftChapterId(activeChapter.id);
-    setTextDraft(savedText);
     setContentDraft(savedContent);
-    setSyncedText(savedText);
     setSyncedContent(savedContent);
-  } else if (savedText !== syncedText || savedContent !== syncedContent) {
-    // The saved text changed (our own save, or a reload picking up OCR results). Follow a
-    // change from elsewhere unless there are edits to keep, so a stale draft can't overwrite it.
-    setSyncedText(savedText);
+  } else if (savedContent !== syncedContent) {
+    // Nội dung đã lưu thay đổi (do chính mình lưu, hoặc tải lại có kết quả OCR mới). Cập nhật theo
+    // thay đổi từ bên ngoài, trừ khi đang có chỉnh sửa cần giữ, để bản nháp cũ không ghi đè lên.
     setSyncedContent(savedContent);
-    if (textDraft === syncedText && contentDraft === syncedContent) {
-      setTextDraft(savedText);
+    if (contentDraft === syncedContent) {
       setContentDraft(savedContent);
       setTextVersion((version) => version + 1);
     }
   }
 
-  const updateDraft = (text: string, content: string) => {
-    setTextDraft(text);
-    setContentDraft(content);
+  /** Bỏ chỉnh sửa chưa lưu, để nội dung mới từ backend (ví dụ sau khi gộp chương) được nạp vào trình soạn. */
+  const discardDraft = () => {
+    setContentDraft(syncedContent);
+    setTextVersion((version) => version + 1);
   };
 
   const saveText = async () => {
     if (!activeChapter) return;
     setIsSavingText(true);
     try {
-      await chapterService.updateChapter(
-        bookId,
-        activeChapter.id,
-        contentDraft ? { contentJson: contentDraft } : { rawText: textDraft }
-      );
-      setChapters((prev) =>
-        prev.map((c) => (c.id === activeChapter.id ? { ...c, rawText: textDraft, contentJson: contentDraft } : c))
-      );
+      await chapterService.updateChapter(bookId, activeChapter.id, { content: contentDraft });
+      setChapters((prev) => prev.map((c) => (c.id === activeChapter.id ? { ...c, content: contentDraft } : c)));
     } catch (error) {
       console.error('Error saving chapter text:', error);
-      showAlert('Không thể lưu nội dung chương. Vui lòng thử lại.');
+      showAlert(getApiErrorMessage(error, 'Không thể lưu nội dung chương. Vui lòng thử lại.'));
     } finally {
       setIsSavingText(false);
     }
   };
 
-  const hasUnsavedChanges = textDraft !== savedText || contentDraft !== savedContent;
+  const hasUnsavedChanges = contentDraft !== savedContent;
 
   return {
-    textDraft,
     contentDraft,
     savedContent,
     textVersion,
-    updateDraft,
+    updateDraft: setContentDraft,
+    discardDraft,
     isSavingText,
     hasUnsavedChanges,
     saveText,

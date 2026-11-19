@@ -42,7 +42,7 @@ interface VoiceTableProps {
   onCreate: () => void;
 }
 
-/** Memoized so the page's audio time updates do not re-render every row. */
+/** Dùng memo để việc cập nhật thời gian phát audio của trang không render lại mọi dòng. */
 export const VoiceTable = memo(function VoiceTable({
   voices,
   startIndex,

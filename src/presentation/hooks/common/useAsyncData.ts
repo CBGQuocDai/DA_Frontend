@@ -7,22 +7,22 @@ interface AsyncResult<T> {
   reloadCount: number;
   data?: T;
   error?: unknown;
-  /** Latest successful data and when it arrived, carried across later loads and errors */
+  /** Dữ liệu thành công gần nhất và thời điểm nhận, giữ qua các lần tải sau và cả khi lỗi */
   lastData?: T;
   loadedAt?: Date;
 }
 
 interface AsyncDataOptions {
   /**
-   * Keep returning the previous data while a new `load` (or a reload) is in flight, flagged by
-   * `isRefreshing`, instead of dropping back to `undefined` and showing a skeleton again.
+   * Tiếp tục trả dữ liệu cũ trong lúc `load` mới (hoặc reload) đang chạy, đánh dấu bằng
+   * `isRefreshing`, thay vì quay về `undefined` rồi hiện lại skeleton.
    */
   keepPrevious?: boolean;
 }
 
 /**
- * Runs `load` whenever its identity changes (wrap it in useCallback) and exposes the result.
- * State is only set from the promise callbacks, so a stale response never overwrites a newer one.
+ * Chạy `load` mỗi khi hàm này đổi (hãy bọc bằng useCallback) và trả về kết quả.
+ * State chỉ được set trong callback của promise nên response cũ không bao giờ ghi đè response mới.
  */
 export const useAsyncData = <T>(load: () => Promise<T>, { keepPrevious = false }: AsyncDataOptions = {}) => {
   const [reloadCount, setReloadCount] = useState(0);
@@ -51,7 +51,7 @@ export const useAsyncData = <T>(load: () => Promise<T>, { keepPrevious = false }
     data: isCurrent ? (result.data ?? previous) : previous,
     error: isCurrent ? result.error : undefined,
     isLoading: !isCurrent,
-    /** Loading again while the previous data is still shown (keepPrevious only) */
+    /** Đang tải lại trong khi dữ liệu cũ vẫn hiển thị (chỉ khi bật keepPrevious) */
     isRefreshing: !isCurrent && previous !== undefined,
     loadedAt: result?.loadedAt,
     reload,

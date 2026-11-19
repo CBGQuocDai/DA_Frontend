@@ -5,14 +5,12 @@ import { PenLine, Plus } from "lucide-react";
 import { AdminLayout } from "@/src/presentation/layouts";
 import { authorService } from "@/src/infrastructure/api/services";
 import type { Author } from "@/src/shared/types";
-import { getApiErrorMessage } from "@/src/shared/utils";
 import {
   Button,
   ConfirmDeleteModal,
   ErrorState,
   Pagination,
   SearchInput,
-  showAlert,
 } from "@/src/presentation/components/common";
 import {
   AuthorAvatar,
@@ -20,8 +18,9 @@ import {
   CatalogTable,
   type CatalogColumn,
 } from "@/src/presentation/components/admin/catalog";
-import { invalidateBookFormOptions, useAdminSearchList } from "@/src/presentation/hooks/admin";
+import { invalidateBookFormOptions, useAdminSearchList, useDeleteConfirm } from "@/src/presentation/hooks/admin";
 
+// Các cột riêng của bảng tác giả; cột số thứ tự và thao tác do CatalogTable lo
 const columns: CatalogColumn<Author>[] = [
   {
     header: "Tác giả",
@@ -49,34 +48,23 @@ const columns: CatalogColumn<Author>[] = [
   },
 ];
 
+/** Trang quản lý tác giả: tìm kiếm, phân trang, thêm/sửa/xóa. */
 export const ManageAuthorPage = () => {
   const list = useAdminSearchList(authorService.searchAuthors);
-  // `undefined` = closed, `null` = creating, Author = editing
+  // `undefined` = đóng modal, `null` = đang tạo mới, Author = đang sửa
   const [editing, setEditing] = useState<Author | null | undefined>(undefined);
-  const [deleting, setDeleting] = useState<Author | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSaved = () => {
+  // Thêm/sửa/xóa đều làm thay đổi danh sách lựa chọn của form sách
+  const handleChanged = () => {
     invalidateBookFormOptions();
     list.reload();
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deleting) return;
-    setIsDeleting(true);
-    try {
-      await authorService.deleteAuthor(deleting.id);
-      invalidateBookFormOptions();
-      setDeleting(null);
-      list.reload();
-    } catch (error) {
-      console.error("Error deleting author:", error);
-      setDeleting(null);
-      showAlert(getApiErrorMessage(error, "Không xóa được tác giả, thử lại sau"));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const deletion = useDeleteConfirm<Author>({
+    remove: (author) => authorService.deleteAuthor(author.id),
+    onDeleted: handleChanged,
+    errorMessage: "Không xóa được tác giả, thử lại sau",
+  });
 
   return (
     <AdminLayout>
@@ -125,7 +113,7 @@ export const ManageAuthorPage = () => {
               onCreate={() => setEditing(null)}
               onClearSearch={list.clearSearch}
               onEdit={setEditing}
-              onDelete={setDeleting}
+              onDelete={deletion.ask}
             />
           </div>
 
@@ -142,17 +130,17 @@ export const ManageAuthorPage = () => {
           key={editing?.id ?? "new"}
           author={editing}
           onClose={() => setEditing(undefined)}
-          onSuccess={handleSaved}
+          onSuccess={handleChanged}
         />
       )}
 
       <ConfirmDeleteModal
-        isOpen={Boolean(deleting)}
-        onClose={() => setDeleting(null)}
-        onConfirm={handleConfirmDelete}
+        isOpen={deletion.target !== null}
+        onClose={deletion.cancel}
+        onConfirm={deletion.confirm}
         title="Xóa tác giả"
-        itemName={deleting?.fullName}
-        isLoading={isDeleting}
+        itemName={deletion.target?.fullName}
+        isLoading={deletion.isDeleting}
       />
     </AdminLayout>
   );

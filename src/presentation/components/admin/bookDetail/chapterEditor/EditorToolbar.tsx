@@ -19,6 +19,7 @@ import {
   Redo2,
   Search,
   SeparatorHorizontal,
+  Table,
   Underline,
   Undo2,
   WandSparkles,
@@ -69,7 +70,7 @@ const menuItem =
 
 const Divider = () => <span className="w-px h-5 bg-border mx-0.5 @4xl:mx-1" aria-hidden />;
 
-/** Headless UI hands focus back to the menu button on close, so editor commands run a frame later. */
+/** Headless UI trả focus về nút menu khi đóng nên command của editor phải chạy trễ một frame. */
 const afterMenuCloses = (action: () => void) => () => requestAnimationFrame(action);
 
 interface EditorToolbarProps {
@@ -83,6 +84,7 @@ interface EditorToolbarProps {
   activeMarks: Record<(typeof MARKS)[number]['name'], boolean>;
   isFindOpen: boolean;
   isFullscreen: boolean;
+  onInsertTable: () => void;
   onToggleFind: () => void;
   onCleanup: (apply: (text: string) => string) => void;
   onPageChange: (page: number) => void;
@@ -100,6 +102,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   activeMarks,
   isFindOpen,
   isFullscreen,
+  onInsertTable,
   onToggleFind,
   onCleanup,
   onPageChange,
@@ -221,6 +224,16 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     >
       <SeparatorHorizontal className="w-4 h-4" />
       <span className="hidden @5xl:inline">Ngắt trang</span>
+    </button>
+    <button
+      type="button"
+      onClick={onInsertTable}
+      className={toolButton}
+      title="Chèn bảng đính kèm tại con trỏ"
+      aria-label="Chèn bảng"
+    >
+      <Table className="w-4 h-4" />
+      <span className="hidden @5xl:inline">Bảng</span>
     </button>
     <Menu>
       <MenuButton className={toolButton} title="Chèn ký tự đặc biệt" aria-label="Chèn ký tự đặc biệt">

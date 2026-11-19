@@ -34,7 +34,7 @@ const validate = (v: Values): Partial<Record<Field, string>> => {
   return errors;
 };
 
-/* ---------- Password input ---------- */
+/* ---------- Ô nhập mật khẩu ---------- */
 
 interface PasswordInputProps {
   id: string;
@@ -109,13 +109,13 @@ const PasswordInput = ({ id, label, value, autoComplete, hint, error, disabled, 
   );
 };
 
-/* ---------- Modal ---------- */
+/* ---------- Modal đổi mật khẩu ---------- */
 
 interface ChangePasswordModalProps {
   onClose: () => void;
 }
 
-/** Signed-in admin's password change; the backend also rejects a wrong current password. */
+/** Admin đang đăng nhập đổi mật khẩu; backend cũng từ chối khi mật khẩu hiện tại sai. */
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClose }) => {
   const [values, setValues] = useState<Values>(EMPTY);
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -141,7 +141,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClos
 
     setIsSubmitting(true);
     try {
-      await authService.changeAdminPassword({ oldPassword: current, newPassword: next });
+      await authService.changePassword({ oldPassword: current, newPassword: next });
       setIsDone(true);
     } catch (error) {
       setServerError(getApiErrorMessage(error, 'Chưa đổi được mật khẩu. Kiểm tra kết nối rồi thử lại.'));

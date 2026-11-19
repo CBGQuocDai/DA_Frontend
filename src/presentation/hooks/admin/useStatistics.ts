@@ -1,28 +1,28 @@
 'use client';
 
 import { useCallback } from 'react';
-import { bookService, categoryService, statisticsService } from '@/src/infrastructure/api/services';
+import { adminService, bookService, categoryService } from '@/src/infrastructure/api/services';
 import type { BestsellerPeriod } from '@/src/shared/types';
 import { useAsyncData } from '../common';
 
-/** The chart's longest range; shorter ranges are a slice of it, so switching range costs no request. */
+/** Khoảng dài nhất của biểu đồ; khoảng ngắn hơn chỉ là một phần của nó nên đổi khoảng không tốn request. */
 const STATISTICS_MONTHS = 12;
 
-const loadStatistics = () => statisticsService.getStatistics(STATISTICS_MONTHS);
+const loadStatistics = () => adminService.getStatistics(STATISTICS_MONTHS);
 
-/** Overview figures and the last 12 months of revenue. */
+/** Số liệu tổng quan và doanh thu 12 tháng gần nhất. */
 export const useStatistics = () => {
   const { data, ...rest } = useAsyncData(loadStatistics, { keepPrevious: true });
   return { statistics: data, ...rest };
 };
 
-/** Best-selling books and categories in the period, with all purchases in it. */
+/** Sách và thể loại bán chạy trong kỳ, kèm tổng lượt mua của kỳ đó. */
 export const useBestsellers = (period: BestsellerPeriod) => {
   const load = useCallback(async () => {
     const [books, categories, trend] = await Promise.all([
       bookService.getBestsellers(period),
       categoryService.getBestsellers(period),
-      statisticsService.getPurchaseTrend(period),
+      adminService.getPurchaseTrend(period),
     ]);
     return { books, categories, trend };
   }, [period]);
