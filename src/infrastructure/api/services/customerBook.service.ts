@@ -10,6 +10,23 @@ export interface GetCustomerBooksParams {
   authorId?: number;
 }
 
+// Share overlapping public overview reads (including React Strict Mode's effect replay).
+// Remove each request when it settles so retrying or reopening always reads fresh data.
+const overviewRequests = new Map<number, Promise<CustomerBookOverview>>();
+
+const getOverview = (bookId: number): Promise<CustomerBookOverview> => {
+  const pending = overviewRequests.get(bookId);
+  if (pending) return pending;
+  const request = apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.OVERVIEW(bookId))
+    .then((response) => unwrap<CustomerBookOverview>(response));
+  overviewRequests.set(bookId, request);
+  const release = () => {
+    if (overviewRequests.get(bookId) === request) overviewRequests.delete(bookId);
+  };
+  void request.then(release, release);
+  return request;
+};
+
 /** Separate customer reads; the admin API still returns the full editable chapter list. */
 export const customerBookService = {
   getBooks: async (params?: GetCustomerBooksParams): Promise<PaginatedResponse<Book>> =>
@@ -21,11 +38,14 @@ export const customerBookService = {
   ): Promise<PaginatedResponse<Book>> =>
     unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.LIST, { params: { ...params, categoryId } })),
 
-  getOverview: async (bookId: number): Promise<CustomerBookOverview> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.OVERVIEW(bookId))),
+  getOverview,
 
-  getChaptersPage: async (bookId: number, page = 0, size = 10): Promise<PaginatedResponse<CustomerChapter>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.CHAPTERS(bookId), { params: { page, size } })),
+  /** Public recommendations return book cards directly in data, in backend order. */
+  getRelatedBooks: async (bookId: number, limit = 8): Promise<Book[]> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.RELATED(bookId), { params: { limit } })),
+
+  getChapters: async (bookId: number): Promise<CustomerChapter[]> =>
+    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.CHAPTERS(bookId))),
 
   checkOwnership: async (bookId: number): Promise<boolean> => {
     const data = unwrap<{ purchased?: boolean } | null>(

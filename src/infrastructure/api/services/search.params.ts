@@ -1,4 +1,4 @@
-/** Query of the admin list endpoints (`/authors/search`, `/categories/search`). */
+/** Query of the paged search endpoints (`/authors/search`, `/categories/search`). */
 export interface SearchParams {
   keyword?: string;
   /** Zero-based */

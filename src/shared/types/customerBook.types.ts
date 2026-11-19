@@ -9,3 +9,32 @@ export interface CustomerBookOverview {
   totalDuration: number;
   firstChapter?: CustomerChapter | null;
 }
+
+export interface ChapterProgress {
+  chapterId: number;
+  chapterIndex: number;
+  lastPlayAt: number;
+  isComplete: boolean;
+  updatedAt: string;
+}
+
+export interface ListeningResume {
+  chapterId: number;
+  chapterIndex: number;
+  lastPlayAt: number;
+}
+
+export interface BookProgress {
+  bookId: number;
+  hasProgress: boolean;
+  chapters: ChapterProgress[];
+  chapterCount: number;
+  completedChapterCount: number;
+  isBookComplete: boolean;
+  resume: ListeningResume | null;
+}
+
+export interface SaveListeningProgress {
+  lastPlayAt: number;
+  isComplete: boolean;
+}
