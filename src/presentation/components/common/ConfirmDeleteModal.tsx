@@ -27,7 +27,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   cancelText = "Hủy",
   isLoading = false,
 }) => {
-  // Listen for Escape key
+  // Phím Esc đóng modal
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,19 +43,19 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
+      {/* Lớp nền mờ */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
         onClick={() => !isLoading && onClose()}
       />
 
-      {/* Modal Container */}
+      {/* Khung modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl p-6 transform transition-all animate-in zoom-in-95 duration-150"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close button */}
+          {/* Nút đóng */}
           <button
             type="button"
             onClick={onClose}
@@ -66,9 +66,9 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
             <X className="w-4 h-4" />
           </button>
 
-          {/* Content */}
+          {/* Nội dung */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            {/* Texts */}
+            {/* Tiêu đề và mô tả */}
             <div className="flex-1 text-center sm:text-left min-w-0">
               <h3 className="text-lg font-bold text-text-primary tracking-tight">
                 {title}
@@ -94,7 +94,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Nút thao tác */}
           <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-border">
             <Button
               type="button"

@@ -24,8 +24,8 @@ export const createListeningProgressApi = (bookId: number, token: string) => {
     return result.data;
   };
   return {
-    load: () => request(API_ENDPOINTS.CUSTOMER_BOOKS.PROGRESS(bookId)),
+    load: () => request(API_ENDPOINTS.CUSTOMER.LISTENING_PROGRESS(bookId)),
     save: (chapterId: number, body: SaveListeningProgress) =>
-      request(API_ENDPOINTS.CUSTOMER_BOOKS.SAVE_PROGRESS(bookId, chapterId), body),
+      request(API_ENDPOINTS.CUSTOMER.SAVE_LISTENING_PROGRESS(bookId, chapterId), body),
   };
 };

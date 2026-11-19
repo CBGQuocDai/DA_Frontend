@@ -12,7 +12,7 @@ interface RevenueTabProps {
   onRangeChange: (range: MonthRange) => void;
 }
 
-/** Revenue in the chosen range: the total, the average purchase, and how it spreads over the months. */
+/** Doanh thu trong khoảng đã chọn: tổng, giá trị trung bình mỗi lượt mua và phân bố theo tháng. */
 export const RevenueTab: React.FC<RevenueTabProps> = ({ statistics, range, onRangeChange }) => {
   const { months } = statistics;
   const revenue = months.reduce((sum, m) => sum + m.revenue, 0);
@@ -41,7 +41,7 @@ export const RevenueTab: React.FC<RevenueTabProps> = ({ statistics, range, onRan
       </div>
 
       <Panel title="Doanh thu theo tháng" description="Rê chuột hoặc chọn một cột để xem số lượt mua của tháng">
-        {/* Fills the rest of the viewport on a desktop screen, never shorter than 20rem */}
+        {/* Lấp phần còn lại của màn hình desktop, không thấp hơn 20rem */}
         <RevenueChart months={months} className="h-[max(20rem,calc(100dvh-30rem))]" />
       </Panel>
     </div>

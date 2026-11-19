@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { chapterService } from '@/src/infrastructure/api/services';
-import type { Chapter, ChapterStatus } from '@/src/shared/types';
+import { chapterService, uploadService } from '@/src/infrastructure/api/services';
+import type { Chapter } from '@/src/shared/types';
+import { getApiErrorMessage, getAudioDuration } from '@/src/shared/utils';
 import { showAlert } from '@/src/presentation/components/common';
 
 interface Options {
@@ -14,7 +15,7 @@ interface Options {
   onChapterCreated?: () => void;
 }
 
-/** Chapter CRUD, AI audio generation, audio upload, and the add/edit chapter modals. */
+/** Thêm/sửa/xóa chương, tạo audio bằng AI, upload audio và trạng thái các modal liên quan. */
 export const useChapterActions = ({
   bookId,
   chapters,
@@ -30,7 +31,7 @@ export const useChapterActions = ({
   const [generatingChapterId, setGeneratingChapterId] = useState<number | null>(null);
   const [uploadingChapterId, setUploadingChapterId] = useState<number | null>(null);
 
-  // The backend may renumber other chapters, so both flows re-read the list
+  // Backend có thể đánh lại thứ tự hoặc đổi trạng thái chương khác nên luôn đọc lại cả danh sách
   const reloadChapters = async () => {
     setChapters(await chapterService.getChapters(bookId));
   };
@@ -40,6 +41,20 @@ export const useChapterActions = ({
     await reloadChapters();
     setSelectedChapterId(created.id);
     onChapterCreated?.();
+  };
+
+  /** Gộp các chương rồi mở chương đã gộp; trả về false nếu backend từ chối. */
+  const mergeChapters = async (chapterIds: number[]) => {
+    try {
+      const merged = await chapterService.mergeChapters(bookId, chapterIds);
+      await reloadChapters();
+      setSelectedChapterId(merged.id);
+      return true;
+    } catch (error) {
+      console.error('Error merging chapters:', error);
+      showAlert(getApiErrorMessage(error, 'Không thể gộp các chương này. Vui lòng thử lại.'));
+      return false;
+    }
   };
 
   const deleteActiveChapter = async () => {
@@ -52,7 +67,7 @@ export const useChapterActions = ({
       setSelectedChapterId(remaining.length > 0 ? remaining[0].id : null);
     } catch (error) {
       console.error('Error deleting chapter:', error);
-      showAlert('Có lỗi xảy ra khi xóa chương này.');
+      showAlert(getApiErrorMessage(error, 'Có lỗi xảy ra khi xóa chương này.'));
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
@@ -63,41 +78,47 @@ export const useChapterActions = ({
     setGeneratingChapterId(chapterId);
     try {
       await chapterService.generateAudio(bookId, chapterId, speed);
+      // Backend xử lý nền; đánh dấu ngay, trạng thái cuối sẽ về qua SSE (useBookDetailData)
       setChapters((prev) =>
-        prev.map((c) =>
-          c.id === chapterId
-            ? { ...c, status: 'PROCESSING_AUDIO' as ChapterStatus, readingSpeed: speed }
-            : c
-        )
+        prev.map((c) => (c.id === chapterId ? { ...c, status: 'PROCESSING_AUDIO', readingSpeed: speed } : c))
       );
     } catch (error) {
       console.error('Error generating voice audio:', error);
-      showAlert('Không thể tạo audio tự động cho chương này. Vui lòng thử lại sau.');
+      showAlert(getApiErrorMessage(error, 'Không thể tạo audio tự động cho chương này. Vui lòng thử lại sau.'));
     } finally {
       setGeneratingChapterId(null);
     }
   };
 
-  const uploadAudio = async () => {
+  const uploadAudio = async (chapterId: number, file: File) => {
+    setUploadingChapterId(chapterId);
     try {
-      const updated = await chapterService.getChapters(bookId);
-      if (updated && updated.length > 0) setChapters(updated);
+      // Đọc thời lượng trước: file không phát được thì khỏi tốn công upload
+      const duration = await getAudioDuration(file);
+      const audioPath = await uploadService.uploadFile(file, 'AUDIO');
+      await chapterService.uploadAudio(bookId, chapterId, {
+        audioPath,
+        duration: Math.max(1, Math.round(duration)),
+      });
+      await reloadChapters();
     } catch (error) {
-      console.error('Error reloading chapters:', error);
+      console.error('Error uploading chapter audio:', error);
+      showAlert(
+        getApiErrorMessage(error, 'Không thể tải audio lên cho chương này. Hãy chọn file MP3 hoặc WAV tối đa 10MB rồi thử lại.')
+      );
     } finally {
       setUploadingChapterId(null);
     }
   };
 
-  const triggerUpload = (chapterId: number) => {
-    setUploadingChapterId(chapterId);
+  /** Mở hộp thoại chọn file của trình duyệt rồi upload file được chọn cho chương. */
+  const pickAudioFile = (chapterId: number) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'audio/*';
+    input.accept = '.mp3,.wav,audio/mpeg,audio/wav';
     input.onchange = () => {
       const file = input.files?.[0];
-      if (file) uploadAudio();
-      else setUploadingChapterId(null);
+      if (file) uploadAudio(chapterId, file);
     };
     input.click();
   };
@@ -123,8 +144,9 @@ export const useChapterActions = ({
       confirm: deleteActiveChapter,
     },
     createChapter,
+    mergeChapters,
     reloadChapters,
     generateVoice,
-    triggerUpload,
+    pickAudioFile,
   };
 };

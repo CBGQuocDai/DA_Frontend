@@ -38,7 +38,7 @@ export const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, initialQ
     gotoMatch(editor, 0);
   }, [editor, query, caseSensitive]);
 
-  // Clear highlights when the panel closes (the editor may already be gone)
+  // Xóa highlight khi đóng thanh tìm kiếm (trình soạn thảo có thể đã bị hủy)
   useEffect(
     () => () => {
       if (!editor.isDestroyed) setSearch(editor, '', false);

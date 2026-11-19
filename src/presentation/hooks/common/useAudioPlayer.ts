@@ -6,7 +6,6 @@ import { createAudioProgress } from '@/src/presentation/utils/customer/audioProg
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-/** State and controls for a single <audio> element; spread `audioProps` onto it. */
 interface AudioPlayerOptions {
   trackKey?: string;
   restorePosition?: () => Promise<number>;
@@ -14,6 +13,7 @@ interface AudioPlayerOptions {
   onCheckpoint?: (position: number, complete: boolean) => void;
 }
 
+/** Trạng thái và điều khiển cho một thẻ <audio>; spread `audioProps` vào thẻ đó. */
 export const useAudioPlayer = ({ trackKey, restorePosition, restoreAvailable = true, onCheckpoint }: AudioPlayerOptions = {}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<ReturnType<typeof createAudioProgress> | null>(null);
@@ -95,7 +95,7 @@ export const useAudioPlayer = ({ trackKey, restorePosition, restoreAvailable = t
     audio.currentTime = clamp(audio.currentTime + seconds, 0, audio.duration);
   }, []);
 
-  /** Jump to a position given as a 0..1 fraction of the track. */
+  /** Tua tới vị trí tính theo tỉ lệ 0..1 của bản audio. */
   const seek = useCallback((fraction: number) => {
     if (progressRef.current?.isRestoring()) return;
     const audio = audioRef.current;
@@ -121,7 +121,7 @@ export const useAudioPlayer = ({ trackKey, restorePosition, restoreAvailable = t
       e.currentTarget.playbackRate = playbackRate;
       setDuration(e.currentTarget.duration);
       setCurrentTime(0);
-      // A new element mounts per track; autoplay may have been blocked
+      // Mỗi bản audio mount một thẻ mới; autoplay có thể đã bị trình duyệt chặn
       setIsPlaying(!e.currentTarget.paused);
     },
   };

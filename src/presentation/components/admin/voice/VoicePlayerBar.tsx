@@ -15,7 +15,7 @@ interface VoicePlayerBarProps {
   onClose: () => void;
 }
 
-/** Player docked under the voice table while a sample is playing. */
+/** Trình phát gắn dưới bảng giọng đọc trong lúc một file mẫu đang phát. */
 export const VoicePlayerBar: React.FC<VoicePlayerBarProps> = ({
   voice,
   isPlaying,

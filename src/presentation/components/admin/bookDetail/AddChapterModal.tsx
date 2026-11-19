@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button, Spinner, showAlert } from '@/src/presentation/components/common';
+import { getApiErrorMessage } from '@/src/shared/utils';
 
 interface AddChapterModalProps {
   onClose: () => void;
@@ -14,7 +15,7 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
 }) => {
   const [form, setForm] = useState({
     title: '',
-    // Kept as text so clearing the field stays empty and `required` can catch it
+    // Giữ dạng chuỗi để khi xóa ô vẫn rỗng và `required` bắt được
     chapterOrder: String(defaultChapterOrder),
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +33,7 @@ export const AddChapterModal: React.FC<AddChapterModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error creating chapter:', error);
-      showAlert('Không thể tạo chương. Vui lòng thử lại.');
+      showAlert(getApiErrorMessage(error, 'Không thể tạo chương. Vui lòng thử lại.'));
     } finally {
       setIsSubmitting(false);
     }

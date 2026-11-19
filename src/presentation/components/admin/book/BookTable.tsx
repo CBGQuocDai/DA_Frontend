@@ -156,7 +156,7 @@ const BookRow: React.FC<BookRowProps> = ({
 };
 
 export const BookTable: React.FC<BookTableProps> = ({ books, isLoading, startIndex, busyBookId, ...handlers }) => {
-  // One open row menu at a time: opening another row's menu replaces this one
+  // Mỗi lúc chỉ một menu dòng được mở: mở menu của dòng khác sẽ thay thế menu này
   const [menu, setMenu] = useState<{ bookId: number; anchor: MenuAnchor } | null>(null);
   const closeMenu = useCallback(() => setMenu(null), []);
   const toggleMenu = useCallback((book: Book, trigger: HTMLElement) => {

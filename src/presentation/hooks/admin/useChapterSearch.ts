@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import type { Chapter } from '@/src/shared/types';
 
+/** Lọc danh sách chương theo tiêu đề hoặc số thứ tự ngay ở client. */
 export const useChapterSearch = (chapters: Chapter[]) => {
   const [query, setQuery] = useState('');
 

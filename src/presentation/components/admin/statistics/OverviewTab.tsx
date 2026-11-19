@@ -19,11 +19,11 @@ interface OverviewTabProps {
   range: MonthRange;
   onRangeChange: (range: MonthRange) => void;
   onNavigate: (tab: StatTab) => void;
-  /** The bestseller section; the page owns its period and data so they survive tab switches */
+  /** Mục bán chạy; trang giữ kỳ và dữ liệu của nó để không mất khi đổi tab */
   bestsellers: React.ReactNode;
 }
 
-/** This month at a glance, the catalog's state, and what is selling in a chosen window. */
+/** Tổng quan tháng này, tình trạng kho sách và những gì đang bán chạy trong kỳ đã chọn. */
 export const OverviewTab: React.FC<OverviewTabProps> = ({ statistics, range, onRangeChange, onNavigate, bestsellers }) => {
   const { overview, months, bookStatus } = statistics;
   const current = months.at(-1);

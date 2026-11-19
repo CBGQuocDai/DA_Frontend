@@ -20,7 +20,7 @@ type SearchMeta = Partial<Pick<SearchState, 'query' | 'caseSensitive' | 'current
 
 export const searchKey = new PluginKey<SearchState>('chapterSearch');
 
-// Paragraphs hold only text nodes, so textContent offsets map 1:1 to doc positions
+// Đoạn văn chỉ chứa text node nên offset của textContent khớp 1:1 với vị trí trong tài liệu
 const findMatches = (doc: PMNode, query: string, caseSensitive: boolean): Range[] => {
   if (!query) return [];
   const needle = caseSensitive ? query : query.toLowerCase();
@@ -50,7 +50,7 @@ const buildState = (doc: PMNode, query: string, caseSensitive: boolean, current:
   return { query, caseSensitive, matches, current: index, decorations };
 };
 
-/** Highlights find-panel matches; driven by the helpers below rather than editor commands. */
+/** Tô sáng các kết quả tìm kiếm; điều khiển bằng các hàm bên dưới chứ không qua command của editor. */
 export const SearchHighlight = Extension.create({
   name: 'searchHighlight',
 
@@ -85,7 +85,7 @@ export const setSearch = (editor: Editor, query: string, caseSensitive: boolean)
   editor.view.dispatch(editor.state.tr.setMeta(searchKey, { query, caseSensitive, current: 0 }));
 };
 
-/** Moves to the next (+1) or previous (-1) match, wrapping around, and scrolls it into view. */
+/** Chuyển tới kết quả kế tiếp (+1) hoặc trước đó (-1), quay vòng khi hết, và cuộn tới kết quả đó. */
 export const gotoMatch = (editor: Editor, delta: number) => {
   const state = getSearchState(editor);
   if (!state?.matches.length) return;
@@ -108,7 +108,7 @@ export const replaceCurrent = (editor: Editor, replacement: string) => {
   editor.view.dispatch(tr.scrollIntoView());
 };
 
-/** Replaces every match in a single transaction, so one undo reverts it. Returns the count. */
+/** Thay mọi kết quả trong một transaction nên một lần undo là hoàn tác hết. Trả về số lượng đã thay. */
 export const replaceAll = (editor: Editor, replacement: string) => {
   const matches = getSearchState(editor)?.matches ?? [];
   if (!matches.length) return 0;

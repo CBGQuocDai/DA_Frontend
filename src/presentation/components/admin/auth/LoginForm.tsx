@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { authService } from "@/src/infrastructure/api/services";
+import { adminService } from "@/src/infrastructure/api/services";
 import { getApiErrorMessage } from "@/src/shared/utils";
 import { Button } from "@/src/presentation/components/common";
 
@@ -21,7 +21,7 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
         setIsLoading(true);
 
         try {
-            await authService.login({ email, password }, true);
+            await adminService.login({ email, password });
             onSuccess?.();
         } catch (err) {
             setError(getApiErrorMessage(err, "Đăng nhập thất bại. Vui lòng thử lại."));

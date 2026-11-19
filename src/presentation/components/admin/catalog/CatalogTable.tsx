@@ -8,7 +8,7 @@ const SKELETON_ROWS = 5;
 
 export interface CatalogColumn<T> {
   header: string;
-  /** Applied to both the header and the cells, e.g. a width */
+  /** Áp dụng cho cả ô tiêu đề lẫn ô dữ liệu, vd: độ rộng */
   className?: string;
   render: (item: T) => React.ReactNode;
 }
@@ -16,11 +16,11 @@ export interface CatalogColumn<T> {
 interface CatalogTableProps<T extends { id: number }> {
   items: T[];
   columns: CatalogColumn<T>[];
-  /** Row number of the first item, for the "#" column */
+  /** Số thứ tự của dòng đầu tiên, cho cột "#" */
   startIndex: number;
   isLoading: boolean;
   isFiltered: boolean;
-  /** Name read out by the row action buttons, e.g. the author's name */
+  /** Tên mà các nút thao tác của dòng đọc lên (aria-label), vd: tên tác giả */
   itemLabel: (item: T) => string;
   empty: { icon: React.ReactNode; title: string; description: string; createLabel: string };
   filteredEmptyTitle: string;
@@ -33,7 +33,7 @@ interface CatalogTableProps<T extends { id: number }> {
 const iconButtonClass =
   'p-1.5 rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40';
 
-/** Table shared by the author and category screens: numbered rows, edit and delete at the end. */
+/** Bảng dùng chung cho màn tác giả và thể loại: dòng có số thứ tự, nút sửa và xóa ở cuối. */
 export function CatalogTable<T extends { id: number }>({
   items,
   columns,

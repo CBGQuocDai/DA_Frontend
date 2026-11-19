@@ -1,4 +1,4 @@
-// Auth Types
+// Kiểu dữ liệu xác thực và tài khoản
 export interface LoginRequest {
   email: string;
   password: string;
@@ -12,7 +12,6 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken?: string;
 }
 
 export interface ChangePasswordRequest {
@@ -22,7 +21,7 @@ export interface ChangePasswordRequest {
 
 export type UserRole = 'ADMIN' | 'CUSTOMER';
 
-/** Profile returned by GET /customer/profile */
+/** Hồ sơ trả về từ GET /customer/profile */
 export interface CustomerProfile {
   id: number;
   email?: string;
@@ -31,7 +30,7 @@ export interface CustomerProfile {
   avatarUrl?: string;
 }
 
-/** Signed-in user kept on the client */
+/** Người dùng đang đăng nhập, lưu ở client */
 export interface User {
   id: string;
   email: string;

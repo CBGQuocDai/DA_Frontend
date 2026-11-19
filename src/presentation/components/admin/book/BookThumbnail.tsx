@@ -8,7 +8,7 @@ interface BookThumbnailProps {
   iconClassName?: string;
 }
 
-/** Small book cover with an icon placeholder, used in admin tables and headers. */
+/** Ảnh bìa sách cỡ nhỏ, hiện icon thay thế khi chưa có ảnh; dùng trong bảng và tiêu đề của admin. */
 export const BookThumbnail: React.FC<BookThumbnailProps> = ({
   title,
   coverImage,

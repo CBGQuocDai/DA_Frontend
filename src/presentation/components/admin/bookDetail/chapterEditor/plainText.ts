@@ -1,67 +1,88 @@
 import type { JSONContent } from '@tiptap/core';
 
-/** Average Vietnamese TTS pace at 1.0x, in words (syllables) per minute. */
+/** Tốc độ đọc trung bình của TTS tiếng Việt ở 1.0x, tính bằng từ (âm tiết) mỗi phút. */
 const WORDS_PER_MINUTE = 180;
 
-/** Separator the backend OCR puts between PDF pages in `rawText`. */
+/** Dòng đại diện cho dấu ngắt trang trong văn bản của editor (dán vào hay khi dọn văn bản). */
 const PAGE_BREAK = /-{3,}\s*page_break\s*-{3,}/gi;
 const PAGE_BREAK_LINE = /^\s*-{3,}\s*page_break\s*-{3,}\s*$/i;
 export const PAGE_BREAK_TEXT = '-------------page_break------------------';
+/** Câu TTS đọc thay cho ảnh và bảng đính kèm; phải giống hệt phía backend (`ChapterDocument`). */
+export const IMAGE_TEXT = 'Xem ảnh trong tệp đính kèm của chương.';
+export const TABLE_TEXT = 'Xem bảng trong tệp đính kèm của chương.';
+const ATTACHMENT_TEXT: Record<string, string> = { image: IMAGE_TEXT, table: TABLE_TEXT };
 
 export const countWords = (text?: string) => {
   if (!text) return 0;
   return text.replace(PAGE_BREAK, ' ').trim().split(/\s+/).filter(Boolean).length;
 };
 
-/** Estimated audio length in seconds for the given text and reading speed. */
+/** Thời lượng audio ước tính (giây) theo văn bản và tốc độ đọc. */
 export const estimateAudioSeconds = (text: string | undefined, speed = 1) =>
   Math.round((countWords(text) / (WORDS_PER_MINUTE * speed)) * 60);
 
-/** One block per line (separator lines become page-break nodes), so the editor text round-trips. */
-export const textToDoc = (text: string): JSONContent => ({
-  type: 'doc',
-  content: text.split('\n').map((line) => {
-    if (PAGE_BREAK_LINE.test(line)) return { type: 'pageBreak' };
-    return line ? { type: 'paragraph', content: [{ type: 'text', text: line }] } : { type: 'paragraph' };
-  }),
-});
-
-/** Inverse of `textToDoc`: the text the editor reports for a document. */
-const docToText = (doc: JSONContent) =>
-  (doc.content ?? [])
-    .map((node) =>
-      node.type === 'pageBreak' ? PAGE_BREAK_TEXT : (node.content ?? []).map((child) => child.text ?? '').join('')
-    )
-    .join('\n');
-
-/** The document to store next to `rawText`; empty when nothing is formatted, so plain chapters cost nothing. */
-export const serializeDoc = (doc: JSONContent) => {
-  const isFormatted = doc.content?.some((node) => {
-    const align = node.attrs?.textAlign;
-    return (align && align !== 'left') || node.content?.some((child) => child.marks?.length);
-  });
-  return isFormatted ? JSON.stringify(doc) : '';
+/**
+ * Mỗi dòng một block (dòng phân cách thành node ngắt trang) để văn bản qua editor rồi lấy ra vẫn y nguyên.
+ * Ảnh và bảng của `source` được đặt lại vào đúng dòng đang đứng thay cho chúng, theo thứ tự.
+ */
+export const textToDoc = (text: string, source?: JSONContent): JSONContent => {
+  const attachments = (source?.content ?? []).filter((node) => node.type && node.type in ATTACHMENT_TEXT);
+  return {
+    type: 'doc',
+    content: text.split('\n').map((line) => {
+      if (PAGE_BREAK_LINE.test(line)) return { type: 'pageBreak' };
+      const index = attachments.findIndex((node) => ATTACHMENT_TEXT[node.type!] === line);
+      if (index >= 0) return attachments.splice(index, 1)[0];
+      return line ? { type: 'paragraph', content: [{ type: 'text', text: line }] } : { type: 'paragraph' };
+    }),
+  };
 };
 
-/**
- * Stored formatting, if it still belongs to `rawText`. The backend keeps the two equal on every
- * save; this guards rows changed outside the API, so the editor never shows text TTS won't read.
- */
-export const getValidContent = (contentJson: string | undefined, rawText: string) => {
-  if (!contentJson) return '';
+/** Văn bản TTS sẽ đọc từ một tài liệu đã lưu, giống `ChapterContentService.text` phía backend. */
+export const docText = (content?: string | null) => {
+  if (!content) return '';
   try {
-    return docToText(JSON.parse(contentJson)) === rawText ? contentJson : '';
+    return ((JSON.parse(content) as JSONContent).content ?? [])
+      .filter((node) => node.type !== 'pageBreak')
+      .map((node) => ATTACHMENT_TEXT[node.type ?? ''] ?? (node.content ?? []).map((child) => child.text ?? '').join(''))
+      .join('\n');
   } catch {
     return '';
   }
 };
 
-export const loadDoc = (content: string, text: string): JSONContent =>
-  content ? JSON.parse(content) : textToDoc(text);
+/** Có căn lề hoặc chữ đậm, nghiêng, gạch chân hay không. */
+export const hasFormatting = (doc: JSONContent) =>
+  !!doc.content?.some((node) => {
+    const align = node.attrs?.textAlign;
+    return (align && align !== 'left') || node.content?.some((child) => child.marks?.length);
+  });
+
+/** Tài liệu có ảnh hoặc bảng hay không, để biết có hiện nút xem tệp đính kèm. */
+export const hasAttachments = (content?: string | null) => {
+  if (!content) return false;
+  try {
+    return ((JSON.parse(content) as JSONContent).content ?? []).some((node) => node.type && node.type in ATTACHMENT_TEXT);
+  } catch {
+    return false;
+  }
+};
+
+const EMPTY_DOC: JSONContent = { type: 'doc', content: [{ type: 'paragraph' }] };
+
+/** Tài liệu để nạp vào editor; chương chưa có nội dung (hoặc tài liệu hỏng) mở thành trang trống. */
+export const loadDoc = (content: string): JSONContent => {
+  if (!content) return EMPTY_DOC;
+  try {
+    return JSON.parse(content) as JSONContent;
+  } catch {
+    return EMPTY_DOC;
+  }
+};
 
 /**
- * Rejoins lines a PDF broke mid-sentence. Conservative on purpose: only merges when the
- * line has no closing punctuation and the next one starts in lowercase, so headings stay put.
+ * Nối lại các dòng bị PDF ngắt giữa câu. Cố ý thận trọng: chỉ nối khi dòng không kết thúc bằng
+ * dấu câu và dòng sau bắt đầu bằng chữ thường, nên tiêu đề vẫn nằm riêng.
  */
 export const joinBrokenLines = (text: string) =>
   text.split('\n').reduce<string[]>((lines, line) => {
@@ -83,9 +104,8 @@ export const removeBlankLines = (text: string) =>
     .join('\n');
 
 /**
- * Cleans text pasted from PDFs/web before it is sent to TTS: composes Vietnamese
- * diacritics (NFC), unifies whitespace, drops spaces before punctuation and
- * collapses runs of blank lines.
+ * Làm sạch văn bản dán từ PDF/web trước khi gửi cho TTS: ghép dấu tiếng Việt (NFC),
+ * thống nhất khoảng trắng, bỏ khoảng trắng trước dấu câu và gộp các dòng trống liên tiếp.
  */
 export const normalizeText = (text: string) =>
   text

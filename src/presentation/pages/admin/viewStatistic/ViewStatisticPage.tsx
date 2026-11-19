@@ -20,14 +20,15 @@ const Skeleton = ({ className }: { className: string }) => (
   <div className={`rounded-xl border border-border bg-surface animate-pulse motion-reduce:animate-none ${className}`} />
 );
 
+/** Trang thống kê của admin: tab Tổng quan (kèm mục bán chạy) và tab Doanh thu. */
 export const ViewStatisticPage = () => {
   const [tab, setTab] = useState<StatTab>('overview');
   const [range, setRange] = useState<MonthRange>(12);
   const [period, setPeriod] = useState<BestsellerPeriod>('MONTH');
-  // Both live here, not in the tabs, so switching tabs neither refetches nor forgets the chosen period
+  // Cả hai nằm ở đây chứ không nằm trong tab, nên đổi tab không tải lại và không quên kỳ đã chọn
   const { statistics, loadedAt, error, isRefreshing, reload } = useStatistics();
   const bestsellers = useBestsellers(period);
-  // 12 months are loaded once; a shorter range is the tail of them
+  // 12 tháng được tải một lần; khoảng ngắn hơn chỉ là phần đuôi của chuỗi đó
   const shown = statistics && { ...statistics, months: statistics.months.slice(-range) };
   const refresh = () => {
     reload();
@@ -35,7 +36,7 @@ export const ViewStatisticPage = () => {
   };
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Arrow keys move between tabs, as in any tab list
+  // Phím mũi tên di chuyển giữa các tab như mọi tab list
   const onTabKeyDown = (e: React.KeyboardEvent, index: number) => {
     const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
     if (!step) return;

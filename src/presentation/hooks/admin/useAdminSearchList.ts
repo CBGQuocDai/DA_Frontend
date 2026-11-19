@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { SearchParams } from '@/src/infrastructure/api/services';
-import type { PaginatedResponse } from '@/src/shared/types';
+import type { PaginatedResponse, SearchParams } from '@/src/shared/types';
 import { getApiErrorMessage } from '@/src/shared/utils';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -14,9 +13,9 @@ interface Loaded<T> {
 }
 
 /**
- * Server-side filtered and paged admin list (authors, categories...).
- * The keyword is debounced and going back to the first page follows each new search.
- * `fetchPage` must be stable, e.g. a service method.
+ * Danh sách quản lý được lọc và phân trang phía server (tác giả, thể loại, giọng đọc...).
+ * Từ khóa được debounce và mỗi lần tìm mới sẽ quay về trang đầu.
+ * `fetchPage` phải ổn định qua các lần render, vd: một method của service.
  */
 export const useAdminSearchList = <T>(
   fetchPage: (params: SearchParams) => Promise<PaginatedResponse<T>>,
@@ -43,7 +42,7 @@ export const useAdminSearchList = <T>(
     fetchPage({ keyword: query.keyword, page: query.page, size: pageSize })
       .then((data) => {
         if (cancelled) return;
-        // The last row of a later page was deleted: step back to the new last page
+        // Dòng cuối của một trang phía sau vừa bị xóa: lùi về trang cuối mới
         if (data.content.length === 0 && query.page > 0 && data.totalPage > 0) {
           setQuery((q) => ({ ...q, page: data.totalPage - 1 }));
           return;
@@ -81,8 +80,9 @@ export const useAdminSearchList = <T>(
     keyword,
     setKeyword,
     clearSearch,
-    /** True until the first page arrives; later fetches keep showing the previous rows */
+    /** True cho tới khi có trang đầu tiên; các lần tải sau vẫn hiển thị dữ liệu cũ */
     isLoading: loaded.data === null && loaded.error === null,
+    /** Đang có request chưa về, kể cả khi dữ liệu cũ vẫn hiển thị */
     isFetching: loaded.key !== requestKey,
     isFiltered: query.keyword !== '',
     error: loaded.error,

@@ -3,7 +3,7 @@ export interface JwtPayload {
   email?: string;
 }
 
-/** Reads the payload of a JWT without verifying it. */
+/** Đọc payload của JWT mà không xác minh chữ ký. */
 export const decodeJwt = (token: string): JwtPayload | null => {
   try {
     const base64Url = token.split('.')[1];
