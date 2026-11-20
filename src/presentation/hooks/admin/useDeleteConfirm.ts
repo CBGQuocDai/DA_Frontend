@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { getApiErrorMessage } from '@/src/shared/utils';
-import { showAlert } from '@/src/presentation/components/common';
+import { showAlert, toast } from '@/src/presentation/components/common';
 
 interface Options<T> {
   /** Gọi API xóa; lỗi ném ra sẽ được hiển thị bằng hộp thoại cảnh báo */
@@ -11,10 +11,12 @@ interface Options<T> {
   onDeleted: (item: T) => void;
   /** Thông báo dùng khi backend không trả về lý do cụ thể */
   errorMessage: string;
+  /** Nội dung toast sau khi xóa thành công */
+  successMessage: (item: T) => string;
 }
 
 /** Trạng thái cho luồng "chọn mục → xác nhận → xóa" của các trang quản lý, dùng với ConfirmDeleteModal. */
-export const useDeleteConfirm = <T>({ remove, onDeleted, errorMessage }: Options<T>) => {
+export const useDeleteConfirm = <T>({ remove, onDeleted, errorMessage, successMessage }: Options<T>) => {
   const [target, setTarget] = useState<T | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -24,6 +26,7 @@ export const useDeleteConfirm = <T>({ remove, onDeleted, errorMessage }: Options
     try {
       await remove(target);
       setTarget(null);
+      toast.success(successMessage(target));
       onDeleted(target);
     } catch (error) {
       console.error('Error deleting item:', error);

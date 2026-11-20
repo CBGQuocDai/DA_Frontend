@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Button, FileDropzone, showAlert } from '@/src/presentation/components/common';
+import { Modal, Button, FileDropzone, showAlert, toast } from '@/src/presentation/components/common';
 import { uploadService, voiceService } from '@/src/infrastructure/api/services';
 import type { Voice } from '@/src/shared/types';
 import { getApiErrorMessage, resolveMediaUrl } from '@/src/shared/utils';
@@ -59,6 +59,7 @@ export const VoiceModal: React.FC<VoiceModalProps> = ({ voice, onClose, onSucces
       const saved = voice
         ? await voiceService.updateVoice(voice.id, payload)
         : await voiceService.createVoice(payload);
+      toast.success(`Đã ${isEditMode ? 'cập nhật' : 'thêm'} giọng đọc “${payload.name}”`);
       onSuccess(saved);
       onClose();
     } catch (error) {

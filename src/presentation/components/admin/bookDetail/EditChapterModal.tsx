@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, showAlert } from '@/src/presentation/components/common';
+import { Modal, Button, showAlert, toast } from '@/src/presentation/components/common';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
 import { getApiErrorMessage } from '@/src/shared/utils';
@@ -36,6 +36,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
         title,
         chapterOrder: Number(infoForm.chapterOrder),
       });
+      toast.success(`Đã cập nhật thông tin chương “${title}”`);
       await onSuccess();
       onClose();
     } catch (error) {

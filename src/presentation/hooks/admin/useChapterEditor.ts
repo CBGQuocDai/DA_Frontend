@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
-import { showAlert } from '@/src/presentation/components/common';
+import { showAlert, toast } from '@/src/presentation/components/common';
 import { getApiErrorMessage } from '@/src/shared/utils';
 
 interface Options {
@@ -50,6 +50,7 @@ export const useChapterEditor = ({ bookId, activeChapter, setChapters }: Options
     try {
       await chapterService.updateChapter(bookId, activeChapter.id, { content: contentDraft });
       setChapters((prev) => prev.map((c) => (c.id === activeChapter.id ? { ...c, content: contentDraft } : c)));
+      toast.success('Đã lưu nội dung chương');
     } catch (error) {
       console.error('Error saving chapter text:', error);
       showAlert(getApiErrorMessage(error, 'Không thể lưu nội dung chương. Vui lòng thử lại.'));

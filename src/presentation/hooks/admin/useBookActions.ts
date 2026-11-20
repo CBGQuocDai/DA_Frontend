@@ -5,7 +5,7 @@ import { bookService } from '@/src/infrastructure/api/services';
 import type { Book } from '@/src/shared/types';
 import { getApiErrorMessage } from '@/src/shared/utils';
 import { toBookPayload, type BookFormValues } from '@/src/presentation/components/admin/book';
-import { showAlert } from '@/src/presentation/components/common';
+import { showAlert, toast } from '@/src/presentation/components/common';
 import { BOOK_PUBLISH_ERROR, BOOK_UNPUBLISH_ERROR } from '@/src/presentation/utils/admin';
 import { useBookFormOptions } from './useBookFormOptions';
 
@@ -28,6 +28,7 @@ export const useBookActions = ({ book, setBook, reload }: Options) => {
     try {
       await (published ? bookService.publishBook(book.id) : bookService.unpublishBook(book.id));
       setBook({ ...book, status: published ? 'PUBLISHED' : 'UNPUBLISHED' });
+      toast.success(`Đã ${published ? 'xuất bản' : 'gỡ xuất bản'} sách “${book.title}”`);
     } catch (error) {
       console.error('Error changing book status:', error);
       showAlert(getApiErrorMessage(error, published ? BOOK_PUBLISH_ERROR : BOOK_UNPUBLISH_ERROR));
@@ -41,6 +42,7 @@ export const useBookActions = ({ book, setBook, reload }: Options) => {
     if (!book) return;
     await bookService.updateBook(book.id, await toBookPayload(data, book));
     setIsEditOpen(false);
+    toast.success(`Đã cập nhật sách “${data.title}”`);
     // Tải lại để ảnh bìa/PDF nhận URL mới được ký từ endpoint chi tiết
     await reload();
   };

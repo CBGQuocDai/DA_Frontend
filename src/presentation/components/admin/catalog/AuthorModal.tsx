@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileDropzone, Modal } from '@/src/presentation/components/common';
+import { FileDropzone, Modal, toast } from '@/src/presentation/components/common';
 import { authorService, uploadService } from '@/src/infrastructure/api/services';
 import type { Author } from '@/src/shared/types';
 import { getApiErrorMessage, resolveMediaUrl } from '@/src/shared/utils';
@@ -71,6 +71,7 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
       const saved = author
         ? await authorService.updateAuthor(author.id, payload)
         : await authorService.createAuthor(payload);
+      toast.success(`Đã ${isEdit ? 'cập nhật' : 'thêm'} tác giả “${payload.fullName}”`);
       onSuccess(saved);
       onClose();
     } catch (error) {

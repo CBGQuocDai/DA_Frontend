@@ -10,52 +10,72 @@ export interface BookFormOptions {
   voices: Voice[];
 }
 
-const EMPTY_OPTIONS: BookFormOptions = { categories: [], authors: [], voices: [] };
+type FilterOptions = Pick<BookFormOptions, 'categories' | 'authors'>;
 
-// Dùng chung cho mọi màn admin có sửa hoặc lọc sách; các danh sách này hiếm khi thay đổi
-let optionsPromise: Promise<BookFormOptions> | null = null;
+// Dùng chung cho mọi màn admin có sửa hoặc lọc sách; các danh sách này hiếm khi thay đổi.
+// Thể loại + tác giả (bộ lọc và form) và giọng đọc (chỉ form) được cache riêng
+// để trang danh sách không tải giọng đọc khi chưa mở form.
+let filterPromise: Promise<FilterOptions> | null = null;
+let voicesPromise: Promise<Voice[]> | null = null;
 
-const loadOptions = async (): Promise<BookFormOptions> => {
-  const [categories, authors, voices] = await Promise.allSettled([
+const loadFilterOptions = async (): Promise<FilterOptions> => {
+  const [categories, authors] = await Promise.allSettled([
     categoryService.getCategories(),
     authorService.getAuthors(),
-    voiceService.getVoices(),
   ]);
-  const options = {
+  // Có danh sách tải lỗi thì lần mount sau tải lại
+  if (categories.status === 'rejected' || authors.status === 'rejected') filterPromise = null;
+  return {
     categories: categories.status === 'fulfilled' ? categories.value : [],
     authors: authors.status === 'fulfilled' ? authors.value : [],
-    voices: voices.status === 'fulfilled' ? voices.value : [],
   };
-  // Có danh sách tải lỗi thì lần mount sau tải lại
-  if ([categories, authors, voices].some((result) => result.status === 'rejected')) {
-    optionsPromise = null;
-  }
-  return options;
 };
+
+const loadVoices = (): Promise<Voice[]> =>
+  voiceService.getVoices().catch((error) => {
+    console.error('Error fetching voices:', error);
+    voicesPromise = null;
+    return [];
+  });
 
 /** Gọi sau khi thêm/sửa/xóa giọng đọc, thể loại hoặc tác giả để lần mount sau tải lại. */
 export const invalidateBookFormOptions = () => {
-  optionsPromise = null;
+  filterPromise = null;
+  voicesPromise = null;
 };
 
 /**
  * Thể loại, tác giả và giọng đọc cho form sách và bộ lọc, chỉ tải một lần mỗi phiên.
- * Truyền `enabled = false` để hoãn việc tải cho tới khi thực sự cần.
+ * `enabled = false` hoãn toàn bộ; `withVoices = false` chỉ tải thể loại + tác giả
+ * (giọng đọc chỉ cần khi form mở).
  */
-export const useBookFormOptions = (enabled = true): BookFormOptions => {
-  const [options, setOptions] = useState<BookFormOptions>(EMPTY_OPTIONS);
+export const useBookFormOptions = (enabled = true, withVoices = enabled): BookFormOptions => {
+  const [filters, setFilters] = useState<FilterOptions>({ categories: [], authors: [] });
+  const [voices, setVoices] = useState<Voice[]>([]);
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    optionsPromise ??= loadOptions();
-    optionsPromise.then((loaded) => {
-      if (!cancelled) setOptions(loaded);
+    filterPromise ??= loadFilterOptions();
+    filterPromise.then((loaded) => {
+      if (!cancelled) setFilters(loaded);
     });
     return () => {
       cancelled = true;
     };
   }, [enabled]);
 
-  return options;
+  useEffect(() => {
+    if (!withVoices) return;
+    let cancelled = false;
+    voicesPromise ??= loadVoices();
+    voicesPromise.then((loaded) => {
+      if (!cancelled) setVoices(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [withVoices]);
+
+  return { ...filters, voices };
 };

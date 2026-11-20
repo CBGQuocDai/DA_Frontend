@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal } from '@/src/presentation/components/common';
+import { Modal, toast } from '@/src/presentation/components/common';
 import { categoryService } from '@/src/infrastructure/api/services';
 import type { Category } from '@/src/shared/types';
 import { getApiErrorMessage } from '@/src/shared/utils';
@@ -42,6 +42,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ category, initialN
       const saved = category
         ? await categoryService.updateCategory(category.id, payload)
         : await categoryService.createCategory(payload);
+      toast.success(`Đã ${isEdit ? 'cập nhật' : 'thêm'} thể loại “${payload.name}”`);
       onSuccess(saved);
       onClose();
     } catch (error) {

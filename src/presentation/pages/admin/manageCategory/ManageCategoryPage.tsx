@@ -60,6 +60,7 @@ export const ManageCategoryPage = () => {
     remove: (category) => categoryService.deleteCategory(category.id),
     onDeleted: handleChanged,
     errorMessage: "Không xóa được thể loại, thử lại sau",
+    successMessage: (category) => `Đã xóa thể loại “${category.name}”`,
   });
 
   return (

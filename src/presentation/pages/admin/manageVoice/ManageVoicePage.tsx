@@ -75,6 +75,7 @@ export const ManageVoicePage = () => {
       handleChanged();
     },
     errorMessage: "Có lỗi xảy ra khi xóa giọng đọc",
+    successMessage: (voice) => `Đã xóa giọng đọc “${voice.name}”`,
   });
 
   return (

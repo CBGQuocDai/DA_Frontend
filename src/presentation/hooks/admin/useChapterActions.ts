@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { chapterService, uploadService } from '@/src/infrastructure/api/services';
 import type { Chapter } from '@/src/shared/types';
 import { getApiErrorMessage, getAudioDuration } from '@/src/shared/utils';
-import { showAlert } from '@/src/presentation/components/common';
+import { showAlert, toast } from '@/src/presentation/components/common';
+
+const chapterLabel = (chapter: Chapter) => chapter.title || `Chương ${chapter.chapterOrder}`;
 
 interface Options {
   bookId: number;
@@ -38,6 +40,7 @@ export const useChapterActions = ({
 
   const createChapter = async (title: string, chapterOrder: number) => {
     const created = await chapterService.createChapter(bookId, { title, chapterOrder });
+    toast.success(`Đã thêm chương “${title}”`);
     await reloadChapters();
     setSelectedChapterId(created.id);
     onChapterCreated?.();
@@ -47,6 +50,7 @@ export const useChapterActions = ({
   const mergeChapters = async (chapterIds: number[]) => {
     try {
       const merged = await chapterService.mergeChapters(bookId, chapterIds);
+      toast.success(`Đã gộp ${chapterIds.length} chương`);
       await reloadChapters();
       setSelectedChapterId(merged.id);
       return true;
@@ -62,6 +66,7 @@ export const useChapterActions = ({
     setIsDeleting(true);
     try {
       await chapterService.deleteChapter(bookId, activeChapter.id);
+      toast.success(`Đã xóa chương “${chapterLabel(activeChapter)}”`);
       const remaining = chapters.filter((c) => c.id !== activeChapter.id);
       setChapters(remaining);
       setSelectedChapterId(remaining.length > 0 ? remaining[0].id : null);
@@ -78,6 +83,7 @@ export const useChapterActions = ({
     setGeneratingChapterId(chapterId);
     try {
       await chapterService.generateAudio(bookId, chapterId, speed);
+      toast.info('Đã gửi yêu cầu tạo audio. Bạn sẽ nhận thông báo khi audio sẵn sàng.');
       // Backend xử lý nền; đánh dấu ngay, trạng thái cuối sẽ về qua SSE (useBookDetailData)
       setChapters((prev) =>
         prev.map((c) => (c.id === chapterId ? { ...c, status: 'PROCESSING_AUDIO', readingSpeed: speed } : c))
@@ -100,6 +106,7 @@ export const useChapterActions = ({
         audioPath,
         duration: Math.max(1, Math.round(duration)),
       });
+      toast.success('Đã tải audio lên cho chương');
       await reloadChapters();
     } catch (error) {
       console.error('Error uploading chapter audio:', error);

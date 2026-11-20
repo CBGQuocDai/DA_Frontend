@@ -64,6 +64,7 @@ export const ManageAuthorPage = () => {
     remove: (author) => authorService.deleteAuthor(author.id),
     onDeleted: handleChanged,
     errorMessage: "Không xóa được tác giả, thử lại sau",
+    successMessage: (author) => `Đã xóa tác giả “${author.fullName}”`,
   });
 
   return (

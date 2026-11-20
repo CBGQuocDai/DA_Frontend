@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { bookService, chapterService } from '@/src/infrastructure/api/services';
 import type { Book, Chapter } from '@/src/shared/types';
+import { notifyBookStatus, notifyChapterStatus } from '@/src/presentation/utils/admin';
 import { useAdminEvents } from './useAdminEvents';
 
 /** Tải sách (kèm các chương), theo dõi chương đang chọn và nhận trạng thái OCR, gen audio qua SSE. */
@@ -37,6 +38,11 @@ export const useBookDetailData = (bookId: number) => {
   useAdminEvents({
     onChapterStatus: (event) => {
       if (event.bookId !== bookId) return;
+      const chapter = chapters.find((c) => c.id === event.chapterId);
+      notifyChapterStatus(
+        event.status,
+        chapter?.title ? `chương “${chapter.title}”` : `chương ${chapter?.chapterOrder ?? `#${event.chapterId}`}`
+      );
       setChapters((prev) =>
         prev.map((c) =>
           c.id === event.chapterId ? { ...c, status: event.status, duration: event.duration ?? c.duration } : c
@@ -52,7 +58,9 @@ export const useBookDetailData = (bookId: number) => {
     },
     // OCR xong mới có danh sách chương nên tải lại cả sách
     onBookStatus: (event) => {
-      if (event.bookId === bookId) loadData();
+      if (event.bookId !== bookId) return;
+      notifyBookStatus(event.status, book?.title, bookId);
+      loadData();
     },
     onReconnect: loadData,
   });

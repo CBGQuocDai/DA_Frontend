@@ -7,7 +7,7 @@ import { AdminLayout } from "@/src/presentation/layouts";
 import { bookService } from "@/src/infrastructure/api/services";
 import type { Book } from "@/src/shared/types";
 import { getApiErrorMessage, isBookPublished } from "@/src/shared/utils";
-import { ConfirmDeleteModal, Pagination, showAlert } from "@/src/presentation/components/common";
+import { ConfirmDeleteModal, Pagination, showAlert, toast } from "@/src/presentation/components/common";
 import {
   BookFilterToolbar,
   BookFormModal,
@@ -27,10 +27,11 @@ import { BOOK_PUBLISH_ERROR, BOOK_UNPUBLISH_ERROR } from "@/src/presentation/uti
 export const ManageBookPage = () => {
   const router = useRouter();
   const list = useAdminBookList();
-  const { categories, authors, voices } = useBookFormOptions();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  // Bộ lọc cần thể loại + tác giả ngay; giọng đọc chỉ tải khi mở form thêm/sửa
+  const { categories, authors, voices } = useBookFormOptions(true, showCreateModal || editingBook !== null);
   const [viewingReviewsBook, setViewingReviewsBook] = useState<Book | null>(null);
   const [deletingBook, setDeletingBook] = useState<Book | null>(null);
   const [busyBookId, setBusyBookId] = useState<number | null>(null);
@@ -55,6 +56,7 @@ export const ManageBookPage = () => {
       async () => {
         await (publish ? bookService.publishBook(book.id) : bookService.unpublishBook(book.id));
         list.updateBook(book.id, { status: publish ? "PUBLISHED" : "UNPUBLISHED" });
+        toast.success(`Đã ${publish ? "xuất bản" : "gỡ xuất bản"} sách “${book.title}”`);
       },
       publish ? BOOK_PUBLISH_ERROR : BOOK_UNPUBLISH_ERROR,
     );
@@ -66,6 +68,7 @@ export const ManageBookPage = () => {
       deletingBook.id,
       async () => {
         await bookService.deleteBook(deletingBook.id);
+        toast.success(`Đã xóa sách “${deletingBook.title}”`);
         // Tải lại: xóa một dòng làm các trang phía sau bị dồn lên
         list.reload();
       },
@@ -88,6 +91,7 @@ export const ManageBookPage = () => {
   const handleCreateBook = async (data: BookFormValues) => {
     await bookService.createBook(await toBookPayload(data));
     setShowCreateModal(false);
+    toast.success(`Đã thêm sách “${data.title}”`);
     // Sách mới nằm ở trang đầu
     if (list.page === 0) list.reload();
     else list.goToPage(0);
@@ -97,6 +101,7 @@ export const ManageBookPage = () => {
     if (!editingBook) return;
     await bookService.updateBook(editingBook.id, await toBookPayload(data, editingBook));
     setEditingBook(null);
+    toast.success(`Đã cập nhật sách “${data.title}”`);
     list.reload();
   };
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { bookService } from '@/src/infrastructure/api/services';
 import type { Book, BookStatus } from '@/src/shared/types';
+import { notifyBookStatus } from '@/src/presentation/utils/admin';
 import { useAdminEvents } from './useAdminEvents';
 
 export const ADMIN_BOOKS_PER_PAGE = 10;
@@ -22,6 +23,22 @@ interface PageResult {
   books: Book[];
   totalPage: number;
 }
+
+type BooksRequest = { key: string; promise: ReturnType<typeof bookService.getBooks> };
+
+// React Strict Mode (dev) chạy effect hai lần: dùng lại request đang chạy cùng key thay vì gọi API lần nữa
+let inflight: BooksRequest | null = null;
+
+const fetchBooksOnce = (key: string, query: Parameters<typeof bookService.getBooks>[0]) => {
+  if (inflight?.key === key) return inflight.promise;
+  const request: BooksRequest = { key, promise: bookService.getBooks(query) };
+  inflight = request;
+  const clear = () => {
+    if (inflight === request) inflight = null;
+  };
+  request.promise.then(clear, clear);
+  return request.promise;
+};
 
 /** Danh sách sách có phân trang và bộ lọc cho bảng "quản lý sách" của admin. */
 export const useAdminBookList = () => {
@@ -54,7 +71,7 @@ export const useAdminBookList = () => {
   // State chỉ được set trong callback của promise nên response cũ không bao giờ ghi đè response mới
   useEffect(() => {
     let active = true;
-    bookService.getBooks(query).then(
+    fetchBooksOnce(requestKey, query).then(
       (data) => {
         if (active) setResult({ key: requestKey, books: data?.content ?? [], totalPage: data?.totalPage ?? 0 });
       },
@@ -80,9 +97,13 @@ export const useAdminBookList = () => {
         prev && { ...prev, books: prev.books.map((book) => (book.id === bookId ? { ...book, ...patch } : book)) }
     );
 
-  // OCR xong thì đổi trạng thái ngay trên dòng; sách không nằm trong trang hiện tại tự được bỏ qua
+  // OCR xong thì báo toast và đổi trạng thái ngay trên dòng; sách không nằm trong trang hiện tại
+  // vẫn được báo (theo id) nhưng không có dòng nào để sửa
   useAdminEvents({
-    onBookStatus: ({ bookId, status }) => updateBook(bookId, { status }),
+    onBookStatus: ({ bookId, status }) => {
+      notifyBookStatus(status, result?.books.find((book) => book.id === bookId)?.title, bookId);
+      updateBook(bookId, { status });
+    },
     onReconnect: () => setReloadCount((count) => count + 1),
   });
 
