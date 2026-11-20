@@ -5,7 +5,7 @@ import { PAGE_BREAK_TEXT } from './plainText';
 const insertPageBreak = (editor: Editor) =>
   editor.chain().focus().insertContent({ type: 'pageBreak' }).run();
 
-/** Page separator from `rawText`, shown as a gap between sheets and serialized back verbatim. */
+/** Dấu ngắt trang của tài liệu, hiển thị thành khoảng hở giữa các tờ. */
 export const PageBreak = Node.create({
   name: 'pageBreak',
   group: 'block',
@@ -27,7 +27,7 @@ export const PageBreak = Node.create({
 
 export { insertPageBreak };
 
-/** Start position of each non-empty page. */
+/** Vị trí bắt đầu của từng trang không rỗng. */
 export const getPageStarts = (doc: PMNode) => {
   const starts: number[] = [];
   let pageStart = 0;
@@ -44,7 +44,7 @@ export const getPageStarts = (doc: PMNode) => {
   return starts.length ? starts : [0];
 };
 
-/** Zero-based index of the page containing `pos`. */
+/** Chỉ số (từ 0) của trang chứa `pos`. */
 export const getPageIndex = (starts: number[], pos: number) => {
   let index = 0;
   while (index + 1 < starts.length && starts[index + 1] <= pos) index++;

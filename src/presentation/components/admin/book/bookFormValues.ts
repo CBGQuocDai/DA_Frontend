@@ -1,5 +1,5 @@
-import type { Book } from '@/src/shared/types';
-import { uploadService, type BookPayload } from '@/src/infrastructure/api/services';
+import type { Book, BookPayload } from '@/src/shared/types';
+import { uploadService } from '@/src/infrastructure/api/services';
 import type { BookFormValues } from './BookFormModal';
 import { getBookAuthors, getBookCategories, getBookPrice } from '@/src/shared/utils';
 
@@ -15,9 +15,9 @@ export const getBookPriceInput = (book?: Book): string => {
 };
 
 /**
- * Uploads the chosen PDF/cover straight to cloud storage, then builds the JSON
- * body of the create/update book endpoints. A file left empty on update resends
- * the current path of `book`, which keeps it.
+ * Upload file PDF/ảnh bìa đã chọn thẳng lên cloud storage rồi dựng body JSON cho
+ * endpoint tạo/cập nhật sách. Khi cập nhật mà không chọn file mới thì gửi lại
+ * đường dẫn hiện tại của `book` để giữ nguyên file cũ.
  */
 export const toBookPayload = async (values: BookFormValues, book?: Book): Promise<BookPayload> => {
   const [contentFile, coverImage] = await Promise.all([

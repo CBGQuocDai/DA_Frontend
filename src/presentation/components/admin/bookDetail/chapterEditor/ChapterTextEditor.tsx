@@ -11,45 +11,45 @@ import { TextAlign } from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { Focus, Gapcursor, Placeholder, UndoRedo } from '@tiptap/extensions';
 import { formatDuration } from '@/src/shared/utils';
+import { ChapterImage, ChapterTable, insertTable } from './attachments';
 import { EditorToolbar } from './EditorToolbar';
 import { FindReplaceBar } from './FindReplaceBar';
 import { getPageIndex, getPageStarts, PageBreak } from './pageBreak';
-import { countWords, estimateAudioSeconds, loadDoc, serializeDoc, textToDoc } from './plainText';
+import { countWords, estimateAudioSeconds, hasFormatting, loadDoc, textToDoc } from './plainText';
 import { SearchHighlight } from './searchHighlight';
 import { goToPage } from './textCommands';
 
 export interface ChapterTextEditorHandle {
-  /** Replaces the document as one undoable step, without reporting it through `onChange` */
-  resetContent: (text: string, content: string) => void;
+  /** Thay toàn bộ tài liệu trong một bước undo, không báo qua `onChange` */
+  resetContent: (content: string) => void;
 }
 
 interface ChapterTextEditorProps {
   handleRef?: React.Ref<ChapterTextEditorHandle>;
-  initialText: string;
   initialContent: string;
   isFullscreen: boolean;
-  onChange: (text: string, content: string) => void;
+  /** Nhận tài liệu (JSON) sau mỗi thay đổi */
+  onChange: (content: string) => void;
   onSave: () => void;
   onToggleFullscreen: () => void;
-  /** Lives here so it keeps playing during edits */
+  /** Đặt ở đây để audio vẫn phát tiếp trong lúc chỉnh sửa */
   statusBarAudio?: React.ReactNode;
   statusBarEnd?: React.ReactNode;
 }
 
-// Its Ctrl+Shift+L/E/R/J shortcuts would take over hard reload and devtools while the editor has focus
+// Các phím tắt Ctrl+Shift+L/E/R/J của nó sẽ chiếm mất hard reload và devtools khi trình soạn thảo đang focus
 const ParagraphAlign = TextAlign.extend({ addKeyboardShortcuts: () => ({}) }).configure({ types: ['paragraph'] });
 
 const getEditorText = (editor: { getText: (o: { blockSeparator: string }) => string }) =>
   editor.getText({ blockSeparator: '\n' });
 
 /**
- * Chapter editor: paragraphs and page breaks, formatted with alignment, bold, italic and
- * underline. The plain text goes to TTS; the formatted document is saved next to it. Pages
- * render as stacked sheets; the tools target OCR cleanup.
+ * Trình soạn chương: các đoạn văn và dấu ngắt trang, định dạng bằng căn lề, đậm, nghiêng và
+ * gạch chân, cùng ảnh và bảng OCR lấy từ sách. Tài liệu được lưu nguyên vẹn; backend lấy văn bản
+ * cho TTS từ đó. Các trang hiển thị thành những tờ giấy xếp chồng; bộ công cụ nhắm tới việc dọn văn bản OCR.
  */
 export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
   handleRef,
-  initialText,
   initialContent,
   isFullscreen,
   onChange,
@@ -73,6 +73,8 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
       Paragraph,
       Text,
       PageBreak,
+      ChapterImage,
+      ChapterTable,
       UndoRedo,
       Gapcursor,
       Focus.configure({ mode: 'shallowest' }),
@@ -83,11 +85,11 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
       Italic,
       Underline,
     ],
-    // The marks' Markdown rules would strip the * and _ from OCR text that TTS must read as is
+    // Quy tắc Markdown của các mark sẽ xóa mất dấu * và _ trong văn bản OCR mà TTS cần đọc nguyên văn
     enableInputRules: false,
     enablePasteRules: [PageBreak],
-    content: loadDoc(initialContent, initialText),
-    // Also dispatches the first transaction, which is what makes `stats` below non-null
+    content: loadDoc(initialContent),
+    // Đồng thời dispatch transaction đầu tiên, nhờ đó `stats` bên dưới khác null
     autofocus: 'start',
     editorProps: {
       attributes: {
@@ -97,7 +99,7 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
     },
     onUpdate: ({ editor }) => {
       setNotice(null);
-      onChangeRef.current(getEditorText(editor), serializeDoc(editor.getJSON()));
+      onChangeRef.current(JSON.stringify(editor.getJSON()));
     },
   });
 
@@ -133,9 +135,9 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
   useImperativeHandle(
     handleRef,
     () => ({
-      resetContent: (text, content) => {
+      resetContent: (content) => {
         setNotice(null);
-        editor?.chain().setContent(loadDoc(content, text), { emitUpdate: false }).focus('start').run();
+        editor?.chain().setContent(loadDoc(content), { emitUpdate: false }).focus('start').run();
       },
     }),
     [editor]
@@ -157,14 +159,15 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
       editor.commands.focus();
       return;
     }
-    const hadFormatting = !!serializeDoc(editor.getJSON());
-    editor.chain().focus().setContent(textToDoc(cleaned), { emitUpdate: true }).run();
-    // Cleanup rewrites whole lines, so there is nothing left to carry the formatting on
+    const doc = editor.getJSON();
+    const hadFormatting = hasFormatting(doc);
+    editor.chain().focus().setContent(textToDoc(cleaned, doc), { emitUpdate: true }).run();
+    // Việc dọn dẹp viết lại cả dòng nên không còn gì để giữ định dạng
     if (hadFormatting) setNotice('Định dạng đã bị xoá. Nhấn Hoàn tác nếu cần lấy lại.');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // With the find bar open, Esc closes that first
+    // Khi thanh tìm kiếm đang mở, Esc đóng thanh đó trước
     if (e.key === 'Escape' && isFullscreen && !findSession) {
       onToggleFullscreen();
       return;
@@ -193,6 +196,7 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
         totalPage={stats.totalPage}
         isFindOpen={!!findSession}
         isFullscreen={isFullscreen}
+        onInsertTable={() => insertTable(editor)}
         onToggleFind={() => (findSession ? setFindSession(null) : openFind())}
         onCleanup={runCleanup}
         onPageChange={(page) => goToPage(editor, page, scrollerRef.current)}
@@ -208,7 +212,7 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
         />
       )}
 
-      {/* Writing surface: the chapter as a sheet of paper on the desk */}
+      {/* Vùng soạn thảo: chương hiển thị như tờ giấy đặt trên bàn */}
       <div
         ref={scrollerRef}
         className="flex-1 min-h-0 flex flex-col overflow-y-auto bg-bg px-2 sm:px-6 py-2 sm:py-3 cursor-text"
@@ -223,7 +227,7 @@ export const ChapterTextEditor: React.FC<ChapterTextEditorProps> = ({
         </div>
       </div>
 
-      {/* Status bar */}
+      {/* Thanh trạng thái */}
       <div className="flex items-center gap-x-4 gap-y-1 flex-wrap px-3 py-1 border-t border-border bg-surface text-[11px] text-text-secondary tabular-nums flex-shrink-0">
         {stats.totalPage > 1 && (
           <span className="font-medium text-text-primary">

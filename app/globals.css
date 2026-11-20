@@ -132,6 +132,62 @@
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+/* Images and tables OCR took from the book; TTS reads a pointer to them instead */
+.chapter-editor [data-chapter-image],
+.chapter-editor [data-chapter-table] {
+  margin-block: 1rem;
+  border-radius: 0.25rem;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  cursor: pointer;
+}
+.chapter-editor [data-chapter-image] img {
+  display: block;
+  max-width: 100%;
+  max-height: 24rem;
+  margin-inline: auto;
+}
+.chapter-editor [data-chapter-table] {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.chapter-editor [data-chapter-table] th,
+.chapter-editor [data-chapter-table] td {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+.chapter-editor [data-chapter-table] th {
+  background-color: var(--color-bg);
+  font-weight: 600;
+}
+.chapter-editor [data-chapter-image].ProseMirror-selectednode,
+.chapter-editor [data-chapter-table].ProseMirror-selectednode {
+  outline-color: var(--color-accent);
+}
+/* Bảng sửa được trong trình soạn (TableNodeView) */
+.chapter-editor [data-chapter-table-view] {
+  margin-block: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  white-space: normal;
+  cursor: default;
+}
+.chapter-editor [data-chapter-table-view].ProseMirror-selectednode {
+  outline-color: var(--color-accent);
+}
+/* Khi chọn cả khối ảnh/bảng, ProseMirror ẩn nền vùng chọn nhưng màu chữ trắng của ::selection vẫn áp vào,
+   làm chữ trong bảng biến mất trên nền trắng */
+.chapter-editor.ProseMirror-hideselection *::selection {
+  color: var(--color-text-primary);
+}
 .chapter-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;

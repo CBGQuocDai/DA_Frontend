@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { bookService } from '@/src/infrastructure/api/services';
-import type { Book, BookStatus } from '@/src/shared/types';
+import type { Book } from '@/src/shared/types';
+import { getApiErrorMessage } from '@/src/shared/utils';
 import { toBookPayload, type BookFormValues } from '@/src/presentation/components/admin/book';
-import { useBookFormOptions } from './useBookFormOptions';
 import { showAlert } from '@/src/presentation/components/common';
+import { BOOK_PUBLISH_ERROR, BOOK_UNPUBLISH_ERROR } from '@/src/presentation/utils/admin';
+import { useBookFormOptions } from './useBookFormOptions';
 
 interface Options {
   book: Book | null;
@@ -13,56 +15,40 @@ interface Options {
   reload: () => Promise<void>;
 }
 
-/** Publish / unpublish and the "edit book" modal flow. */
+/** Xuất bản / gỡ xuất bản và luồng modal "sửa sách" ở trang chi tiết sách. */
 export const useBookActions = ({ book, setBook, reload }: Options) => {
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<'publish' | 'unpublish' | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  // Only needed by the edit modal, so don't fetch them until it opens
+  // Chỉ modal sửa mới cần các danh sách này nên chưa tải khi modal chưa mở
   const options = useBookFormOptions(isEditOpen);
 
-  const changeStatus = async (
-    key: 'publish' | 'unpublish',
-    task: (bookId: number) => Promise<void>,
-    status: BookStatus,
-    errorMessage: string
-  ) => {
+  const setPublished = async (published: boolean) => {
     if (!book) return;
-    setActionLoading(key);
+    setActionLoading(published ? 'publish' : 'unpublish');
     try {
-      await task(book.id);
-      setBook({ ...book, status, isPublish: status === 'PUBLISHED' });
+      await (published ? bookService.publishBook(book.id) : bookService.unpublishBook(book.id));
+      setBook({ ...book, status: published ? 'PUBLISHED' : 'UNPUBLISHED' });
     } catch (error) {
-      console.error(`Error (${key}) book:`, error);
-      showAlert(errorMessage);
+      console.error('Error changing book status:', error);
+      showAlert(getApiErrorMessage(error, published ? BOOK_PUBLISH_ERROR : BOOK_UNPUBLISH_ERROR));
     } finally {
       setActionLoading(null);
     }
   };
 
-  const publish = () =>
-    changeStatus(
-      'publish',
-      bookService.publishBook,
-      'PUBLISHED',
-      'Không thể xuất bản sách. Vui lòng kiểm tra: Đã chọn giọng đọc, có chapter, chapter đã có audio.'
-    );
-
-  const unpublish = () =>
-    changeStatus('unpublish', bookService.unpublishBook, 'UNPUBLISHED', 'Có lỗi xảy ra khi gỡ sách.');
-
-  // Errors propagate to BookFormModal, which shows them inline
+  // Lỗi được ném tiếp cho BookFormModal để hiển thị ngay trong modal
   const saveEdit = async (data: BookFormValues) => {
     if (!book) return;
     await bookService.updateBook(book.id, await toBookPayload(data, book));
     setIsEditOpen(false);
-    // Reload so cover/PDF come back as freshly signed URLs from the detail endpoint
+    // Tải lại để ảnh bìa/PDF nhận URL mới được ký từ endpoint chi tiết
     await reload();
   };
 
   return {
     actionLoading,
-    publish,
-    unpublish,
+    publish: () => setPublished(true),
+    unpublish: () => setPublished(false),
     edit: {
       isOpen: isEditOpen,
       ...options,

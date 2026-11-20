@@ -8,7 +8,7 @@ export interface MenuAnchor {
   right: number;
 }
 
-/** Positions a menu under (or above, when there is no room) the clicked trigger. */
+/** Tính vị trí menu ngay dưới nút vừa bấm (hoặc phía trên khi bên dưới không đủ chỗ). */
 export const getMenuAnchor = (trigger: HTMLElement, menuHeight: number): MenuAnchor => {
   const rect = trigger.getBoundingClientRect();
   const openUp = window.innerHeight - rect.bottom < menuHeight && rect.top > menuHeight;
@@ -24,7 +24,7 @@ interface FloatingMenuProps {
   children: React.ReactNode;
 }
 
-/** Fixed-position menu rendered in a portal, so table overflow cannot clip it. Closes on outside click, scroll or resize. */
+/** Menu vị trí cố định, render qua portal nên overflow của bảng không cắt mất. Tự đóng khi bấm ra ngoài, cuộn hoặc đổi kích thước cửa sổ. */
 export const FloatingMenu: React.FC<FloatingMenuProps> = ({ anchor, onClose, children }) => {
   useEffect(() => {
     window.addEventListener('click', onClose);

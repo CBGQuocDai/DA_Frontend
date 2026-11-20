@@ -12,7 +12,7 @@ export type FieldName =
 
 export type Errors = Partial<Record<FieldName, string>>;
 
-/** Order used to focus the first invalid field on submit */
+/** Thứ tự dùng để focus vào trường lỗi đầu tiên khi submit */
 export const FIELD_ORDER: FieldName[] = [
   'coverFile',
   'pdfFile',
@@ -38,7 +38,7 @@ export const COVER_ACCEPT = 'image/jpeg,image/png,image/webp';
 export interface FormState {
   title: string;
   description: string;
-  price: string; // raw digits so an empty field is distinguishable from 0
+  price: string; // giữ chuỗi chữ số thô để phân biệt ô trống với giá 0
   voiceId: number;
   categoryIds: number[];
   authorIds: number[];

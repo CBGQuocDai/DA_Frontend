@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, showAlert } from '@/src/presentation/components/common';
 import type { Chapter } from '@/src/shared/types';
 import { chapterService } from '@/src/infrastructure/api/services';
+import { getApiErrorMessage } from '@/src/shared/utils';
 
 interface EditChapterModalProps {
   bookId: number;
@@ -16,10 +17,10 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
   chapter,
   onSuccess,
 }) => {
-  // The modal is mounted per open, so the chapter only seeds the initial form
+  // Modal được mount lại mỗi lần mở nên chapter chỉ dùng để khởi tạo form
   const [infoForm, setInfoForm] = useState({
     title: chapter.title || '',
-    // Kept as text so clearing the field stays empty and `required` can catch it
+    // Giữ dạng chuỗi để khi xóa ô vẫn rỗng và `required` bắt được
     chapterOrder: String(chapter.chapterOrder),
   });
 
@@ -39,7 +40,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error updating chapter:', error);
-      showAlert('Không thể cập nhật thông tin chương. Vui lòng thử lại.');
+      showAlert(getApiErrorMessage(error, 'Không thể cập nhật thông tin chương. Vui lòng thử lại.'));
     }
   };
 

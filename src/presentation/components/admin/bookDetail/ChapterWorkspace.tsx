@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button, Spinner, showConfirm } from '@/src/presentation/components/common';
+import { Button, ChapterAttachmentsPdfViewer, Spinner, showConfirm } from '@/src/presentation/components/common';
 import type { ChapterWorkspaceProps } from '../../../../shared/types/ChapterWorkspace.types';
 import { getChapterStatusBadge } from '@/src/presentation/utils/admin';
 import { resolveMediaUrl } from '@/src/shared/utils';
@@ -12,9 +12,11 @@ import {
   Check,
   PanelLeftClose,
   PanelLeftOpen,
+  Paperclip,
 } from 'lucide-react';
 import { ChapterTextEditor, type ChapterTextEditorHandle } from './chapterEditor/ChapterTextEditor';
 import { AudioPopover } from './AudioPopover';
+import { docText, hasAttachments } from './chapterEditor/plainText';
 import type { Chapter } from '@/src/shared/types';
 
 interface ChapterStepButtonProps {
@@ -41,11 +43,11 @@ const ChapterStepButton: React.FC<ChapterStepButtonProps> = ({ chapter, directio
 };
 
 export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
+  bookId,
   activeChapter,
   sortedChapters,
   activeChapterIndex,
   voiceName,
-  textDraft,
   contentDraft,
   savedContent,
   textVersion,
@@ -66,6 +68,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
   onSelectChapter,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
   const editorRef = useRef<ChapterTextEditorHandle>(null);
   const prevChapter = activeChapterIndex > 0 ? sortedChapters[activeChapterIndex - 1] : null;
   const nextChapter =
@@ -97,9 +100,8 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
       cancelText: 'Tiếp tục sửa',
     });
     if (!confirmed) return;
-    const savedText = activeChapter.rawText || '';
-    editorRef.current?.resetContent(savedText, savedContent);
-    onDraftChange(savedText, savedContent);
+    editorRef.current?.resetContent(savedContent);
+    onDraftChange(savedContent);
   };
 
   const saveIfDirty = () => {
@@ -112,7 +114,7 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
         }`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-1.5 border-b border-border flex-shrink-0">
-        {/* Wide enough for the number, title and status, so the actions wrap before the status clips */}
+        {/* Đủ rộng cho số chương, tiêu đề và trạng thái, để các nút xuống dòng trước khi trạng thái bị cắt */}
         <div className="flex items-center gap-2 flex-1 min-w-[min(20rem,100%)] overflow-hidden">
           {onToggleSidebar && !isFullscreen && (
             <button
@@ -188,8 +190,20 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
 
         {!isFullscreen && (
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* File PDF dựng từ bản đã lưu, đúng như người nghe nhận */}
+            {hasAttachments(savedContent) && (
+              <button
+                type="button"
+                onClick={() => setIsAttachmentsOpen(true)}
+                className="flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:bg-bg"
+                title={hasUnsavedChanges ? 'Xem tệp đính kèm (bản đã lưu, lưu chương để thấy thay đổi mới)' : 'Xem tệp đính kèm như người nghe thấy'}
+                aria-label="Xem tệp đính kèm của chương"
+              >
+                <Paperclip className="h-3.5 w-3.5" />
+              </button>
+            )}
             <AudioPopover
-              rawText={activeChapter.rawText}
+              text={docText(savedContent)}
               hasAudio={!!activeChapter.audioUrl}
               hasUnsavedChanges={hasUnsavedChanges}
               voiceName={voiceName}
@@ -218,7 +232,6 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
         <ChapterTextEditor
           key={`${activeChapter.id}-${textVersion}`}
           handleRef={editorRef}
-          initialText={textDraft}
           initialContent={contentDraft}
           isFullscreen={isFullscreen}
           onChange={onDraftChange}
@@ -249,6 +262,15 @@ export const ChapterWorkspace: React.FC<ChapterWorkspaceProps> = ({
           }
         />
       </div>
+
+      {isAttachmentsOpen && (
+        <ChapterAttachmentsPdfViewer
+          bookId={bookId}
+          chapterId={activeChapter.id}
+          chapterTitle={activeChapter.title || `Chương ${activeChapter.chapterOrder}`}
+          onClose={() => setIsAttachmentsOpen(false)}
+        />
+      )}
     </div>
   );
 };

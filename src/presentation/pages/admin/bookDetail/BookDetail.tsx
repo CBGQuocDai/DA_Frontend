@@ -27,6 +27,7 @@ interface BookDetailProps {
   bookId: number;
 }
 
+/** Trang chi tiết sách của admin: thông tin sách, danh sách chương và khu soạn nội dung/audio từng chương. */
 export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [mobileTab, setMobileTab] = useState<MobileTab>('detail');
@@ -58,7 +59,7 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
   });
   const search = useChapterSearch(sortedChapters);
 
-  // Warn before closing the tab while the chapter text has unsaved edits
+  // Cảnh báo trước khi đóng tab nếu nội dung chương còn thay đổi chưa lưu
   const { hasUnsavedChanges } = editor;
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -122,8 +123,21 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
                 setMobileTab('detail');
               }}
               onAddChapter={async () => {
-                // Creating a chapter switches to it, which drops the current draft
+                // Tạo chương mới sẽ chuyển sang chương đó và làm mất bản nháp hiện tại
                 if (await confirmDiscardEdits()) chapterActions.addModal.open();
+              }}
+              onMergeChapters={async (selected) => {
+                const confirmed = await showConfirm({
+                  title: `Gộp ${selected.length} chương?`,
+                  message: `Bạn có chắc chắn muốn gộp ${selected.length} chương đã chọn không?`,
+                  confirmText: 'Gộp chương',
+                });
+                // Sau khi gộp sẽ mở chương đã gộp nên bản nháp hiện tại không còn dùng được
+                if (!confirmed || !(await confirmDiscardEdits())) return false;
+                if (hasUnsavedChanges) editor.discardDraft();
+                const merged = await chapterActions.mergeChapters(selected.map((chapter) => chapter.id));
+                if (merged) setMobileTab('detail');
+                return merged;
               }}
             />
           </div>
@@ -133,11 +147,11 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               }`}
           >
             <ChapterWorkspace
+              bookId={bookId}
               activeChapter={activeChapter}
               sortedChapters={sortedChapters}
               activeChapterIndex={activeChapterIndex}
               voiceName={book.voice?.name}
-              textDraft={editor.textDraft}
               contentDraft={editor.contentDraft}
               savedContent={editor.savedContent}
               textVersion={editor.textVersion}
@@ -155,7 +169,7 @@ export const BookDetail: React.FC<BookDetailProps> = ({ bookId }) => {
               onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
               onEditInfo={chapterActions.editModal.open}
               onGenerateVoice={chapterActions.generateVoice}
-              onUploadAudio={chapterActions.triggerUpload}
+              onUploadAudio={chapterActions.pickAudioFile}
               onDeleteChapter={chapterActions.deleteModal.open}
               onDraftChange={editor.updateDraft}
               onSaveText={editor.saveText}

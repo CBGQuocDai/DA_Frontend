@@ -6,7 +6,7 @@ import { ROUTES } from "@/src/shared/constants";
 import { AdminLayout } from "@/src/presentation/layouts";
 import { bookService } from "@/src/infrastructure/api/services";
 import type { Book } from "@/src/shared/types";
-import { isBookPublished } from "@/src/shared/utils";
+import { getApiErrorMessage, isBookPublished } from "@/src/shared/utils";
 import { ConfirmDeleteModal, Pagination, showAlert } from "@/src/presentation/components/common";
 import {
   BookFilterToolbar,
@@ -21,10 +21,9 @@ import {
   useAdminBookList,
   useBookFormOptions,
 } from "@/src/presentation/hooks/admin";
+import { BOOK_PUBLISH_ERROR, BOOK_UNPUBLISH_ERROR } from "@/src/presentation/utils/admin";
 
-const PUBLISH_ERROR =
-  "Không thể xuất bản sách. Vui lòng kiểm tra: Đã chọn giọng đọc, có chapter, chapter đã có audio.";
-
+/** Trang quản lý sách: lọc, phân trang, thêm/sửa/xóa, xuất bản và xem đánh giá. */
 export const ManageBookPage = () => {
   const router = useRouter();
   const list = useAdminBookList();
@@ -36,13 +35,14 @@ export const ManageBookPage = () => {
   const [deletingBook, setDeletingBook] = useState<Book | null>(null);
   const [busyBookId, setBusyBookId] = useState<number | null>(null);
 
-  const runRowAction = async (bookId: number, task: () => Promise<void>, onError?: () => void) => {
+  // Chạy một thao tác trên một dòng: khóa dòng đó trong lúc chờ và báo lỗi nếu thất bại
+  const runRowAction = async (bookId: number, task: () => Promise<void>, errorMessage: string) => {
     setBusyBookId(bookId);
     try {
       await task();
     } catch (error) {
       console.error("Book action failed:", error);
-      onError?.();
+      showAlert(getApiErrorMessage(error, errorMessage));
     } finally {
       setBusyBookId(null);
     }
@@ -54,35 +54,41 @@ export const ManageBookPage = () => {
       book.id,
       async () => {
         await (publish ? bookService.publishBook(book.id) : bookService.unpublishBook(book.id));
-        list.updateBook(book.id, { status: publish ? "PUBLISHED" : "UNPUBLISHED", isPublish: publish });
+        list.updateBook(book.id, { status: publish ? "PUBLISHED" : "UNPUBLISHED" });
       },
-      publish ? () => showAlert(PUBLISH_ERROR) : undefined,
+      publish ? BOOK_PUBLISH_ERROR : BOOK_UNPUBLISH_ERROR,
     );
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingBook) return;
-    await runRowAction(deletingBook.id, async () => {
-      await bookService.deleteBook(deletingBook.id);
-      // Refetch: removing a row shifts the following pages
-      list.reload();
-    });
+    await runRowAction(
+      deletingBook.id,
+      async () => {
+        await bookService.deleteBook(deletingBook.id);
+        // Tải lại: xóa một dòng làm các trang phía sau bị dồn lên
+        list.reload();
+      },
+      "Không xóa được sách, thử lại sau",
+    );
     setDeletingBook(null);
   };
 
+  // Lấy bản chi tiết để form có đủ đường dẫn file hiện tại; lỗi thì dùng tạm dữ liệu của dòng
   const handleOpenEditModal = async (book: Book) => {
     try {
-      setEditingBook((await bookService.getBookById(book.id)) || book);
+      setEditingBook(await bookService.getBookById(book.id));
     } catch (err) {
       console.error("Error fetching book detail for edit:", err);
       setEditingBook(book);
     }
   };
 
-  // Both handlers let errors propagate so BookFormModal can show them inline
+  // Cả hai handler đều ném lỗi tiếp để BookFormModal hiển thị ngay trong modal
   const handleCreateBook = async (data: BookFormValues) => {
     await bookService.createBook(await toBookPayload(data));
     setShowCreateModal(false);
+    // Sách mới nằm ở trang đầu
     if (list.page === 0) list.reload();
     else list.goToPage(0);
   };

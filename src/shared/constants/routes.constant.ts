@@ -1,4 +1,4 @@
-// Routes
+// Đường dẫn các trang của ứng dụng
 export const ROUTES = {
   ADMIN: {
     LOGIN: '/admin/login',
@@ -12,7 +12,7 @@ export const ROUTES = {
   CUSTOMER: {
     HOME: '/customer',
     LOGIN: '/customer/login',
-    /** Login page that sends the user back to `path` afterwards. */
+    /** Trang đăng nhập, đăng nhập xong đưa người dùng quay lại `path`. */
     LOGIN_THEN: (path: string) => `/customer/login?redirect=${encodeURIComponent(path)}`,
     REGISTER: '/customer/register',
     FORGOT_PASSWORD: '/customer/forgot-password',

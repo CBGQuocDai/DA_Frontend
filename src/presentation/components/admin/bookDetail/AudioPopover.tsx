@@ -12,13 +12,14 @@ const MAX_SPEED = 2;
 const SPEED_PRESETS = [0.75, 1, 1.25, 1.5];
 
 interface AudioPopoverProps {
-  rawText?: string;
+  /** Văn bản đã lưu mà TTS sẽ đọc */
+  text?: string;
   hasAudio: boolean;
   hasUnsavedChanges: boolean;
   voiceName?: string;
-  /** Speed stored by the backend; the slider starts from it each time the popover opens */
+  /** Tốc độ backend đang lưu; thanh trượt bắt đầu từ giá trị này mỗi lần mở popover */
   savedSpeed?: number | null;
-  /** The backend is rendering audio; a file can still be uploaded meanwhile */
+  /** Backend đang tạo audio; trong lúc đó vẫn có thể chọn file để upload */
   isProcessing: boolean;
   isGenerating: boolean;
   isUploading: boolean;
@@ -31,9 +32,9 @@ const DEFAULT_SPEED = 1;
 const formatSpeed = (speed: number) => `${speed.toFixed(2).replace(/0$/, '')}x`;
 const isSameSpeed = (a: number, b: number) => Math.abs(a - b) < 0.001;
 
-/** Single entry point for a chapter's audio: generate it with AI or upload a file. */
+/** Điểm vào duy nhất cho audio của chương: tạo bằng AI hoặc upload file. */
 export const AudioPopover: React.FC<AudioPopoverProps> = ({
-  rawText,
+  text,
   hasAudio,
   hasUnsavedChanges,
   voiceName,
@@ -44,7 +45,7 @@ export const AudioPopover: React.FC<AudioPopoverProps> = ({
   onGenerate,
   onUpload,
 }) => {
-  const hasText = !!rawText?.trim();
+  const hasText = !!text?.trim();
   const busyLabel = isUploading
     ? 'Đang tải lên...'
     : isGenerating
@@ -83,7 +84,7 @@ export const AudioPopover: React.FC<AudioPopoverProps> = ({
       >
         {({ close }) => (
           <AudioPanel
-            rawText={rawText}
+            text={text}
             hasText={hasText}
             hasAudio={hasAudio}
             hasUnsavedChanges={hasUnsavedChanges}
@@ -107,7 +108,7 @@ export const AudioPopover: React.FC<AudioPopoverProps> = ({
 };
 
 interface AudioPanelProps {
-  rawText?: string;
+  text?: string;
   hasText: boolean;
   hasAudio: boolean;
   hasUnsavedChanges: boolean;
@@ -119,9 +120,9 @@ interface AudioPanelProps {
   onCancel: () => void;
 }
 
-/** Mounted each time the popover opens, so the slider restarts from the saved speed. */
+/** Được mount lại mỗi lần mở popover nên thanh trượt bắt đầu lại từ tốc độ đã lưu. */
 const AudioPanel: React.FC<AudioPanelProps> = ({
-  rawText,
+  text,
   hasText,
   hasAudio,
   hasUnsavedChanges,
@@ -133,7 +134,7 @@ const AudioPanel: React.FC<AudioPanelProps> = ({
   onCancel,
 }) => {
   const [speed, setSpeed] = useState(initialSpeed);
-  const estimate = estimateAudioSeconds(rawText, speed);
+  const estimate = estimateAudioSeconds(text, speed);
 
   return (
     <>

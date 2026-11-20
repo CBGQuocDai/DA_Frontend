@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { authService } from '@/src/infrastructure/api/services';
+import { authService, customerService } from '@/src/infrastructure/api/services';
 import { STORAGE_KEYS } from '@/src/shared/constants';
 import type { RegisterRequest, User } from '@/src/shared/types';
 import { decodeJwt, storageString } from '@/src/shared/utils';
@@ -27,7 +27,7 @@ const noopSubscribe = () => () => {};
 
 const mergeProfile = async (user: User): Promise<User> => {
   try {
-    const profile = await authService.getCustomerProfile();
+    const profile = await customerService.getProfile();
     return {
       ...user,
       id: String(profile.id ?? user.id),
@@ -62,7 +62,7 @@ export const useCustomerAuth = () => {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { accessToken } = await authService.login({ email, password });
+      const { accessToken } = await customerService.login({ email, password });
       const payload = decodeJwt(accessToken);
       const baseUser: User = {
         id: payload?.sub ?? '',
@@ -77,7 +77,7 @@ export const useCustomerAuth = () => {
 
   const register = useCallback(
     async (data: RegisterRequest) => {
-      await authService.register(data);
+      await customerService.register(data);
       return login(data.email, data.password);
     },
     [login]

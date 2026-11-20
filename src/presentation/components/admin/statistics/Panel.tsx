@@ -8,7 +8,7 @@ interface PanelProps {
   children: React.ReactNode;
 }
 
-/** White card with a heading row; every dashboard section sits in one. */
+/** Thẻ trắng có dòng tiêu đề; mỗi phần của trang thống kê nằm trong một thẻ. */
 export const Panel: React.FC<PanelProps> = ({ title, description, action, className = '', children }) => (
   <section className={`bg-surface rounded-xl border border-border p-5 ${className}`}>
     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-4">
@@ -25,13 +25,13 @@ export const Panel: React.FC<PanelProps> = ({ title, description, action, classN
 interface DeltaProps {
   value: number;
   format: (abs: number) => string;
-  /** Names the period compared with, e.g. "so với tháng 10" */
+  /** Tên kỳ được đem ra so sánh, vd: "so với tháng 10" */
   suffix?: string;
-  /** Text size; the colour follows the direction */
+  /** Cỡ chữ; màu sắc đi theo chiều tăng/giảm */
   className?: string;
 }
 
-/** Signed change versus a named period: green for a rise, red for a fall (every figure here is better higher). */
+/** Mức thay đổi có dấu so với một kỳ: xanh khi tăng, đỏ khi giảm (mọi số liệu ở đây đều càng cao càng tốt). */
 export const Delta: React.FC<DeltaProps> = ({ value, format, suffix, className = 'text-xs' }) => {
   if (value === 0) {
     return <span className={`${className} text-text-muted`}>Không đổi{suffix && ` ${suffix}`}</span>;
@@ -50,11 +50,11 @@ interface StatTileProps {
   icon?: React.ElementType;
   label: string;
   value: React.ReactNode;
-  /** One or two short lines under the value: a delta, a total, what the figure includes */
+  /** Một hai dòng ngắn dưới giá trị: mức thay đổi, tổng số, hoặc số liệu này gồm những gì */
   children?: React.ReactNode;
 }
 
-/** A single figure with its label; tiles sit in rows of three or four. */
+/** Một số liệu kèm nhãn; các ô xếp thành hàng ba hoặc bốn. */
 export const StatTile: React.FC<StatTileProps> = ({ icon: Icon, label, value, children }) => (
   <div className="bg-surface rounded-xl border border-border p-5 min-w-0">
     <p className="flex items-center gap-2 text-sm font-medium text-text-secondary">
@@ -71,7 +71,7 @@ export const StatTile: React.FC<StatTileProps> = ({ icon: Icon, label, value, ch
   </div>
 );
 
-/** "4,7 / 5", or a muted "Chưa có" when nothing has been rated yet. */
+/** "4,7 / 5", hoặc chữ mờ "Chưa có" khi chưa có đánh giá nào. */
 export const RatingValue: React.FC<{ rating: number; reviews: number }> = ({ rating, reviews }) =>
   reviews > 0 ? (
     <>

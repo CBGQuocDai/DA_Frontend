@@ -4,7 +4,7 @@ import { Star } from 'lucide-react';
 const STARS = [1, 2, 3, 4, 5];
 
 interface StarRatingProps {
-  /** 0..5, rounded to the nearest whole star */
+  /** 0..5, làm tròn tới số sao nguyên gần nhất */
   value: number;
   className?: string;
 }

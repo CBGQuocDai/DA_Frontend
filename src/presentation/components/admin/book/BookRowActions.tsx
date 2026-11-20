@@ -5,7 +5,7 @@ import { Eye, EyeOff, MessageSquare, MoreVertical, Pencil, Trash2 } from 'lucide
 import { FloatingMenu, type MenuAnchor } from '@/src/presentation/components/common';
 
 interface BookRowActionsProps {
-  /** Where the menu is open, or null when closed; the table keeps a single open menu */
+  /** Vị trí menu đang mở, null khi đóng; cả bảng chỉ có một menu mở */
   anchor: MenuAnchor | null;
   onToggle: (trigger: HTMLElement) => void;
   onClose: () => void;
@@ -21,8 +21,8 @@ const itemClass =
   'w-full px-3 py-2 text-left text-sm text-text-primary hover:bg-bg flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer';
 
 /**
- * Click-to-open menu with the per-book actions of the manage-books table. Rendered in a
- * portal so the table's scroll container cannot clip it on the last rows.
+ * Menu thao tác cho từng sách trong bảng quản lý sách, bấm để mở. Render qua portal
+ * để vùng cuộn của bảng không cắt mất menu ở các dòng cuối.
  */
 export const BookRowActions: React.FC<BookRowActionsProps> = ({
   anchor,

@@ -1,33 +1,23 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
-import type { Author, PaginatedResponse } from '@/src/shared/types';
-import { toSearchQuery, type SearchParams } from './search.params';
+import type { Author, AuthorPayload, PaginatedResponse, SearchParams } from '@/src/shared/types';
+import { toSearchQuery } from './search.params';
 
-/**
- * Body of both create (POST) and update (PUT, full replacement). `avatar` is the
- * path returned by uploadService for a new image, the current path to keep it,
- * or empty to remove it.
- */
-export interface AuthorPayload {
-  fullName: string;
-  bio?: string;
-  avatar?: string;
-}
-
+/** Các API tác giả (AuthorController). */
 export const authorService = {
-  /** Every author, for pickers. */
+  /** Toàn bộ tác giả, dùng cho các ô chọn. */
   getAuthors: async (): Promise<Author[]> =>
-    unwrap<Author[]>(await apiClient.get(API_ENDPOINTS.AUTHORS.LIST)) ?? [],
+    unwrap<Author[]>(await apiClient.get(API_ENDPOINTS.AUTHORS.ROOT)) ?? [],
 
   getAuthor: async (authorId: number): Promise<Author> =>
     unwrap(await apiClient.get(API_ENDPOINTS.AUTHORS.DETAIL(authorId))),
 
-  /** Public paged list used by customer and admin pages; name A–Z, accent-insensitive search. */
+  /** Danh sách có phân trang, xếp theo tên A–Z, tìm không phân biệt dấu (công khai, dùng cho cả admin và khách). */
   searchAuthors: async (params: SearchParams = {}): Promise<PaginatedResponse<Author>> =>
     unwrap(await apiClient.get(API_ENDPOINTS.AUTHORS.SEARCH, { params: toSearchQuery(params) })),
 
   createAuthor: async (payload: AuthorPayload): Promise<Author> =>
-    unwrap(await apiClient.post(API_ENDPOINTS.AUTHORS.LIST, payload)),
+    unwrap(await apiClient.post(API_ENDPOINTS.AUTHORS.ROOT, payload)),
 
   updateAuthor: async (authorId: number, payload: AuthorPayload): Promise<Author> =>
     unwrap(await apiClient.put(API_ENDPOINTS.AUTHORS.DETAIL(authorId), payload)),

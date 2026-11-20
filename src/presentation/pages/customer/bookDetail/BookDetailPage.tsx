@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CustomerLayout } from '@/src/presentation/layouts';
 import { useAudioPlayer } from '@/src/presentation/hooks/common';
@@ -13,7 +13,7 @@ import {
   useRelatedBooks,
 } from '@/src/presentation/hooks/customer';
 import { BookShelf } from '@/src/presentation/components/customer/book';
-import { Breadcrumb, ErrorState } from '@/src/presentation/components/common';
+import { Breadcrumb, ChapterAttachmentsPdfViewer, ErrorState } from '@/src/presentation/components/common';
 import {
   AudioPlayerBar,
   BookDetailNotFound,
@@ -68,6 +68,8 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
   const savedChapters = useMemo(() => new Map(
     (progress.progress?.chapters ?? []).map((chapter) => [chapter.chapterId, chapter]),
   ), [progress.progress?.chapters]);
+  // Chương đang mở mục tệp đính kèm; audio vẫn phát tiếp trong lúc xem
+  const [attachmentsChapter, setAttachmentsChapter] = useState<Chapter | null>(null);
 
   // Invalidate an in-flight chapter change when the book, rights or mounted page changes.
   useEffect(() => () => chapterPlayback.cancelNavigation(), [chapterPlayback, payment.isPurchased]);
@@ -262,8 +264,18 @@ export const CustomerBookDetailPage: React.FC<{ bookId: number }> = ({ bookId })
           showBuyButton={!payment.isPurchased}
           onBuy={payment.openPayment}
           onClose={closePlayer}
+          onOpenAttachments={() => setAttachmentsChapter(activeChapter)}
         />
       )}
+
+      {attachmentsChapter ? (
+        <ChapterAttachmentsPdfViewer
+          bookId={bookId}
+          chapterId={attachmentsChapter.id}
+          chapterTitle={attachmentsChapter.title}
+          onClose={() => setAttachmentsChapter(null)}
+        />
+      ) : null}
 
       {payment.isModalOpen && (
         <PaymentModal

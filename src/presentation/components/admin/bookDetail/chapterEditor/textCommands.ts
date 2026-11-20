@@ -18,7 +18,7 @@ export const CASE_STYLES: { label: string; apply: (text: string) => string }[] =
   },
 ];
 
-/** Rewrites the selected text paragraph by paragraph, keeping the selection on the result. */
+/** Viết lại phần văn bản đang chọn theo từng đoạn, giữ vùng chọn trên kết quả. */
 export const transformSelection = (editor: Editor, apply: (text: string) => string) => {
   const { doc, selection, tr } = editor.state;
   const { from, to } = selection;
@@ -36,8 +36,8 @@ export const transformSelection = (editor: Editor, apply: (text: string) => stri
 };
 
 /**
- * Merges the selected paragraphs into one (or the current paragraph with the next when
- * nothing is selected). Blank lines are dropped; page breaks are never crossed.
+ * Gộp các đoạn đang chọn thành một (hoặc đoạn hiện tại với đoạn kế tiếp khi không chọn gì).
+ * Dòng trống bị bỏ; không bao giờ gộp qua dấu ngắt trang.
  */
 export const joinParagraphs = (editor: Editor) => {
   const { doc, selection, tr } = editor.state;
@@ -67,7 +67,7 @@ export const joinParagraphs = (editor: Editor) => {
   editor.commands.focus();
 };
 
-/** Moves the cursor to a page and scrolls its first line under the top of `scroller`. */
+/** Đưa con trỏ tới một trang và cuộn dòng đầu của trang đó lên sát mép trên của `scroller`. */
 export const goToPage = (editor: Editor, page: number, scroller: HTMLElement | null) => {
   const { doc, tr } = editor.state;
   const pos = getPageStarts(doc)[page] ?? 0;
@@ -77,6 +77,6 @@ export const goToPage = (editor: Editor, page: number, scroller: HTMLElement | n
   const target = editor.view.nodeDOM(pos);
   if (!scroller || !(target instanceof HTMLElement)) return;
   const offset = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-  // Leaves room for the "Trang N" divider above the page
+  // Chừa chỗ cho vạch phân cách "Trang N" phía trên trang
   scroller.scrollTop = page === 0 ? 0 : scroller.scrollTop + offset - 76;
 };

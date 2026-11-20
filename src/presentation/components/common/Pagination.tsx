@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './Button';
 
 export interface PaginationProps {
-  /** Zero-based current page */
+  /** Trang hiện tại, bắt đầu từ 0 */
   page: number;
   totalPage: number;
   onPageChange: (page: number) => void;

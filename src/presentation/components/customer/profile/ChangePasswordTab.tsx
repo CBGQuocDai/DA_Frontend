@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { authService } from '@/src/infrastructure/api/services';
+import { customerService } from '@/src/infrastructure/api/services';
 import { MIN_PASSWORD_LENGTH, getApiErrorMessage } from '@/src/shared/utils';
 import { FormNotice, ProfileField, SubmitButton, TabHeader, profileInputClass, type FormMessage } from './ProfileParts';
 
@@ -30,7 +30,7 @@ export const ChangePasswordTab: React.FC = () => {
     setIsSubmitting(true);
     setMessage(null);
     try {
-      await authService.changePassword({ oldPassword: currentPassword, newPassword });
+      await customerService.changePassword({ oldPassword: currentPassword, newPassword });
       setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
       setCurrentPassword('');
       setNewPassword('');

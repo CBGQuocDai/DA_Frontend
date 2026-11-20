@@ -4,6 +4,7 @@ import { LoginForm } from "@/src/presentation/components/admin/auth";
 import { ROUTES } from "@/src/shared/constants";
 import { useRouter } from "next/navigation";
 
+/** Trang đăng nhập quản trị; đăng nhập xong chuyển tới trang thống kê. */
 export const AdminLoginPage = () => {
   const router = useRouter();
 

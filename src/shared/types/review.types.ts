@@ -1,4 +1,4 @@
-// Review Types
+// Kiểu dữ liệu đánh giá sách
 export interface Review {
   id: number;
   bookId: number;
@@ -7,6 +7,7 @@ export interface Review {
   userAvatar?: string;
   rating: number; // 1-5
   comment: string;
+  /** Thời điểm tạo, dạng ISO 8601 */
   createdAt?: string;
   updatedAt?: string;
   verifiedPurchase?: boolean;
@@ -28,4 +29,13 @@ export interface MyReview {
 export interface ReviewDraft {
   rating: number;
   comment: string;
+}
+
+export interface GetReviewPageParams {
+  /** Bắt đầu từ 0 */
+  page: number;
+  size: number;
+  /** Chỉ lấy đánh giá đúng số sao này */
+  rating?: number;
+  sort: ReviewSort;
 }

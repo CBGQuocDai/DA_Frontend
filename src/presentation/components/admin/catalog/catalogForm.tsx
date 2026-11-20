@@ -4,7 +4,7 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button, Spinner } from '@/src/presentation/components/common';
 
-/** Limits enforced by the backend DTOs (AuthorRequest, CategoryRequest). */
+/** Giới hạn do DTO phía backend quy định (AuthorRequest, CategoryRequest). */
 export const CATALOG_LIMITS = {
   name: 255,
   text: 255,

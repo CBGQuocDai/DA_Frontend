@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { bookService } from '@/src/infrastructure/api/services';
 import type { Book, BookStatus } from '@/src/shared/types';
+import { useAdminEvents } from './useAdminEvents';
 
 export const ADMIN_BOOKS_PER_PAGE = 10;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -22,14 +23,14 @@ interface PageResult {
   totalPage: number;
 }
 
-/** Paginated, filterable book list for the admin "manage books" table. */
+/** Danh sách sách có phân trang và bộ lọc cho bảng "quản lý sách" của admin. */
 export const useAdminBookList = () => {
   const [filters, setFilters] = useState<BookFilters>(EMPTY_FILTERS);
   const [page, setPage] = useState(0);
   const [reloadCount, setReloadCount] = useState(0);
   const [result, setResult] = useState<PageResult | null>(null);
 
-  // Debounced copy of the search box so each keystroke doesn't hit the API
+  // Bản debounce của ô tìm kiếm để không gọi API sau mỗi phím gõ
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedKeyword(filters.keyword.trim()), SEARCH_DEBOUNCE_MS);
@@ -50,7 +51,7 @@ export const useAdminBookList = () => {
   );
   const requestKey = `${JSON.stringify(query)}#${reloadCount}`;
 
-  // State is only set from the promise callbacks, so a stale response never overwrites a newer one
+  // State chỉ được set trong callback của promise nên response cũ không bao giờ ghi đè response mới
   useEffect(() => {
     let active = true;
     bookService.getBooks(query).then(
@@ -72,11 +73,18 @@ export const useAdminBookList = () => {
     setPage(0);
   };
 
+  /** Sửa một dòng ngay tại chỗ, không cần tải lại cả trang */
   const updateBook = (bookId: number, patch: Partial<Book>) =>
     setResult(
       (prev) =>
         prev && { ...prev, books: prev.books.map((book) => (book.id === bookId ? { ...book, ...patch } : book)) }
     );
+
+  // OCR xong thì đổi trạng thái ngay trên dòng; sách không nằm trong trang hiện tại tự được bỏ qua
+  useAdminEvents({
+    onBookStatus: ({ bookId, status }) => updateBook(bookId, { status }),
+    onReconnect: () => setReloadCount((count) => count + 1),
+  });
 
   return {
     books: result?.books ?? [],

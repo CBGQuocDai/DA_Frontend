@@ -11,9 +11,9 @@ const AVATAR_ACCEPT = 'image/jpeg,image/png,image/webp';
 const AVATAR_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
 
 interface AuthorModalProps {
-  /** Author to edit; omit to create one. The modal is mounted per open. */
+  /** Tác giả cần sửa; bỏ trống để tạo mới. Modal được mount lại mỗi lần mở. */
   author?: Author | null;
-  /** Prefills the name when creating, e.g. what was typed in the book form's author search */
+  /** Điền sẵn tên khi tạo mới, vd: chữ đã gõ ở ô tìm tác giả của form sách */
   initialName?: string;
   onClose: () => void;
   onSuccess: (saved: Author) => void;
@@ -45,7 +45,7 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
 
   const nameError = !fullName.trim() ? 'Nhập tên tác giả' : undefined;
   const bioError = !bio.trim() ? 'Nhập tiểu sử tác giả' : undefined;
-  // A bad file is reported at once; a missing one only after the first submit
+  // File không hợp lệ thì báo ngay; thiếu file thì chỉ báo sau lần submit đầu tiên
   const fileError = validateAvatar(avatarFile);
   const missingAvatarError = !avatarFile && !currentAvatar ? 'Chọn ảnh tác giả' : undefined;
   const avatarError = fileError ?? (submitAttempted ? missingAvatarError : undefined);
@@ -54,7 +54,7 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // The book form's own submit must not fire when this modal sits on top of it
+    // Không để form sách bên dưới submit theo khi modal này đang nằm chồng lên
     e.stopPropagation();
     if (isSubmitting) return;
     setSubmitAttempted(true);
@@ -63,7 +63,7 @@ export const AuthorModal: React.FC<AuthorModalProps> = ({ author, initialName = 
 
     setIsSubmitting(true);
     try {
-      // A new image goes straight to cloud storage; the author only stores its path
+      // Ảnh mới được đưa thẳng lên cloud storage; tác giả chỉ lưu đường dẫn
       const avatar = avatarFile
         ? await uploadService.uploadFile(avatarFile, 'IMAGE')
         : currentAvatar?.path ?? '';

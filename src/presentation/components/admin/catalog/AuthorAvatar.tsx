@@ -9,7 +9,7 @@ interface AuthorAvatarProps {
   className?: string;
 }
 
-/** Vietnamese names end with the given name, so "Nguyễn Nhật Ánh" shows "Á". */
+/** Tên người Việt đặt tên gọi ở cuối nên "Nguyễn Nhật Ánh" hiển thị chữ "Á". */
 const initialOf = (name?: string) => name?.trim().split(/\s+/).pop()?.charAt(0).toUpperCase() || '?';
 
 export const AuthorAvatar: React.FC<AuthorAvatarProps> = ({ name, url, className = 'h-9 w-9 text-sm' }) =>
