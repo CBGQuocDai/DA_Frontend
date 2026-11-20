@@ -26,7 +26,7 @@ export interface ChapterProgress {
   updatedAt: string;
 }
 
-export interface ListeningResume {
+interface ListeningResume {
   chapterId: number;
   chapterIndex: number;
   lastPlayAt: number;

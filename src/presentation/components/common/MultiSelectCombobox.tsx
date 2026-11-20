@@ -30,12 +30,12 @@ const getClipBounds = (element: HTMLElement) => {
   return { top: 0, bottom: window.innerHeight };
 };
 
-export interface MultiSelectComboboxOption {
+interface MultiSelectComboboxOption {
   id: number;
   name: string;
 }
 
-export interface MultiSelectComboboxProps {
+interface MultiSelectComboboxProps {
   options: MultiSelectComboboxOption[];
   selectedIds: number[];
   onChange: (ids: number[]) => void;

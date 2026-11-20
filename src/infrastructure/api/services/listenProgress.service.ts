@@ -1,7 +1,7 @@
 import { API_BASE_URL, API_ENDPOINTS } from '@/src/shared/constants';
 import type { BookProgress, SaveListeningProgress } from '@/src/shared/types';
 
-export class ListeningProgressError extends Error {
+class ListeningProgressError extends Error {
   constructor(public readonly status: number) {
     super(`Listening progress: HTTP ${status}`);
   }

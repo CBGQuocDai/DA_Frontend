@@ -16,7 +16,6 @@ export const CustomerAuthorsPage = () => {
   const [query, setQuery] = useState("");
   const {
     authors,
-    total,
     totalPage,
     page,
     isLoading,

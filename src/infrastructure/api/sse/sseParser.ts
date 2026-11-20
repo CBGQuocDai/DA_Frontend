@@ -1,4 +1,4 @@
-export interface SseMessage {
+interface SseMessage {
   event: string;
   data: string;
 }

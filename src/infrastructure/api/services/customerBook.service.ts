@@ -28,17 +28,11 @@ export const customerBookService = {
   getBooks: async (params?: GetCustomerBooksParams): Promise<PaginatedResponse<Book>> =>
     unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.CATALOG, { params })),
 
-  getBooksByCategory: async (
-    categoryId: number,
-    params?: Pick<GetCustomerBooksParams, 'page' | 'size'>
-  ): Promise<PaginatedResponse<Book>> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.CATALOG, { params: { ...params, categoryId } })),
-
   getOverview,
 
   /** Public discovery shelf, available without a customer session. */
   getRecommendations: async (limit = 10): Promise<Book[]> =>
-    unwrap(await apiClient.get(API_ENDPOINTS.CUSTOMER_BOOKS.RECOMMENDATIONS, { params: { limit } })),
+    unwrap(await apiClient.get(API_ENDPOINTS.BOOKS.DISCOVERY_RECOMMENDATIONS, { params: { limit } })),
 
   /** Sách liên quan, backend trả thẳng danh sách thẻ sách theo thứ tự đã xếp. */
   getRelatedBooks: async (bookId: number, limit = 8): Promise<Book[]> =>

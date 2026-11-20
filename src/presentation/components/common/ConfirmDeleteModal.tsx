@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { Button } from "./Button";
 import { Trash2, X } from "lucide-react";
 
-export interface ConfirmDeleteModalProps {
+interface ConfirmDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void | Promise<void>;

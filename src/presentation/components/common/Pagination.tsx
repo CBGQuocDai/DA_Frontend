@@ -4,7 +4,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './Button';
 
-export interface PaginationProps {
+interface PaginationProps {
   /** Trang hiện tại, bắt đầu từ 0 */
   page: number;
   totalPage: number;

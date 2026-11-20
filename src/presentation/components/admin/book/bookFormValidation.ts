@@ -10,7 +10,7 @@ export type FieldName =
   | 'coverFile'
   | 'pdfFile';
 
-export type Errors = Partial<Record<FieldName, string>>;
+type Errors = Partial<Record<FieldName, string>>;
 
 /** Thứ tự dùng để focus vào trường lỗi đầu tiên khi submit */
 export const FIELD_ORDER: FieldName[] = [

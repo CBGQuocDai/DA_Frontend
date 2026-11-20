@@ -1,5 +1,5 @@
 // Kiểu dữ liệu thanh toán
-export type PaymentStatus = 'PENDING' | 'PAID';
+type PaymentStatus = 'PENDING' | 'PAID';
 
 export interface Payment {
   id: number;

@@ -1,12 +1,5 @@
 // Kiểu dữ liệu dùng chung
 
-/** Khung bọc response của backend (ApiResponse) */
-export interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
-
 /** Một trang kết quả (PageResponse phía backend); `page` bắt đầu từ 0 */
 export interface PaginatedResponse<T> {
   content: T[];

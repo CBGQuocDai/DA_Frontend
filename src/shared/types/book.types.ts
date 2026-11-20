@@ -1,6 +1,6 @@
 // Kiểu dữ liệu sách, chương, giọng đọc, tác giả, thể loại (khớp các *Response phía backend)
 
-export interface StoredFile {
+interface StoredFile {
   /** Đường dẫn lưu trữ: gửi lại trong request cập nhật để giữ nguyên file này */
   path: string;
   /** URL đã ký để đọc file */
@@ -51,13 +51,13 @@ export interface Voice {
 }
 
 /** Dòng liên kết sách – thể loại (BookCategoryResponse) */
-export interface BookCategory {
+interface BookCategory {
   id: number;
   category: Category;
 }
 
 /** Dòng liên kết sách – tác giả (BookAuthorResponse) */
-export interface BookAuthor {
+interface BookAuthor {
   id: number;
   author: Author;
 }

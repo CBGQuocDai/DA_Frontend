@@ -4,12 +4,12 @@ import React, { useState, useMemo } from 'react';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 
-export interface DropSearchOption {
+interface DropSearchOption {
   value: string | number;
   label: string;
 }
 
-export interface DropSearchProps {
+interface DropSearchProps {
   options: DropSearchOption[];
   value: string | number | null;
   onChange: (val: string | number | null) => void;

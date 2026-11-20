@@ -5,6 +5,23 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    files: ["src/domain/**/*.ts", "src/application/**/*.ts"],
+    rules: {
+      "no-restricted-globals": ["error", "window", "document", "localStorage", "sessionStorage", "fetch"],
+      "no-restricted-imports": ["error", {
+        patterns: ["react", "react/**", "next", "next/**", "axios", "@/src/infrastructure/**", "@/src/presentation/**", "@/src/composition/**", "@/src/shared/**"],
+      }],
+    },
+  },
+  {
+    files: ["src/domain/**/*.ts"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: ["react", "react/**", "next", "next/**", "axios", "@/src/application/**", "@/src/infrastructure/**", "@/src/presentation/**", "@/src/composition/**", "@/src/shared/**"],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

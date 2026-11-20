@@ -8,7 +8,7 @@ interface Range {
   to: number;
 }
 
-export interface SearchState {
+interface SearchState {
   query: string;
   caseSensitive: boolean;
   matches: Range[];
@@ -18,7 +18,7 @@ export interface SearchState {
 
 type SearchMeta = Partial<Pick<SearchState, 'query' | 'caseSensitive' | 'current'>>;
 
-export const searchKey = new PluginKey<SearchState>('chapterSearch');
+const searchKey = new PluginKey<SearchState>('chapterSearch');
 
 // Đoạn văn chỉ chứa text node nên offset của textContent khớp 1:1 với vị trí trong tài liệu
 const findMatches = (doc: PMNode, query: string, caseSensitive: boolean): Range[] => {

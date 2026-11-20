@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { authorService, categoryService, voiceService } from '@/src/infrastructure/api/services';
 import type { Author, Category, Voice } from '@/src/shared/types';
 
-export interface BookFormOptions {
+interface BookFormOptions {
   categories: Category[];
   authors: Author[];
   voices: Voice[];

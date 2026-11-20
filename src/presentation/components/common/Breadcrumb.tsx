@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-export interface BreadcrumbItem {
+interface BreadcrumbItem {
   label: string;
   href?: string;
 }

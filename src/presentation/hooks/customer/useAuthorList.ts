@@ -28,7 +28,6 @@ export const useAuthorList = (keyword: string, pageSize = 8) => {
 
   return {
     authors: isPending ? [] : data?.content ?? [],
-    total: data?.total ?? 0,
     totalPage: data?.totalPage ?? 0,
     page,
     isLoading: isPending,

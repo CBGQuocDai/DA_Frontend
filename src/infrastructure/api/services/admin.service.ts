@@ -1,14 +1,14 @@
 import { apiClient, unwrap } from '../config/apiClient';
 import { API_ENDPOINTS } from '@/src/shared/constants';
 import type { AuthResponse, BestsellerPeriod, LoginRequest, PurchaseTrend, Statistics } from '@/src/shared/types';
-import { authService } from './auth.service';
+import { authStorage } from '@/src/infrastructure/storage/authStorage';
 
 /** Các API riêng của admin (AdminController): đăng nhập và số liệu trang thống kê. */
 export const adminService = {
   /** Đăng nhập quản trị (POST /admin/login) và lưu access token. */
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     const session = unwrap<AuthResponse>(await apiClient.post(API_ENDPOINTS.ADMIN.LOGIN, credentials));
-    authService.storeAccessToken(session.accessToken);
+    authStorage.setToken(session.accessToken);
     return session;
   },
 

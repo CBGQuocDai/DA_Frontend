@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { BOOK_CARD_WIDTH } from './BookCard';
-import styles from './BookShelf.module.css';
+import React from "react";
+import styles from "./BookShelf.module.css";
 
-export const BookCardSkeleton: React.FC<{ className?: string }> = ({ className = BOOK_CARD_WIDTH }) => (
+export const BookCardSkeleton: React.FC<{ className?: string }> = ({
+  className = "min-w-0 w-full",
+}) => (
   <div className={`${className} flex-shrink-0 animate-pulse`}>
     <div className="aspect-[3/4.2] w-full rounded-xl bg-slate-200 border border-slate-200" />
     <div className="mt-2.5 space-y-1.5">
@@ -14,7 +15,9 @@ export const BookCardSkeleton: React.FC<{ className?: string }> = ({ className =
   </div>
 );
 
-export const BookRowSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => (
+export const BookRowSkeleton: React.FC<{ count?: number }> = ({
+  count = 5,
+}) => (
   <div className={`${styles.row} overflow-hidden`}>
     {Array.from({ length: count }, (_, i) => (
       <BookCardSkeleton key={i} className="min-w-0 w-full" />

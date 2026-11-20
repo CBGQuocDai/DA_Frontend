@@ -12,22 +12,20 @@ export const useBookDetailData = (bookId: number) => {
   const [selectedChapterId, setSelectedChapterId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
-    try {
+  const loadData = useCallback(() =>
+    bookService.getBookById(bookId).then(({ chapters: chaptersData = [], ...bookData }) => {
       // Response chi tiết đã có sẵn chương, giọng đọc, tác giả, thể loại và URL file đã ký
-      const { chapters: chaptersData = [], ...bookData } = await bookService.getBookById(bookId);
       setBook(bookData);
       setChapters(chaptersData);
       setSelectedChapterId((prev) => {
         if (prev && chaptersData.some((c) => c.id === prev)) return prev;
         return chaptersData.length > 0 ? chaptersData[0].id : null;
       });
-    } catch (error) {
+    }).catch((error) => {
       console.error('Error fetching book detail:', error);
-    } finally {
+    }).finally(() => {
       setIsLoading(false);
-    }
-  }, [bookId]);
+    }), [bookId]);
 
   useEffect(() => {
     loadData();

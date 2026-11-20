@@ -34,8 +34,7 @@ export const CustomerProfilePage: React.FC = () => {
   const userId = user?.id;
   useEffect(() => {
     if (userId) refreshProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, refreshProfile]);
 
   const handleLogout = () => {
     logout();

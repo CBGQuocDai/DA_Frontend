@@ -1,6 +1,6 @@
 import { MIN_PASSWORD_LENGTH, getApiErrorMessage, getApiErrorStatus, isNetworkError, isValidEmail } from '@/src/shared/utils';
 
-export interface AuthFormValues {
+interface AuthFormValues {
   email: string;
   password: string;
   fullName?: string;

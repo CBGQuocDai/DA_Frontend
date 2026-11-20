@@ -3,12 +3,12 @@ import { storageString } from '@/src/shared/utils';
 import type { BookStatus, ChapterStatus } from '@/src/shared/types';
 import { createSseParser } from './sseParser';
 
-export interface BookStatusEvent {
+interface BookStatusEvent {
   bookId: number;
   status: BookStatus;
 }
 
-export interface ChapterStatusEvent {
+interface ChapterStatusEvent {
   bookId: number;
   chapterId: number;
   status: ChapterStatus;

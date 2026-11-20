@@ -23,7 +23,7 @@ const MAX_VISIBLE_CATEGORIES = 2;
 
 const Muted: React.FC = () => <span className="text-xs text-text-muted italic">—</span>;
 
-export interface BookRowHandlers {
+interface BookRowHandlers {
   onOpen: (book: Book) => void;
   onViewReviews: (book: Book) => void;
   onTogglePublish: (book: Book) => void;

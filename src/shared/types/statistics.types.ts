@@ -2,7 +2,7 @@
 
 import type { BookStatus } from './book.types';
 
-export interface StatisticsOverview {
+interface StatisticsOverview {
   revenueThisMonth: number;
   revenueLastMonth: number;
   /** Lượt mua đã thanh toán trong tháng này */

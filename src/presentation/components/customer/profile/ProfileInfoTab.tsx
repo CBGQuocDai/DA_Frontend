@@ -1,19 +1,26 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import type { User } from '@/src/shared/types';
-import { FormNotice, ProfileField, SubmitButton, TabHeader, profileInputClass, type FormMessage } from './ProfileParts';
+import React, { useEffect, useRef, useState } from "react";
+import type { User } from "@/src/shared/types";
+import {
+  FormNotice,
+  ProfileField,
+  SubmitButton,
+  TabHeader,
+  profileInputClass,
+  type FormMessage,
+} from "./ProfileParts";
 
-const GENDERS = ['Nam', 'Nữ', 'Khác'] as const;
+const GENDERS = ["Nam", "Nữ", "Khác"] as const;
 const MESSAGE_TIMEOUT_MS = 3000;
-// There is no update-profile endpoint yet, so saving is simulated
+// Form thông tin cá nhân hiện mô phỏng thao tác lưu.
 const SIMULATED_SAVE_MS = 600;
 
 export const ProfileInfoTab: React.FC<{ user: User }> = ({ user }) => {
   const [fullName, setFullName] = useState(user.fullName);
-  const [phone, setPhone] = useState(user.phone ?? '');
-  const [gender, setGender] = useState<string>('');
-  const [birthDate, setBirthDate] = useState('');
+  const [phone, setPhone] = useState(user.phone ?? "");
+  const [gender, setGender] = useState<string>("");
+  const [birthDate, setBirthDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<FormMessage | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -30,14 +37,17 @@ export const ProfileInfoTab: React.FC<{ user: User }> = ({ user }) => {
     setMessage(null);
     later(() => {
       setIsSaving(false);
-      setMessage({ type: 'success', text: 'Cập nhật thông tin cá nhân thành công!' });
+      setMessage({
+        type: "success",
+        text: "Cập nhật thông tin cá nhân thành công!",
+      });
       later(() => setMessage(null), MESSAGE_TIMEOUT_MS);
     }, SIMULATED_SAVE_MS);
   };
 
   const handleReset = () => {
     setFullName(user.fullName);
-    setPhone(user.phone ?? '');
+    setPhone(user.phone ?? "");
   };
 
   return (
@@ -45,7 +55,6 @@ export const ProfileInfoTab: React.FC<{ user: User }> = ({ user }) => {
       <TabHeader
         eyebrow="Tài khoản của tôi"
         title="Thông tin profile"
-        description="Quản lý thông tin hồ sơ để bảo mật và tối ưu trải nghiệm đọc sách"
       />
 
       {message && <FormNotice message={message} />}
@@ -64,7 +73,12 @@ export const ProfileInfoTab: React.FC<{ user: User }> = ({ user }) => {
           </ProfileField>
 
           <ProfileField label="Địa chỉ Email">
-            <input type="email" value={user.email} disabled className={profileInputClass} />
+            <input
+              type="email"
+              value={user.email}
+              disabled
+              className={profileInputClass}
+            />
           </ProfileField>
 
           <ProfileField label="Số điện thoại">
@@ -78,10 +92,15 @@ export const ProfileInfoTab: React.FC<{ user: User }> = ({ user }) => {
           </ProfileField>
 
           <div className="space-y-1.5">
-            <span className="text-xs font-bold text-slate-700 block">Giới tính</span>
+            <span className="text-xs font-bold text-slate-700 block">
+              Giới tính
+            </span>
             <div className="flex items-center gap-4 pt-2">
               {GENDERS.map((item) => (
-                <label key={item} className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                <label
+                  key={item}
+                  className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700"
+                >
                   <input
                     type="radio"
                     name="gender"

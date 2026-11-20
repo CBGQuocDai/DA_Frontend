@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { reviewService } from '@/src/infrastructure/api/services';
 import { useAsyncData } from '../common';
 
-export const ADMIN_REVIEWS_PER_PAGE = 5;
+const ADMIN_REVIEWS_PER_PAGE = 5;
 
 /** Đánh giá của một cuốn sách cho admin xem: tổng hợp theo sao và danh sách phân trang, lọc theo số sao. */
 export const useAdminBookReviews = (bookId: number) => {

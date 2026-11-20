@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ROUTES } from '@/src/shared/constants';
 import { authService } from '@/src/infrastructure/api/services';
+import { authStorage } from '@/src/infrastructure/storage/authStorage';
 import { ChangePasswordModal } from '@/src/presentation/components/admin/auth';
 import { BarChart3, BookOpen, KeyRound, LogOut, Menu, Mic, PenLine, Radio, Tags, X } from 'lucide-react';
 
@@ -53,7 +54,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, compact }) =
 
   // Xóa phiên ở client và thu hồi token phía backend rồi về trang đăng nhập
   const handleLogout = () => {
-    authService.logout();
+    const token = authStorage.getToken();
+    authStorage.clear();
+    if (token) void authService.logout(token).catch(() => undefined);
     router.replace(ROUTES.ADMIN.LOGIN);
   };
 

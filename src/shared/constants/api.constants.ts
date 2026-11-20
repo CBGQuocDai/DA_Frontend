@@ -1,7 +1,6 @@
 // Khóa lưu trữ trong localStorage
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: "da_access_token",
-  REFRESH_TOKEN: "da_refresh_token",
   USER: "da_user",
 } as const;
 
@@ -35,6 +34,7 @@ export const API_ENDPOINTS = {
     LOGIN: "/customer/login",
     REGISTER: "/customer/register",
     PROFILE: "/customer/profile",
+    AVATAR: "/customer/profile/avatar",
     CHANGE_PASSWORD: "/customer/profile/change-password",
     BOOK_OWNERSHIP: (bookId: Id) => `/customer/books/${bookId}/check`,
     // GET: tiến trình nghe của cả cuốn sách
@@ -55,6 +55,7 @@ export const API_ENDPOINTS = {
     CATALOG: "/books/catalog",
     OVERVIEW: (bookId: Id) => `/books/${bookId}/overview`,
     CHAPTER_LIST: (bookId: Id) => `/books/${bookId}/chapters/list`,
+    DISCOVERY_RECOMMENDATIONS: "/books/recommendations",
     // Sách liên quan do backend chọn theo tác giả và thể loại
     RECOMMENDATIONS: (bookId: Id) => `/books/${bookId}/recommendations`,
   },
@@ -98,25 +99,13 @@ export const API_ENDPOINTS = {
   // UploadController
   UPLOADS: {
     SIGN_URL: "/uploads/sign-url",
+    CUSTOMER_SIGN_URL: "/uploads/customer/sign-url",
   },
 
   // PaymentController
   PAYMENTS: {
     ROOT: "/payments",
     DETAIL: (paymentId: Id) => `/payments/${paymentId}`,
-  },
-
-  CUSTOMER_BOOKS: {
-    LIST: "/books/catalog",
-    RECOMMENDATIONS: "/books/recommendations",
-    OVERVIEW: (bookId: string | number) => `/books/${bookId}/overview`,
-    CHAPTERS: (bookId: string | number) => `/books/${bookId}/chapters/list`,
-    RELATED: (bookId: string | number) => `/books/${bookId}/recommendations`,
-    PROGRESS: (bookId: number) => `/customer/books/${bookId}/progress`,
-    SAVE_PROGRESS: (bookId: number, chapterId: number) =>
-      `/customer/books/${bookId}/chapters/${chapterId}/progress`,
-    CHECK_OWNERSHIP: (bookId: string | number) =>
-      `/customer/books/${bookId}/check`,
   },
 
   BOOK_FAVORITES: {
